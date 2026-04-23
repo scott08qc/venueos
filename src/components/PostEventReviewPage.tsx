@@ -35,8 +35,8 @@ type FormValues = {
 function Sec({ title }: { title: string }) {
   return (
     <div className="pt-4 pb-1">
-      <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">{title}</p>
-      <Separator className="mt-2 bg-border/60" />
+      <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#2C5F8A' }}>{title}</p>
+      <Separator className="mt-2" style={{ background: '#EEEEEE' }} />
     </div>
   )
 }
@@ -271,21 +271,20 @@ export function PostEventReviewPage({ events, preselectedEventId }: Props) {
 
         {/* Split variance display */}
         {variance !== null && (
-          <div className={cn(
-            "rounded-lg border px-4 py-3 flex justify-between items-center",
-            varianceOver5
-              ? "bg-destructive/10 border-destructive/30"
-              : "bg-primary/10 border-primary/20"
-          )}>
+          <div className="rounded-lg border px-4 py-3 flex justify-between items-center"
+            style={varianceOver5
+              ? { background: '#FFF0F0', borderColor: 'rgba(139,58,58,0.3)' }
+              : { background: 'rgba(44,95,138,0.08)', borderColor: 'rgba(44,95,138,0.2)' }
+            }>
             <div>
-              <p className={cn("text-xs font-semibold uppercase tracking-wider", varianceOver5 ? "text-destructive" : "text-primary")}>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: varianceOver5 ? '#8B3A3A' : '#2C5F8A' }}>
                 Split Variance
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs mt-0.5" style={{ color: '#555555' }}>
                 {varianceOver5 ? "Actual exceeds projected by more than 5 points" : "Within expected range"}
               </p>
             </div>
-            <span className={cn("text-lg font-bold", varianceOver5 ? "text-destructive" : "text-primary")}>
+            <span className="text-lg font-bold" style={{ color: varianceOver5 ? '#8B3A3A' : '#2C5F8A' }}>
               {variance > 0 ? "+" : ""}{variance.toFixed(1)}%
             </span>
           </div>
@@ -326,12 +325,20 @@ export function PostEventReviewPage({ events, preselectedEventId }: Props) {
                     className={cn(
                       "text-xs px-2.5 py-1.5 rounded border transition-colors font-medium",
                       selectVals[field] === opt
-                        ? opt === "Hit" ? "bg-green-500/20 text-green-400 border-green-500/40"
-                          : opt === "Missed" ? "bg-red-500/20 text-red-400 border-red-500/40"
-                          : opt === "Partial" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
-                          : "bg-muted text-muted-foreground border-border"
-                        : "bg-transparent text-muted-foreground border-border/50 hover:border-border"
-                    )}>
+                        ? opt === "Hit" ? "bg-green-100 text-green-700 border-green-300"
+                          : opt === "Missed" ? "border" : ""
+                          : "bg-transparent border"
+                    )}
+                    style={selectVals[field] === opt && opt === "Missed"
+                      ? { background: '#FFF0F0', color: '#8B3A3A', borderColor: 'rgba(139,58,58,0.35)' }
+                      : selectVals[field] === opt && opt === "Partial"
+                      ? { background: '#FFFBEA', color: '#7A6000', borderColor: 'rgba(180,140,0,0.35)' }
+                      : selectVals[field] === opt && opt === "N/A"
+                      ? { background: '#F5F5F5', color: '#555555', borderColor: '#CCCCCC' }
+                      : selectVals[field] !== opt
+                      ? { background: 'transparent', color: '#888888', borderColor: '#CCCCCC' }
+                      : {}
+                    }>
                     {opt}
                   </button>
                 ))}
@@ -345,12 +352,11 @@ export function PostEventReviewPage({ events, preselectedEventId }: Props) {
         <div className="flex gap-3">
           {["Draft", "Complete"].map((status) => (
             <button key={status} type="button" onClick={() => setSF("review_status", status)}
-              className={cn(
-                "flex-1 h-11 rounded-md border text-sm font-medium transition-colors",
-                selectVals.review_status === status
-                  ? "bg-primary/20 text-primary border-primary/40"
-                  : "bg-transparent text-muted-foreground border-border hover:border-border/80"
-              )}>
+              className="flex-1 h-11 rounded-md border text-sm font-medium transition-colors"
+              style={selectVals.review_status === status
+                ? { background: 'rgba(44,95,138,0.1)', color: '#2C5F8A', borderColor: 'rgba(44,95,138,0.4)' }
+                : { background: 'transparent', color: '#888888', borderColor: '#CCCCCC' }
+              }>
               {status}
             </button>
           ))}

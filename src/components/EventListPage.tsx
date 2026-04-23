@@ -17,20 +17,20 @@ type SortField = "event_date" | "event_name" | "tier1_category"
 type SortDir = "asc" | "desc"
 
 const statusColors: Record<string, string> = {
-  Complete: "bg-green-500/20 text-green-400 border-green-500/30",
-  Draft: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  "No Review": "bg-muted text-muted-foreground border-border",
+  Complete: "bg-green-100 text-green-700 border-green-300",
+  Draft: "bg-amber-50 text-amber-700 border-amber-300",
+  "No Review": "bg-gray-100 text-gray-500 border-gray-300",
 }
 
 const tier1Colors: Record<string, string> = {
-  Electronic: "bg-violet-500/15 text-violet-400",
-  "Open Format": "bg-blue-500/15 text-blue-400",
-  "Hip Hop and R&B": "bg-orange-500/15 text-orange-400",
-  Latin: "bg-red-500/15 text-red-400",
-  "Live Performance": "bg-emerald-500/15 text-emerald-400",
-  "Corporate and Private": "bg-slate-500/15 text-slate-400",
-  "Sports and Viewing": "bg-cyan-500/15 text-cyan-400",
-  "Themed and Holiday": "bg-pink-500/15 text-pink-400",
+  Electronic: "bg-violet-100 text-violet-700",
+  "Open Format": "bg-blue-100 text-blue-700",
+  "Hip Hop and R&B": "bg-orange-100 text-orange-700",
+  Latin: "bg-red-100 text-red-700",
+  "Live Performance": "bg-emerald-100 text-emerald-700",
+  "Corporate and Private": "bg-slate-100 text-slate-600",
+  "Sports and Viewing": "bg-cyan-100 text-cyan-700",
+  "Themed and Holiday": "bg-pink-100 text-pink-700",
 }
 
 export function EventListPage({ events, loading, onRefresh, onNavigate, onSelectEvent }: Props) {
@@ -132,7 +132,7 @@ export function EventListPage({ events, loading, onRefresh, onNavigate, onSelect
                 "flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border transition-colors",
                 sortField === field
                   ? "bg-primary/15 text-primary border-primary/30"
-                  : "text-muted-foreground border-border/50 hover:border-border"
+                  : "text-muted-foreground border border-border/50 hover:border-border"
               )}
             >
               {labels[field]}
@@ -146,7 +146,7 @@ export function EventListPage({ events, loading, onRefresh, onNavigate, onSelect
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 rounded-xl bg-card/50 animate-pulse" />
+            <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: '#EEEEEE' }} />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -172,7 +172,8 @@ export function EventListPage({ events, loading, onRefresh, onNavigate, onSelect
             <button
               key={event.id}
               onClick={() => onSelectEvent(event)}
-              className="w-full text-left rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-card/80 transition-all p-4 group"
+              className="w-full text-left rounded-xl border transition-all p-4 group"
+              style={{ background: '#FFFFFF', borderColor: 'rgba(0,0,0,0.08)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">

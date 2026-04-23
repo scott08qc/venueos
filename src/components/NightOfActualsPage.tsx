@@ -35,8 +35,8 @@ type FormValues = {
 function Sec({ title }: { title: string }) {
   return (
     <div className="pt-4 pb-1">
-      <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">{title}</p>
-      <Separator className="mt-2 bg-border/60" />
+      <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#2C5F8A' }}>{title}</p>
+      <Separator className="mt-2" style={{ background: '#EEEEEE' }} />
     </div>
   )
 }
@@ -96,7 +96,7 @@ function ManualRow({ label, hint, children }: { label: string; hint?: string; ch
   )
 }
 
-const settInp = "bg-background/60 border-border/60 text-foreground placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-primary h-9 text-sm"
+const settInp = "bg-white border text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary h-9 text-sm"
 
 function SettlementSection({ w, register, eventDeal, setValue }: {
   w: FormValues
@@ -163,11 +163,11 @@ function SettlementSection({ w, register, eventDeal, setValue }: {
     : 0
 
   return (
-    <div className="rounded-xl bg-card border border-primary/25 overflow-hidden mt-4">
+    <div className="rounded-xl overflow-hidden mt-4" style={{ background: '#EEF4FF', border: '1px solid rgba(44,95,138,0.25)' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-primary/10 border-b border-primary/20">
-        <Calculator className="h-4 w-4 text-primary" />
-        <span className="text-sm font-bold text-primary uppercase tracking-wider">Settlement Calculation</span>
+      <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ background: 'rgba(44,95,138,0.08)', borderColor: 'rgba(44,95,138,0.2)' }}>
+        <Calculator className="h-4 w-4" style={{ color: '#2C5F8A' }} />
+        <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#2C5F8A' }}>Settlement Calculation</span>
       </div>
 
       <div className="px-4 py-3 space-y-1">
@@ -250,9 +250,9 @@ function SettlementSection({ w, register, eventDeal, setValue }: {
               {fmt(netToVenue)}
             </span>
           </div>
-          <div className="flex justify-between items-center py-1.5 bg-primary/5 rounded-md px-2 mt-1">
-            <span className="text-xs text-muted-foreground">Effective promoter split — used for benchmarking</span>
-            <span className={cn("text-sm font-bold", promoPct > 60 ? "text-destructive" : "text-primary")}>
+          <div className="flex justify-between items-center py-1.5 rounded-md px-2 mt-1" style={{ background: 'rgba(44,95,138,0.08)' }}>
+            <span className="text-xs" style={{ color: '#555555' }}>Effective promoter split — used for benchmarking</span>
+            <span className={cn("text-sm font-bold")} style={{ color: promoPct > 60 ? '#8B3A3A' : '#2C5F8A' }}>
               {promoPct.toFixed(1)}%
             </span>
           </div>
@@ -262,7 +262,7 @@ function SettlementSection({ w, register, eventDeal, setValue }: {
               Benchmark effective split for this event type
             </Label>
             <Input
-              className="bg-background/40 border-border/40 text-foreground placeholder:text-muted-foreground/50 h-9 text-sm focus:ring-1 focus:ring-primary/50"
+              className="bg-white border text-foreground placeholder:text-muted-foreground/50 h-9 text-sm focus:ring-1 focus:ring-primary/50"
               placeholder="Compare against historical average — update manually from Benchmarks page for now."
               {...register("benchmark_effective_split")}
             />
@@ -275,7 +275,7 @@ function SettlementSection({ w, register, eventDeal, setValue }: {
         {/* Settlement Notes */}
         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground pt-3 pb-1">Settlement Notes</p>
         <Textarea
-          className="bg-background/60 border-border/60 text-foreground placeholder:text-muted-foreground/60 min-h-[80px] focus:ring-1 focus:ring-primary resize-none text-sm"
+          className="bg-white border text-foreground placeholder:text-muted-foreground/60 min-h-[80px] focus:ring-1 focus:ring-primary resize-none text-sm"
           placeholder="Document any manual adjustments, disputes, or deal mechanics that affected this calculation..."
           {...register("settlement_notes")}
         />

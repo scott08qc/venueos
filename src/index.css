@@ -4,25 +4,35 @@
 
 @layer base {
   :root {
-    --background: 222 20% 8%;
-    --foreground: 210 20% 92%;
-    --card: 222 20% 11%;
-    --card-foreground: 210 20% 92%;
-    --popover: 222 20% 11%;
-    --popover-foreground: 210 20% 92%;
-    --primary: 217 91% 60%;
+    /* Background: #FAFAF8 → hsl(60 11% 98%) */
+    --background: 60 11% 98%;
+    /* Primary text: #1A1A1A → hsl(0 0% 10%) */
+    --foreground: 0 0% 10%;
+    /* Card: #FFFFFF */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    /* Primary: #2C5F8A → hsl(209 52% 36%) */
+    --primary: 209 52% 36%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 222 20% 16%;
-    --secondary-foreground: 210 20% 85%;
-    --muted: 222 20% 14%;
-    --muted-foreground: 215 16% 55%;
-    --accent: 222 20% 16%;
-    --accent-foreground: 217 91% 70%;
-    --destructive: 0 72% 51%;
+    /* Secondary surface */
+    --secondary: 60 5% 95%;
+    --secondary-foreground: 0 0% 10%;
+    /* Muted: light grey surface */
+    --muted: 60 5% 95%;
+    /* Secondary text: #555555 → hsl(0 0% 33%) */
+    --muted-foreground: 0 0% 33%;
+    --accent: 60 5% 93%;
+    --accent-foreground: 209 52% 36%;
+    /* Destructive: #8B3A3A on #FFF0F0 */
+    --destructive: 0 43% 38%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 20% 18%;
-    --input: 222 20% 14%;
-    --ring: 217 91% 60%;
+    /* Border: #CCCCCC → hsl(0 0% 80%) */
+    --border: 0 0% 80%;
+    /* Input background: white */
+    --input: 0 0% 100%;
+    --ring: 209 52% 36%;
     --radius: 0.625rem;
   }
 }
@@ -33,12 +43,33 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+}
+
+/* Card / panel shadow */
+@layer components {
+  .card-surface {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  /* Settlement card: light blue */
+  .settlement-card {
+    background: #EEF4FF;
+    border: 1px solid rgba(44,95,138,0.25);
+  }
+
+  /* Warning / soft destructive */
+  .warn-soft {
+    background: #FFF0F0;
+    color: #8B3A3A;
   }
 }

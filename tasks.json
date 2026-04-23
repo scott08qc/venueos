@@ -7,17 +7,17 @@
   {
     "content": "[types] Update types.ts: DEAL_STRUCTURES add Net revenue split, new DOOR/TABLE/ARTIST constants, EventFull new fields",
     "id": "2",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "[eventrecord] Rebuild EventRecordPage deal structure: net revenue split mode, door basis options, table section, artist cost structured split",
     "id": "3",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "[noa] Update NightOfActualsPage: artist cost auto-populate from event, net revenue split single payout line",
     "id": "4",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "[backend] Update routes.py Pydantic models and SQL queries to handle all new fields",

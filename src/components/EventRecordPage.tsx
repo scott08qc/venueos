@@ -55,8 +55,8 @@ type FormValues = {
 function Sec({ title }: { title: string }) {
   return (
     <div className="pt-5 pb-1">
-      <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">{title}</p>
-      <Separator className="mt-2 bg-border/60" />
+      <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#2C5F8A' }}>{title}</p>
+      <Separator className="mt-2" style={{ background: '#EEEEEE' }} />
     </div>
   )
 }
@@ -64,7 +64,7 @@ function Sec({ title }: { title: string }) {
 function SubSec({ title }: { title: string }) {
   return (
     <div className="pt-3 pb-0.5">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">{title}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#888888' }}>{title}</p>
     </div>
   )
 }
@@ -299,7 +299,7 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
               }})} />
           </F>
           <F label="Day of Week">
-            <div className="h-11 flex items-center px-3 rounded-md bg-muted/50 border border-border text-muted-foreground text-sm">
+            <div className="h-11 flex items-center px-3 rounded-md border text-sm" style={{ background: '#F5F5F5', borderColor: '#CCCCCC', color: '#888888' }}>
               {dayOfWeek || <span className="italic opacity-50">Auto</span>}
             </div>
           </F>
@@ -351,7 +351,7 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
           {(() => {
             const pct = watchNetRevPct
             return pct > 0 ? (
-              <div className="rounded-md bg-muted/40 border border-border/50 px-3 py-2 flex justify-between items-center text-sm">
+              <div className="rounded-md px-3 py-2 flex justify-between items-center text-sm" style={{ background: "#F5F5F5", border: "1px solid #CCCCCC" }}>
                 <span className="text-muted-foreground">Venue %</span>
                 <span className="font-semibold text-foreground">{(100 - pct).toFixed(1)}%</span>
               </div>
@@ -474,7 +474,7 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
                   </F>
                 </div>
                 {mismatch && (
-                  <p className="text-xs text-destructive px-1">⚠ Venue + promoter amounts don't match total artist fee (${totalFeeWatch.toLocaleString()})</p>
+                  <p className="text-xs px-1" style={{ color: '#8B3A3A' }}>⚠ Venue + promoter amounts don't match total artist fee (${totalFeeWatch.toLocaleString()})</p>
                 )}
               </div>
             )
@@ -488,7 +488,7 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
                   <Input type="number" className={inp} placeholder="0" min={0} max={100} {...register("artist_venue_pct")} />
                 </F>
                 {vPct > 0 && (
-                  <div className="rounded-md bg-muted/40 border border-border/50 px-3 py-2 flex justify-between items-center text-sm">
+                  <div className="rounded-md px-3 py-2 flex justify-between items-center text-sm" style={{ background: "#F5F5F5", border: "1px solid #CCCCCC" }}>
                     <span className="text-muted-foreground">Promoter %</span>
                     <span className="font-semibold text-foreground">{(100 - vPct).toFixed(1)}%</span>
                   </div>
@@ -534,9 +534,9 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
         <F label="Projected Table Revenue ($)">
           <Input type="number" className={inp} placeholder="0" {...register("projected_table_revenue")} />
         </F>
-        <div className="rounded-lg bg-primary/10 border border-primary/20 px-4 py-3 flex justify-between items-center">
-          <span className="text-sm font-semibold text-primary">Total Projected Revenue</span>
-          <span className="text-lg font-bold text-primary">
+        <div className="rounded-lg px-4 py-3 flex justify-between items-center" style={{ background: 'rgba(44,95,138,0.08)', border: '1px solid rgba(44,95,138,0.2)' }}>
+          <span className="text-sm font-semibold" style={{ color: '#2C5F8A' }}>Total Projected Revenue</span>
+          <span className="text-lg font-bold" style={{ color: '#2C5F8A' }}>
             ${projTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>

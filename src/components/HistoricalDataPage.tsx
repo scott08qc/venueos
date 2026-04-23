@@ -35,8 +35,8 @@ type FormValues = {
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="pt-4 pb-1">
-      <p className="text-xs font-semibold uppercase tracking-widest text-primary/80">{title}</p>
-      <Separator className="mt-2 bg-border/60" />
+      <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#2C5F8A' }}>{title}</p>
+      <Separator className="mt-2" style={{ background: '#EEEEEE' }} />
     </div>
   )
 }
@@ -194,12 +194,11 @@ export function HistoricalDataPage() {
                 key={status}
                 type="button"
                 onClick={() => { setClassStatus(status); setValue("classification_status", status) }}
-                className={cn(
-                  "flex-1 h-11 rounded-md border text-xs font-medium transition-colors",
-                  classStatus === status
-                    ? "bg-primary/20 text-primary border-primary/40"
-                    : "bg-transparent text-muted-foreground border-border hover:border-border/80"
-                )}
+                className="flex-1 h-11 rounded-md border text-xs font-medium transition-colors"
+                style={classStatus === status
+                  ? { background: 'rgba(44,95,138,0.1)', color: '#2C5F8A', borderColor: 'rgba(44,95,138,0.4)' }
+                  : { background: 'transparent', color: '#888888', borderColor: '#CCCCCC' }
+                }
               >
                 {status}
               </button>
