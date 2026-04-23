@@ -1,45 +1,105 @@
-import type { ApiStatus, HealthResponse } from "./types";
-import { Card, CardContent } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react"
+import type { Page, EventSummary, EventFull } from "./types"
+import { Layout } from "./components/Layout"
+import { EventListPage } from "./components/EventListPage"
+import { EventRecordPage } from "./components/EventRecordPage"
+import { NightOfActualsPage } from "./components/NightOfActualsPage"
+import { PostEventReviewPage } from "./components/PostEventReviewPage"
+import { HistoricalDataPage } from "./components/HistoricalDataPage"
 
 function App() {
-  const [apiStatus, setApiStatus] = useState<ApiStatus>("checking");
+  const [page, setPage] = useState<Page>("list")
+  const [events, setEvents] = useState<EventSummary[]>([])
+  const [eventsLoading, setEventsLoading] = useState(true)
+  const [editEvent, setEditEvent] = useState<EventFull | null>(null)
+  const [preselectedEventId, setPreselectedEventId] = useState<number | null>(null)
+
+  const loadEvents = useCallback(async () => {
+    setEventsLoading(true)
+    try {
+      const res = await fetch("/api/events")
+      if (res.ok) {
+        const data = await res.json()
+        setEvents(data)
+      }
+    } finally {
+      setEventsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then((data: HealthResponse) => setApiStatus(data?.ok ? "connected" : "error"))
-      .catch(() => setApiStatus("error"));
-  }, []);
+    loadEvents()
+  }, [loadEvents])
 
-  const dotColor =
-    apiStatus === "connected" ? "#22c55e" : apiStatus === "error" ? "#ef4444" : "#ccc";
-  const textColor =
-    apiStatus === "connected" ? "#16a34a" : apiStatus === "error" ? "#dc2626" : undefined;
-  const statusText =
-    apiStatus === "checking"
-      ? "Checking API\u2026"
-      : apiStatus === "connected"
-        ? "API connected"
-        : "API unreachable";
+  function handleNavigate(newPage: Page) {
+    if (newPage !== "event-record") {
+      setEditEvent(null)
+    }
+    if (newPage !== "night-of-actuals" && newPage !== "post-event-review") {
+      setPreselectedEventId(null)
+    }
+    setPage(newPage)
+    // Scroll to top on page change
+    window.scrollTo({ top: 0 })
+  }
+
+  async function handleSelectEvent(event: EventSummary) {
+    // Load full event data then open edit form
+    try {
+      const res = await fetch(`/api/events/${event.id}`)
+      if (res.ok) {
+        const full: EventFull = await res.json()
+        setEditEvent(full)
+        setPage("event-record")
+        window.scrollTo({ top: 0 })
+      }
+    } catch {
+      // fallback: just open with summary
+      setEditEvent(event as EventFull)
+      setPage("event-record")
+    }
+  }
+
+  function handleEventSaved() {
+    loadEvents()
+    setEditEvent(null)
+    setPage("list")
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card>
-        <CardContent className="pt-6 text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to your React Web App</h1>
-          <p className="text-muted-foreground">Start building something amazing.</p>
-          <div className="mt-4 flex items-center justify-center gap-2 text-sm">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full"
-              style={{ background: dotColor }}
-            />
-            <span style={{ color: textColor }}>{statusText}</span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    <Layout currentPage={page} onNavigate={handleNavigate}>
+      {page === "list" && (
+        <EventListPage
+          events={events}
+          loading={eventsLoading}
+          onRefresh={loadEvents}
+          onNavigate={handleNavigate}
+          onSelectEvent={handleSelectEvent}
+        />
+      )}
+      {page === "event-record" && (
+        <EventRecordPage
+          editEvent={editEvent}
+          onSaved={handleEventSaved}
+        />
+      )}
+      {page === "night-of-actuals" && (
+        <NightOfActualsPage
+          events={events}
+          preselectedEventId={preselectedEventId}
+        />
+      )}
+      {page === "post-event-review" && (
+        <PostEventReviewPage
+          events={events}
+          preselectedEventId={preselectedEventId}
+        />
+      )}
+      {page === "historical" && (
+        <HistoricalDataPage />
+      )}
+    </Layout>
+  )
 }
 
-export default App;
+export default App
