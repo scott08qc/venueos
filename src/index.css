@@ -2,8 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light color scheme — prevents OS dark mode from overriding CSS variables */
+html, body {
+  color-scheme: light;
+  background-color: #FAFAF8;
+}
+
 @layer base {
   :root {
+    color-scheme: light;
     /* Background: #FAFAF8 → hsl(60 11% 98%) */
     --background: 60 11% 98%;
     /* Primary text: #1A1A1A → hsl(0 0% 10%) */
