@@ -190,7 +190,7 @@ export const ARTIST_COST_RESPONSIBILITY_OPTIONS = [
 ] as const
 
 export const TIME_OF_ENTRY_OPTIONS = [
-  "10 PM check-in", "11 PM check-in", "12 AM check-in", "1 AM check-in", "Close",
+  "11 PM", "12 AM", "1 AM", "2 AM", "Close",
 ] as const
 
 export const HIT_MISSED_OPTIONS = ["Hit", "Missed", "Partial", "N/A"] as const

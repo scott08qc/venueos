@@ -1,10 +1,12 @@
-import { cn } from "@/lib/utils"
+import { useState } from "react"
 import type { Page } from "@/types"
-import { ClipboardList, Music, BarChart3, History, Moon } from "lucide-react"
+import { ClipboardList, Music, BarChart3, History, Moon, Settings } from "lucide-react"
+import { SettingsPanel } from "./SettingsPanel"
 
 interface NavProps {
   currentPage: Page
   onNavigate: (page: Page) => void
+  onCheckinTimesChanged?: (times: string[]) => void
 }
 
 const navItems: { page: Page; label: string; icon: React.ReactNode; short: string }[] = [
@@ -15,7 +17,9 @@ const navItems: { page: Page; label: string; icon: React.ReactNode; short: strin
   { page: "historical", label: "Historical", short: "History", icon: <History className="h-5 w-5" /> },
 ]
 
-export function Layout({ currentPage, onNavigate, children }: NavProps & { children: React.ReactNode }) {
+export function Layout({ currentPage, onNavigate, onCheckinTimesChanged, children }: NavProps & { children: React.ReactNode }) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Top header */}
@@ -27,9 +31,13 @@ export function Layout({ currentPage, onNavigate, children }: NavProps & { child
             </div>
             <span className="font-semibold text-sm tracking-wide" style={{ color: '#1A1A1A' }}>VenueOS</span>
           </div>
-          <span className="text-xs font-medium uppercase tracking-widest" style={{ color: '#888888' }}>
-            Event Record
-          </span>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors"
+            aria-label="Settings"
+          >
+            <Settings className="h-5 w-5" style={{ color: '#888888' }} />
+          </button>
         </div>
       </header>
 
@@ -56,6 +64,12 @@ export function Layout({ currentPage, onNavigate, children }: NavProps & { child
           ))}
         </div>
       </nav>
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onSaved={(times) => { onCheckinTimesChanged?.(times) }}
+      />
     </div>
   )
 }

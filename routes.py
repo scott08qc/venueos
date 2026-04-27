@@ -182,6 +182,21 @@ def init_db():
             )
         """))
 
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS venue_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        """))
+
+        # Seed default check-in times if not already set
+        conn.execute(text("""
+            INSERT INTO venue_settings (key, value)
+            VALUES ('checkin_times', '["11 PM", "12 AM", "1 AM", "2 AM", "Close"]')
+            ON CONFLICT (key) DO NOTHING
+        """))
+
         conn.commit()
 
 
@@ -665,6 +680,53 @@ def create_app(static_dir: str) -> FastAPI:
 
     @api.post("/historical")
     def create_historical(data: HistoricalEventCreate):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            row = conn.execute(text("""
+                INSERT INTO historical_events (event_date, event_name, tier1_category,
+                    tier2_subcategory, promoter_name, artist_name, gross_revenue,
+                    attendance, data_source, classification_status)
+                VALUES (:event_date, :event_name, :tier1_category, :tier2_subcategory,
+                    :promoter_name, :artist_name, :gross_revenue, :attendance,
+                    :data_source, :classification_status)
+                RETURNING id
+            """), data.model_dump())
+            conn.commit()
+            return {"id": row.fetchone()[0]}
+
+    # ── Venue Settings ────────────────────────────────────────────────────────
+
+    @api.get("/settings")
+    def get_settings():
+        import json
+        defaults = {"checkin_times": ["11 PM", "12 AM", "1 AM", "2 AM", "Close"]}
+        if not engine:
+            return defaults
+        with engine.connect() as conn:
+            rows = conn.execute(text("SELECT key, value FROM venue_settings")).fetchall()
+            result = {}
+            for row in rows:
+                try:
+                    result[row.key] = json.loads(row.value)
+                except Exception:
+                    result[row.key] = row.value
+            return {**defaults, **result}
+
+    @api.put("/settings")
+    def update_settings(data: dict):
+        import json
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            for key, value in data.items():
+                conn.execute(text("""
+                    INSERT INTO venue_settings (key, value, updated_at)
+                    VALUES (:key, :value, NOW())
+                    ON CONFLICT (key) DO UPDATE SET value=:value, updated_at=NOW()
+                """), {"key": key, "value": json.dumps(value)})
+            conn.commit()
+        return {"ok": True}
         if not engine:
             raise HTTPException(status_code=503, detail="DB not configured")
         with engine.connect() as conn:

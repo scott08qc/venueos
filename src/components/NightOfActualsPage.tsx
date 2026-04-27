@@ -10,12 +10,12 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import type { EventSummary, NightOfActuals, EventFull } from "@/types"
-import { TIME_OF_ENTRY_OPTIONS } from "@/types"
 import { CheckCircle, Calculator } from "lucide-react"
 
 interface Props {
   events: EventSummary[]
   preselectedEventId?: number | null
+  checkinTimes?: string[]
 }
 
 type FormValues = {
@@ -286,7 +286,7 @@ function SettlementSection({ w, register, eventDeal, setValue }: {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function NightOfActualsPage({ events, preselectedEventId }: Props) {
+export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }: Props) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [selectedEventId, setSelectedEventId] = useState(preselectedEventId?.toString() || "")
@@ -440,7 +440,7 @@ export function NightOfActualsPage({ events, preselectedEventId }: Props) {
               <SelectValue placeholder="Select check-in time" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
-              {TIME_OF_ENTRY_OPTIONS.map((t) => (
+              {(checkinTimes ?? ["11 PM", "12 AM", "1 AM", "2 AM", "Close"]).map((t) => (
                 <SelectItem key={t} value={t} className="text-foreground focus:bg-muted">{t}</SelectItem>
               ))}
             </SelectContent>

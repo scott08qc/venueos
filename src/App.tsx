@@ -13,6 +13,7 @@ function App() {
   const [eventsLoading, setEventsLoading] = useState(true)
   const [editEvent, setEditEvent] = useState<EventFull | null>(null)
   const [preselectedEventId, setPreselectedEventId] = useState<number | null>(null)
+  const [checkinTimes, setCheckinTimes] = useState<string[]>(["11 PM", "12 AM", "1 AM", "2 AM", "Close"])
 
   const loadEvents = useCallback(async () => {
     setEventsLoading(true)
@@ -29,6 +30,10 @@ function App() {
 
   useEffect(() => {
     loadEvents()
+    // Load saved check-in times on startup
+    fetch("/api/settings").then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.checkin_times) setCheckinTimes(d.checkin_times)
+    })
   }, [loadEvents])
 
   function handleNavigate(newPage: Page) {
@@ -67,7 +72,7 @@ function App() {
   }
 
   return (
-    <Layout currentPage={page} onNavigate={handleNavigate}>
+    <Layout currentPage={page} onNavigate={handleNavigate} onCheckinTimesChanged={setCheckinTimes}>
       {page === "list" && (
         <EventListPage
           events={events}
@@ -87,6 +92,7 @@ function App() {
         <NightOfActualsPage
           events={events}
           preselectedEventId={preselectedEventId}
+          checkinTimes={checkinTimes}
         />
       )}
       {page === "post-event-review" && (
