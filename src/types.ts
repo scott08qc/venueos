@@ -90,6 +90,11 @@ export interface NightOfActuals {
   artist_cost_paid_by_venue: number
   effective_split_percentage: number | null
   settlement_notes: string
+  non_alcoholic_food_sales: number
+  tables_active: number
+  ticket_scan_count: number
+  walk_up_count: number
+  comp_admissions: number
 }
 
 export interface PostEventReview {

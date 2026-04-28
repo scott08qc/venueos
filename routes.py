@@ -127,6 +127,11 @@ def init_db():
             ("effective_split_percentage", "NUMERIC"),
             ("settlement_notes", "TEXT"),
             ("benchmark_effective_split", "TEXT"),
+            ("non_alcoholic_food_sales", "NUMERIC DEFAULT 0"),
+            ("tables_active", "INTEGER DEFAULT 0"),
+            ("ticket_scan_count", "INTEGER DEFAULT 0"),
+            ("walk_up_count", "INTEGER DEFAULT 0"),
+            ("comp_admissions", "INTEGER DEFAULT 0"),
         ]:
             conn.execute(text(f"ALTER TABLE night_of_actuals ADD COLUMN IF NOT EXISTS {col} {dtype}"))
 
@@ -282,6 +287,11 @@ class NightOfActualsCreate(BaseModel):
     effective_split_percentage: Optional[float] = None
     settlement_notes: Optional[str] = None
     benchmark_effective_split: Optional[str] = None
+    non_alcoholic_food_sales: Optional[float] = 0
+    tables_active: Optional[int] = 0
+    ticket_scan_count: Optional[int] = 0
+    walk_up_count: Optional[int] = 0
+    comp_admissions: Optional[int] = 0
 
 
 class PostEventReviewCreate(BaseModel):
@@ -504,6 +514,8 @@ def create_app(static_dir: str) -> FastAPI:
                        charge_backs, promoter_bar_payout, promoter_door_payout,
                        promoter_table_payout, artist_cost_paid_by_venue,
                        effective_split_percentage, settlement_notes, benchmark_effective_split,
+                       non_alcoholic_food_sales, tables_active,
+                       ticket_scan_count, walk_up_count, comp_admissions,
                        created_at, updated_at
                 FROM night_of_actuals WHERE event_id = :eid ORDER BY created_at
             """), {"eid": event_id}).fetchall()
@@ -524,7 +536,9 @@ def create_app(static_dir: str) -> FastAPI:
                     bar_cogs_deduction, bar_threshold_retained, door_threshold_retained,
                     charge_backs, promoter_bar_payout, promoter_door_payout,
                     promoter_table_payout, artist_cost_paid_by_venue,
-                    effective_split_percentage, settlement_notes, benchmark_effective_split
+                    effective_split_percentage, settlement_notes, benchmark_effective_split,
+                    non_alcoholic_food_sales, tables_active,
+                    ticket_scan_count, walk_up_count, comp_admissions
                 ) VALUES (
                     :event_id, :time_of_entry, :total_bar_sales, :liquor_sales, :beer_wine_sales,
                     :table_bottle_service, :comps_total, :voids, :tax_collected, :tips,
@@ -533,7 +547,9 @@ def create_app(static_dir: str) -> FastAPI:
                     :bar_cogs_deduction, :bar_threshold_retained, :door_threshold_retained,
                     :charge_backs, :promoter_bar_payout, :promoter_door_payout,
                     :promoter_table_payout, :artist_cost_paid_by_venue,
-                    :effective_split_percentage, :settlement_notes, :benchmark_effective_split
+                    :effective_split_percentage, :settlement_notes, :benchmark_effective_split,
+                    :non_alcoholic_food_sales, :tables_active,
+                    :ticket_scan_count, :walk_up_count, :comp_admissions
                 ) RETURNING id
             """), params)
             conn.commit()
@@ -566,6 +582,11 @@ def create_app(static_dir: str) -> FastAPI:
                     effective_split_percentage=:effective_split_percentage,
                     settlement_notes=:settlement_notes,
                     benchmark_effective_split=:benchmark_effective_split,
+                    non_alcoholic_food_sales=:non_alcoholic_food_sales,
+                    tables_active=:tables_active,
+                    ticket_scan_count=:ticket_scan_count,
+                    walk_up_count=:walk_up_count,
+                    comp_admissions=:comp_admissions,
                     updated_at=NOW()
                 WHERE id=:id
             """), params)

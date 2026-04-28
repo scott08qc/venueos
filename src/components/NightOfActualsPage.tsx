@@ -21,9 +21,12 @@ interface Props {
 type FormValues = {
   event_id: string; time_of_entry: string
   total_bar_sales: string; liquor_sales: string; beer_wine_sales: string
-  table_bottle_service: string; comps_total: string; voids: string
+  non_alcoholic_food_sales: string
+  table_bottle_service: string; tables_active: string
+  comps_total: string; voids: string
   tax_collected: string; tips: string
   door_revenue_cash: string; door_revenue_card: string
+  ticket_scan_count: string; walk_up_count: string; comp_admissions: string
   total_headcount: string; incident_description: string; incident_department: string; notes: string
   bar_cogs_deduction: string; bar_threshold_retained: string; door_threshold_retained: string
   charge_backs: string; promoter_bar_payout: string; promoter_door_payout: string
@@ -297,8 +300,11 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
   const blank: FormValues = {
     event_id: preselectedEventId?.toString() || "", time_of_entry: "",
     total_bar_sales: "", liquor_sales: "", beer_wine_sales: "",
-    table_bottle_service: "", comps_total: "", voids: "",
+    non_alcoholic_food_sales: "",
+    table_bottle_service: "", tables_active: "",
+    comps_total: "", voids: "",
     tax_collected: "", tips: "", door_revenue_cash: "", door_revenue_card: "",
+    ticket_scan_count: "", walk_up_count: "", comp_admissions: "",
     total_headcount: "", incident_description: "", incident_department: "", notes: "",
     bar_cogs_deduction: "", bar_threshold_retained: "", door_threshold_retained: "",
     charge_backs: "", promoter_bar_payout: "", promoter_door_payout: "",
@@ -330,13 +336,18 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
           total_bar_sales: match.total_bar_sales?.toString() || "",
           liquor_sales: match.liquor_sales?.toString() || "",
           beer_wine_sales: match.beer_wine_sales?.toString() || "",
+          non_alcoholic_food_sales: match.non_alcoholic_food_sales?.toString() || "",
           table_bottle_service: match.table_bottle_service?.toString() || "",
+          tables_active: match.tables_active?.toString() || "",
           comps_total: match.comps_total?.toString() || "",
           voids: match.voids?.toString() || "",
           tax_collected: match.tax_collected?.toString() || "",
           tips: match.tips?.toString() || "",
           door_revenue_cash: match.door_revenue_cash?.toString() || "",
           door_revenue_card: match.door_revenue_card?.toString() || "",
+          ticket_scan_count: match.ticket_scan_count?.toString() || "",
+          walk_up_count: match.walk_up_count?.toString() || "",
+          comp_admissions: match.comp_admissions?.toString() || "",
           total_headcount: match.total_headcount?.toString() || "",
           incident_description: match.incident_description || "",
           incident_department: match.incident_department || "",
@@ -370,14 +381,19 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
       total_bar_sales: parseFloat(values.total_bar_sales) || 0,
       liquor_sales: parseFloat(values.liquor_sales) || 0,
       beer_wine_sales: parseFloat(values.beer_wine_sales) || 0,
+      non_alcoholic_food_sales: parseFloat(values.non_alcoholic_food_sales) || 0,
       table_bottle_service: parseFloat(values.table_bottle_service) || 0,
+      tables_active: parseInt(values.tables_active) || 0,
       comps_total: parseFloat(values.comps_total) || 0,
       voids: parseFloat(values.voids) || 0,
       tax_collected: parseFloat(values.tax_collected) || 0,
       tips: parseFloat(values.tips) || 0,
       door_revenue_cash: parseFloat(values.door_revenue_cash) || 0,
       door_revenue_card: parseFloat(values.door_revenue_card) || 0,
-      total_headcount: parseInt(values.total_headcount) || 0,
+      ticket_scan_count: parseInt(values.ticket_scan_count) || 0,
+      walk_up_count: parseInt(values.walk_up_count) || 0,
+      comp_admissions: parseInt(values.comp_admissions) || 0,
+      total_headcount: (parseInt(values.ticket_scan_count) || 0) + (parseInt(values.walk_up_count) || 0) + (parseInt(values.comp_admissions) || 0),
       incident_description: values.incident_description || null,
       incident_department: values.incident_department || null,
       notes: values.notes || null,
@@ -448,21 +464,24 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
         </F>
         <input type="hidden" {...register("time_of_entry")} />
 
-        <Sec title="Bar Sales" />
-        <F label="Total Bar Sales Gross ($)">
+        <Sec title="Bar sales — exclude table and bottle service entirely" />
+        <F label="Total bar gross — from POS export ($)">
           <Input type="number" className={inp} placeholder="0" {...register("total_bar_sales")} />
         </F>
-        <div className="grid grid-cols-2 gap-3">
-          <F label="Liquor Sales ($)">
+        <div className="grid grid-cols-1 gap-3">
+          <F label="Liquor — breakdown of bar gross above ($)">
             <Input type="number" className={inp} placeholder="0" {...register("liquor_sales")} />
           </F>
-          <F label="Beer & Wine ($)">
+          <F label="Beer and wine — breakdown of bar gross above ($)">
             <Input type="number" className={inp} placeholder="0" {...register("beer_wine_sales")} />
           </F>
+          <F label="Non-alcoholic and food — breakdown of bar gross above ($)">
+            <Input type="number" className={inp} placeholder="0" {...register("non_alcoholic_food_sales")} />
+          </F>
         </div>
-        <F label="Table & Bottle Service ($)">
-          <Input type="number" className={inp} placeholder="0" {...register("table_bottle_service")} />
-        </F>
+        <p className="text-xs text-muted-foreground px-1 pb-1">
+          Subcategory fields should sum to bar gross — they are breakdowns not additions.
+        </p>
 
         <Sec title="Deductions" />
         <div className="grid grid-cols-2 gap-3">
@@ -482,20 +501,67 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
           </F>
         </div>
 
-        <Sec title="Door Revenue" />
+        <Sec title="Table and bottle service — completely separate from bar" />
+        <F label="Total table and bottle service gross ($)">
+          <Input type="number" className={inp} placeholder="0" {...register("table_bottle_service")} />
+        </F>
         <div className="grid grid-cols-2 gap-3">
-          <F label="Door Cash ($)">
+          <F label="Number of tables active">
+            <Input type="number" className={inp} placeholder="0" {...register("tables_active")} />
+          </F>
+          <div className="space-y-1.5">
+            <Label className="text-sm text-foreground/90">Average spend per table</Label>
+            <div className={cn(inp, "flex items-center px-3 rounded-md border bg-muted/40 text-muted-foreground select-none")}>
+              {(() => {
+                const gross = parseFloat(watchedValues.table_bottle_service) || 0
+                const tables = parseFloat(watchedValues.tables_active) || 0
+                return tables > 0 ? "$" + (gross / tables).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"
+              })()}
+            </div>
+          </div>
+        </div>
+
+        <Sec title="Door revenue" />
+        <div className="grid grid-cols-2 gap-3">
+          <F label="Door revenue cash ($)">
             <Input type="number" className={inp} placeholder="0" {...register("door_revenue_cash")} />
           </F>
-          <F label="Door Card ($)">
+          <F label="Door revenue card ($)">
             <Input type="number" className={inp} placeholder="0" {...register("door_revenue_card")} />
           </F>
         </div>
-
-        <Sec title="Headcount" />
-        <F label="Total Headcount">
-          <Input type="number" className={inp} placeholder="0" {...register("total_headcount")} />
-        </F>
+        <div className="space-y-1.5">
+          <Label className="text-sm text-foreground/90">Total door revenue</Label>
+          <div className={cn(inp, "flex items-center px-3 rounded-md border bg-muted/40 text-muted-foreground select-none")}>
+            {(() => {
+              const cash = parseFloat(watchedValues.door_revenue_cash) || 0
+              const card = parseFloat(watchedValues.door_revenue_card) || 0
+              return "$" + (cash + card).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            })()}
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <F label="Ticket scan count">
+            <Input type="number" className={inp} placeholder="0" {...register("ticket_scan_count")} />
+          </F>
+          <F label="Walk-up count">
+            <Input type="number" className={inp} placeholder="0" {...register("walk_up_count")} />
+          </F>
+          <F label="Comp admissions">
+            <Input type="number" className={inp} placeholder="0" {...register("comp_admissions")} />
+          </F>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-sm text-foreground/90">Total headcount</Label>
+          <div className={cn(inp, "flex items-center px-3 rounded-md border bg-muted/40 text-muted-foreground select-none")}>
+            {(() => {
+              const scans = parseInt(watchedValues.ticket_scan_count) || 0
+              const walkup = parseInt(watchedValues.walk_up_count) || 0
+              const comps = parseInt(watchedValues.comp_admissions) || 0
+              return (scans + walkup + comps).toLocaleString("en-US")
+            })()}
+          </div>
+        </div>
 
         {/* Settlement section — only at Close */}
         {isClose && <SettlementSection w={watchedValues} register={register} eventDeal={eventDeal} setValue={setValue} />}
