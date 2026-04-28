@@ -76,14 +76,11 @@ def init_db():
             ("artist_cost_responsibility", "TEXT"),
             ("artist_cost_split_note", "TEXT"),
             ("deal_notes", "TEXT"),
-            # Net revenue split
             ("net_revenue_promoter_pct", "NUMERIC"),
             ("net_revenue_venue_pct", "NUMERIC"),
             ("net_revenue_basis", "TEXT"),
-            # Rebuilt table fields
             ("table_split_promoter", "NUMERIC"),
             ("table_split_basis", "TEXT"),
-            # Structured artist cost split
             ("artist_cost_split_method", "TEXT"),
             ("artist_venue_dollar", "NUMERIC"),
             ("artist_venue_pct", "NUMERIC"),
@@ -196,7 +193,6 @@ def init_db():
             )
         """))
 
-        # Seed default check-in times if not already set
         conn.execute(text("""
             INSERT INTO venue_settings (key, value)
             VALUES ('checkin_times', '["11 PM", "12 AM", "1 AM", "2 AM", "Close"]')
@@ -238,14 +234,11 @@ class EventCreate(BaseModel):
     artist_cost_responsibility: Optional[str] = None
     artist_cost_split_note: Optional[str] = None
     deal_notes: Optional[str] = None
-    # Net revenue split
     net_revenue_promoter_pct: Optional[float] = None
     net_revenue_venue_pct: Optional[float] = None
     net_revenue_basis: Optional[str] = None
-    # Rebuilt table
     table_split_promoter: Optional[float] = None
     table_split_basis: Optional[str] = None
-    # Structured artist cost split
     artist_cost_split_method: Optional[str] = None
     artist_venue_dollar: Optional[float] = None
     artist_venue_pct: Optional[float] = None
@@ -783,7 +776,7 @@ def create_app(static_dir: str) -> FastAPI:
         while current <= end_date:
             day_of_week = current.weekday()
             if day_of_week in [3, 4, 5]:  # Thursday=3, Friday=4, Saturday=5
-                from fastapi.testclient import TestClient
+
                 date_str = current.strftime("%Y-%m-%d")
                 try:
                     result = square_sync(date=date_str)
