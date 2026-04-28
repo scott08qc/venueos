@@ -894,7 +894,7 @@ def create_app(static_dir: str) -> FastAPI:
                 inserted += 1
             conn.commit()
         return {"inserted": inserted}
-     # ── Square Integration ────────────────────────────────────────────────────
+    # ── Square Integration ────────────────────────────────────────────────────
  
     @api.get("/square/sync")
     def square_sync(date: Optional[str] = None):
