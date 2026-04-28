@@ -1199,7 +1199,312 @@ def create_app(static_dir: str) -> FastAPI:
                 }
             except Exception:
                 raise HTTPException(status_code=404, detail="No Square data found — run sync first")
-
+    # ── Variable Event Costs ──────────────────────────────────────────────────
+ 
+    @api.get("/costs/{event_id}")
+    def get_event_costs(event_id: int):
+        """Get all variable costs for an event."""
+        if not engine:
+            return {}
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS event_costs (
+                    id SERIAL PRIMARY KEY,
+                    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+ 
+                    -- Fixed overhead
+                    nightly_operating_cost NUMERIC DEFAULT 0,
+ 
+                    -- Security
+                    security_total NUMERIC DEFAULT 0,
+                    security_notes TEXT,
+ 
+                    -- Door
+                    door_girls_count INTEGER DEFAULT 0,
+                    door_girls_total NUMERIC DEFAULT 0,
+ 
+                    -- Police security
+                    police_hours NUMERIC DEFAULT 0,
+                    police_rate NUMERIC DEFAULT 50,
+                    police_minimum NUMERIC DEFAULT 200,
+                    police_total NUMERIC DEFAULT 0,
+ 
+                    -- Production staff
+                    production_staff_count INTEGER DEFAULT 0,
+                    production_staff_total NUMERIC DEFAULT 0,
+ 
+                    -- Production equipment + tech rider
+                    production_equipment_total NUMERIC DEFAULT 0,
+                    production_equipment_notes TEXT,
+ 
+                    -- Hospitality rider
+                    hospitality_rider_estimate NUMERIC DEFAULT 0,
+                    hospitality_rider_actual NUMERIC DEFAULT 0,
+                    hospitality_rider_notes TEXT,
+ 
+                    -- Marketing
+                    marketing_internal NUMERIC DEFAULT 0,
+                    marketing_promoter_contribution NUMERIC DEFAULT 0,
+                    marketing_notes TEXT,
+ 
+                    -- Artist fee (mirrors deal structure — for P&L view)
+                    artist_fee_total NUMERIC DEFAULT 0,
+ 
+                    -- Timestamps
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            """))
+ 
+            # Add nightly operating cost to venue settings if not present
+            conn.execute(text("""
+                INSERT INTO venue_settings (key, value)
+                VALUES ('nightly_operating_cost', '0')
+                ON CONFLICT (key) DO NOTHING
+            """))
+            conn.commit()
+ 
+            row = conn.execute(text("""
+                SELECT * FROM event_costs WHERE event_id = :eid
+            """), {"eid": event_id}).fetchone()
+ 
+            if not row:
+                return {"event_id": event_id, "exists": False}
+ 
+            d = dict(row._mapping)
+ 
+            # Calculate police total from hours
+            hours = float(d.get("police_hours") or 0)
+            rate = float(d.get("police_rate") or 50)
+            minimum = float(d.get("police_minimum") or 200)
+            d["police_total_calculated"] = max(hours * rate, minimum) if hours > 0 else 0
+ 
+            # Calculate hospitality variance
+            estimate = float(d.get("hospitality_rider_estimate") or 0)
+            actual = float(d.get("hospitality_rider_actual") or 0)
+            d["hospitality_rider_variance"] = actual - estimate
+ 
+            # Total variable costs
+            d["total_variable_costs"] = sum([
+                float(d.get("nightly_operating_cost") or 0),
+                float(d.get("security_total") or 0),
+                float(d.get("door_girls_total") or 0),
+                d["police_total_calculated"],
+                float(d.get("production_staff_total") or 0),
+                float(d.get("production_equipment_total") or 0),
+                float(d.get("hospitality_rider_actual") or 0),
+                float(d.get("marketing_internal") or 0),
+                float(d.get("marketing_promoter_contribution") or 0),
+                float(d.get("artist_fee_total") or 0),
+            ])
+ 
+            return d
+ 
+    @api.post("/costs")
+    def create_event_costs(data: dict):
+        """Create or update variable costs for an event."""
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS event_costs (
+                    id SERIAL PRIMARY KEY,
+                    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+                    nightly_operating_cost NUMERIC DEFAULT 0,
+                    security_total NUMERIC DEFAULT 0,
+                    security_notes TEXT,
+                    door_girls_count INTEGER DEFAULT 0,
+                    door_girls_total NUMERIC DEFAULT 0,
+                    police_hours NUMERIC DEFAULT 0,
+                    police_rate NUMERIC DEFAULT 50,
+                    police_minimum NUMERIC DEFAULT 200,
+                    police_total NUMERIC DEFAULT 0,
+                    production_staff_count INTEGER DEFAULT 0,
+                    production_staff_total NUMERIC DEFAULT 0,
+                    production_equipment_total NUMERIC DEFAULT 0,
+                    production_equipment_notes TEXT,
+                    hospitality_rider_estimate NUMERIC DEFAULT 0,
+                    hospitality_rider_actual NUMERIC DEFAULT 0,
+                    hospitality_rider_notes TEXT,
+                    marketing_internal NUMERIC DEFAULT 0,
+                    marketing_promoter_contribution NUMERIC DEFAULT 0,
+                    marketing_notes TEXT,
+                    artist_fee_total NUMERIC DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            """))
+            conn.commit()
+ 
+            existing = conn.execute(text("""
+                SELECT id FROM event_costs WHERE event_id = :eid
+            """), {"eid": data["event_id"]}).fetchone()
+ 
+            # Calculate police total
+            hours = float(data.get("police_hours") or 0)
+            rate = float(data.get("police_rate") or 50)
+            minimum = float(data.get("police_minimum") or 200)
+            police_total = max(hours * rate, minimum) if hours > 0 else 0
+            data["police_total"] = police_total
+ 
+            if existing:
+                fields = [
+                    "nightly_operating_cost", "security_total", "security_notes",
+                    "door_girls_count", "door_girls_total",
+                    "police_hours", "police_rate", "police_minimum", "police_total",
+                    "production_staff_count", "production_staff_total",
+                    "production_equipment_total", "production_equipment_notes",
+                    "hospitality_rider_estimate", "hospitality_rider_actual", "hospitality_rider_notes",
+                    "marketing_internal", "marketing_promoter_contribution", "marketing_notes",
+                    "artist_fee_total",
+                ]
+                set_clause = ", ".join([f"{f}=:{f}" for f in fields if f in data])
+                set_clause += ", updated_at=NOW()"
+                data["id"] = existing.id
+                conn.execute(text(f"""
+                    UPDATE event_costs SET {set_clause} WHERE id=:id
+                """), data)
+                conn.commit()
+                return {"id": existing.id, "updated": True}
+            else:
+                row = conn.execute(text("""
+                    INSERT INTO event_costs (
+                        event_id, nightly_operating_cost,
+                        security_total, security_notes,
+                        door_girls_count, door_girls_total,
+                        police_hours, police_rate, police_minimum, police_total,
+                        production_staff_count, production_staff_total,
+                        production_equipment_total, production_equipment_notes,
+                        hospitality_rider_estimate, hospitality_rider_actual, hospitality_rider_notes,
+                        marketing_internal, marketing_promoter_contribution, marketing_notes,
+                        artist_fee_total
+                    ) VALUES (
+                        :event_id, :nightly_operating_cost,
+                        :security_total, :security_notes,
+                        :door_girls_count, :door_girls_total,
+                        :police_hours, :police_rate, :police_minimum, :police_total,
+                        :production_staff_count, :production_staff_total,
+                        :production_equipment_total, :production_equipment_notes,
+                        :hospitality_rider_estimate, :hospitality_rider_actual, :hospitality_rider_notes,
+                        :marketing_internal, :marketing_promoter_contribution, :marketing_notes,
+                        :artist_fee_total
+                    ) RETURNING id
+                """), {
+                    "event_id": data.get("event_id"),
+                    "nightly_operating_cost": data.get("nightly_operating_cost", 0),
+                    "security_total": data.get("security_total", 0),
+                    "security_notes": data.get("security_notes"),
+                    "door_girls_count": data.get("door_girls_count", 0),
+                    "door_girls_total": data.get("door_girls_total", 0),
+                    "police_hours": data.get("police_hours", 0),
+                    "police_rate": data.get("police_rate", 50),
+                    "police_minimum": data.get("police_minimum", 200),
+                    "police_total": police_total,
+                    "production_staff_count": data.get("production_staff_count", 0),
+                    "production_staff_total": data.get("production_staff_total", 0),
+                    "production_equipment_total": data.get("production_equipment_total", 0),
+                    "production_equipment_notes": data.get("production_equipment_notes"),
+                    "hospitality_rider_estimate": data.get("hospitality_rider_estimate", 0),
+                    "hospitality_rider_actual": data.get("hospitality_rider_actual", 0),
+                    "hospitality_rider_notes": data.get("hospitality_rider_notes"),
+                    "marketing_internal": data.get("marketing_internal", 0),
+                    "marketing_promoter_contribution": data.get("marketing_promoter_contribution", 0),
+                    "marketing_notes": data.get("marketing_notes"),
+                    "artist_fee_total": data.get("artist_fee_total", 0),
+                })
+                conn.commit()
+                return {"id": row.fetchone()[0], "updated": False}
+ 
+    @api.get("/costs/{event_id}/summary")
+    def get_cost_summary(event_id: int):
+        """Full P&L cost summary for an event — costs against bar revenue."""
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            # Get event
+            event = conn.execute(text("""
+                SELECT event_name, projected_bar_revenue, projected_door_revenue,
+                       artist_fee_landed, artist_fee_travel
+                FROM events WHERE id = :id
+            """), {"id": event_id}).fetchone()
+            if not event:
+                raise HTTPException(status_code=404, detail="Event not found")
+ 
+            # Get latest night of actuals (Close entry)
+            actuals = conn.execute(text("""
+                SELECT total_bar_sales, door_revenue_cash, door_revenue_card,
+                       promoter_bar_payout, promoter_door_payout, promoter_table_payout,
+                       artist_cost_paid_by_venue, house_fee_deduction
+                FROM night_of_actuals
+                WHERE event_id = :eid
+                ORDER BY created_at DESC LIMIT 1
+            """), {"eid": event_id}).fetchone()
+ 
+            # Get variable costs
+            costs = conn.execute(text("""
+                SELECT * FROM event_costs WHERE event_id = :eid
+            """), {"eid": event_id}).fetchone()
+ 
+            # Get nightly operating cost from settings
+            setting = conn.execute(text("""
+                SELECT value FROM venue_settings WHERE key = 'nightly_operating_cost'
+            """)).fetchone()
+            nightly_op = float(setting.value) if setting else 0
+ 
+            bar_revenue = float(actuals.total_bar_sales) if actuals else 0
+            door_revenue = (float(actuals.door_revenue_cash or 0) + float(actuals.door_revenue_card or 0)) if actuals else 0
+            total_revenue = bar_revenue + door_revenue
+ 
+            if costs:
+                hours = float(costs.police_hours or 0)
+                rate = float(costs.police_rate or 50)
+                minimum = float(costs.police_minimum or 200)
+                police_total = max(hours * rate, minimum) if hours > 0 else 0
+ 
+                cost_lines = [
+                    {"label": "Nightly operating cost", "amount": float(costs.nightly_operating_cost or nightly_op), "category": "fixed"},
+                    {"label": "Security", "amount": float(costs.security_total or 0), "category": "variable"},
+                    {"label": "Door girls", "amount": float(costs.door_girls_total or 0), "category": "variable"},
+                    {"label": "Police security", "amount": police_total, "category": "variable"},
+                    {"label": "Production staff", "amount": float(costs.production_staff_total or 0), "category": "variable"},
+                    {"label": "Production equipment + tech rider", "amount": float(costs.production_equipment_total or 0), "category": "variable"},
+                    {"label": "Hospitality rider", "amount": float(costs.hospitality_rider_actual or 0), "category": "variable",
+                     "estimate": float(costs.hospitality_rider_estimate or 0),
+                     "variance": float(costs.hospitality_rider_actual or 0) - float(costs.hospitality_rider_estimate or 0)},
+                    {"label": "Marketing — internal", "amount": float(costs.marketing_internal or 0), "category": "marketing"},
+                    {"label": "Marketing — promoter contribution", "amount": float(costs.marketing_promoter_contribution or 0), "category": "marketing"},
+                    {"label": "Artist fee", "amount": float(costs.artist_fee_total or 0) or (float(event.artist_fee_landed or 0) + float(event.artist_fee_travel or 0)), "category": "talent"},
+                ]
+            else:
+                cost_lines = [{"label": "Nightly operating cost", "amount": nightly_op, "category": "fixed"}]
+ 
+            promoter_payouts = 0
+            if actuals:
+                promoter_payouts = sum([
+                    float(actuals.promoter_bar_payout or 0),
+                    float(actuals.promoter_door_payout or 0),
+                    float(actuals.promoter_table_payout or 0),
+                ])
+ 
+            total_costs = sum(c["amount"] for c in cost_lines) + promoter_payouts
+            net = total_revenue - total_costs
+ 
+            return {
+                "event_id": event_id,
+                "event_name": event.event_name,
+                "revenue": {
+                    "bar": bar_revenue,
+                    "door": door_revenue,
+                    "total": total_revenue,
+                    "projected_bar": float(event.projected_bar_revenue or 0),
+                    "projected_door": float(event.projected_door_revenue or 0),
+                },
+                "cost_lines": cost_lines,
+                "promoter_payouts": promoter_payouts,
+                "total_costs": total_costs,
+                "net": net,
+                "net_margin_pct": round((net / total_revenue * 100), 1) if total_revenue > 0 else 0,
+            }
     # ── Venue Settings ────────────────────────────────────────────────────────
  
     @api.get("/settings")
