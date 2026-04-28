@@ -82,6 +82,7 @@ export interface NightOfActuals {
   notes: string
   bar_cogs_deduction: number
   bar_threshold_retained: number
+  house_fee_deduction: number
   door_threshold_retained: number
   charge_backs: number
   promoter_bar_payout: number

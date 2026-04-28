@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import FastAPI, APIRouter, Request, HTTPException
@@ -118,6 +118,7 @@ def init_db():
         for col, dtype in [
             ("bar_cogs_deduction", "NUMERIC DEFAULT 0"),
             ("bar_threshold_retained", "NUMERIC DEFAULT 0"),
+            ("house_fee_deduction", "NUMERIC DEFAULT 0"),
             ("door_threshold_retained", "NUMERIC DEFAULT 0"),
             ("charge_backs", "NUMERIC DEFAULT 0"),
             ("promoter_bar_payout", "NUMERIC DEFAULT 0"),
@@ -278,6 +279,7 @@ class NightOfActualsCreate(BaseModel):
     notes: Optional[str] = None
     bar_cogs_deduction: Optional[float] = 0
     bar_threshold_retained: Optional[float] = 0
+    house_fee_deduction: Optional[float] = 0
     door_threshold_retained: Optional[float] = 0
     charge_backs: Optional[float] = 0
     promoter_bar_payout: Optional[float] = 0
@@ -510,7 +512,7 @@ def create_app(static_dir: str) -> FastAPI:
                        beer_wine_sales, table_bottle_service, comps_total, voids,
                        tax_collected, tips, door_revenue_cash, door_revenue_card,
                        total_headcount, incident_description, incident_department, notes,
-                       bar_cogs_deduction, bar_threshold_retained, door_threshold_retained,
+                       bar_cogs_deduction, bar_threshold_retained, house_fee_deduction, door_threshold_retained,
                        charge_backs, promoter_bar_payout, promoter_door_payout,
                        promoter_table_payout, artist_cost_paid_by_venue,
                        effective_split_percentage, settlement_notes, benchmark_effective_split,
@@ -533,7 +535,7 @@ def create_app(static_dir: str) -> FastAPI:
                     table_bottle_service, comps_total, voids, tax_collected, tips,
                     door_revenue_cash, door_revenue_card, total_headcount,
                     incident_description, incident_department, notes,
-                    bar_cogs_deduction, bar_threshold_retained, door_threshold_retained,
+                    bar_cogs_deduction, bar_threshold_retained, house_fee_deduction, door_threshold_retained,
                     charge_backs, promoter_bar_payout, promoter_door_payout,
                     promoter_table_payout, artist_cost_paid_by_venue,
                     effective_split_percentage, settlement_notes, benchmark_effective_split,
@@ -544,7 +546,7 @@ def create_app(static_dir: str) -> FastAPI:
                     :table_bottle_service, :comps_total, :voids, :tax_collected, :tips,
                     :door_revenue_cash, :door_revenue_card, :total_headcount,
                     :incident_description, :incident_department, :notes,
-                    :bar_cogs_deduction, :bar_threshold_retained, :door_threshold_retained,
+                    :bar_cogs_deduction, :bar_threshold_retained, :house_fee_deduction, :door_threshold_retained,
                     :charge_backs, :promoter_bar_payout, :promoter_door_payout,
                     :promoter_table_payout, :artist_cost_paid_by_venue,
                     :effective_split_percentage, :settlement_notes, :benchmark_effective_split,
@@ -573,6 +575,7 @@ def create_app(static_dir: str) -> FastAPI:
                     incident_department=:incident_department, notes=:notes,
                     bar_cogs_deduction=:bar_cogs_deduction,
                     bar_threshold_retained=:bar_threshold_retained,
+                    house_fee_deduction=:house_fee_deduction,
                     door_threshold_retained=:door_threshold_retained,
                     charge_backs=:charge_backs,
                     promoter_bar_payout=:promoter_bar_payout,
@@ -716,6 +719,189 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             return {"id": row.fetchone()[0]}
 
+    # ── Square Sync ───────────────────────────────────────────────────────────
+
+    @api.get("/square/sync")
+    def square_sync(date: Optional[str] = None):
+        import httpx, json
+        from datetime import timezone
+        square_token = os.environ.get("SQUARE_ACCESS_TOKEN")
+        square_location = os.environ.get("SQUARE_LOCATION_ID")
+        if not square_token or not square_location:
+            raise HTTPException(status_code=503, detail="Square credentials not configured")
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        if date:
+            d = datetime.strptime(date, "%Y-%m-%d")
+            begin = d.replace(hour=6, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+            end = begin + timedelta(hours=24)
+        else:
+            end = datetime.now(timezone.utc)
+            begin = end - timedelta(hours=24)
+        begin_str = begin.isoformat()
+        end_str = end.isoformat()
+        with engine.connect() as conn:
+            conn.execute(text("CREATE TABLE IF NOT EXISTS square_payments (id TEXT PRIMARY KEY, created_at TIMESTAMPTZ NOT NULL, location_id TEXT, status TEXT, source_type TEXT, amount_cents INTEGER, tip_cents INTEGER, total_cents INTEGER, currency TEXT, order_id TEXT, note TEXT, raw JSONB, synced_at TIMESTAMPTZ DEFAULT NOW())"))
+            conn.commit()
+        headers = {"Authorization": f"Bearer {square_token}", "Content-Type": "application/json", "Square-Version": "2024-01-18"}
+        payments = []
+        cursor = None
+        while True:
+            params = {"location_id": square_location, "begin_time": begin_str, "end_time": end_str, "limit": 100}
+            if cursor:
+                params["cursor"] = cursor
+            r = httpx.get("https://connect.squareup.com/v2/payments", headers=headers, params=params, timeout=15)
+            r.raise_for_status()
+            data = r.json()
+            payments.extend(data.get("payments", []))
+            cursor = data.get("cursor")
+            if not cursor:
+                break
+        if not payments:
+            return {"ok": True, "payments_found": 0, "message": "No payments in this window"}
+        with engine.connect() as conn:
+            for p in payments:
+                money = p.get("amount_money", {})
+                tip = p.get("tip_money", {})
+                total = p.get("total_money", {})
+                conn.execute(text("INSERT INTO square_payments (id, created_at, location_id, status, source_type, amount_cents, tip_cents, total_cents, currency, order_id, note, raw) VALUES (:id, :created_at, :location_id, :status, :source_type, :amount_cents, :tip_cents, :total_cents, :currency, :order_id, :note, :raw) ON CONFLICT (id) DO UPDATE SET status=EXCLUDED.status, raw=EXCLUDED.raw, synced_at=NOW()"), {"id": p["id"], "created_at": p["created_at"], "location_id": p.get("location_id"), "status": p.get("status"), "source_type": p.get("source_type", "UNKNOWN"), "amount_cents": money.get("amount", 0), "tip_cents": tip.get("amount", 0), "total_cents": total.get("amount", 0), "currency": money.get("currency", "USD"), "order_id": p.get("order_id"), "note": p.get("note"), "raw": json.dumps(p)})
+            conn.commit()
+        with engine.connect() as conn:
+            summary = conn.execute(text("SELECT COUNT(*) AS transactions, ROUND(SUM(amount_cents)/100.0,2) AS gross_sales, ROUND(SUM(tip_cents)/100.0,2) AS total_tips FROM square_payments WHERE created_at BETWEEN :begin AND :end AND status='COMPLETED'"), {"begin": begin_str, "end": end_str}).fetchone()
+        return {"ok": True, "payments_found": len(payments), "summary": dict(summary._mapping)}
+
+    @api.get("/square/sync-range")
+    def square_sync_range(start: str, end: str):
+        from datetime import datetime, timedelta
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d")
+            end_date = datetime.strptime(end, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Dates must be YYYY-MM-DD")
+        results = []
+        current = start_date
+        while current <= end_date:
+            day_of_week = current.weekday()
+            if day_of_week in [3, 4, 5]:  # Thursday=3, Friday=4, Saturday=5
+                from fastapi.testclient import TestClient
+                date_str = current.strftime("%Y-%m-%d")
+                try:
+                    result = square_sync(date=date_str)
+                    results.append({"date": date_str, "day": current.strftime("%A"), **result})
+                except Exception as e:
+                    results.append({"date": date_str, "day": current.strftime("%A"), "error": str(e)})
+            current += timedelta(days=1)
+        total_payments = sum(r.get("payments_found", 0) for r in results)
+        total_sales = sum(r.get("summary", {}).get("gross_sales", 0) or 0 for r in results)
+        return {"ok": True, "nights_synced": len(results), "total_payments": total_payments, "total_gross_sales": round(total_sales, 2), "results": results}
+
+    # ── Event Costs ───────────────────────────────────────────────────────────
+
+    @api.get("/costs/{event_id}")
+    def get_event_costs(event_id: int):
+      if not engine:
+        return {}
+      with engine.connect() as conn:
+        conn.execute(text("""
+          CREATE TABLE IF NOT EXISTS event_costs (
+            id SERIAL PRIMARY KEY,
+            event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+            nightly_operating_cost NUMERIC DEFAULT 0,
+            security_total NUMERIC DEFAULT 0,
+            security_notes TEXT,
+            door_girls_count INTEGER DEFAULT 0,
+            door_girls_total NUMERIC DEFAULT 0,
+            police_hours NUMERIC DEFAULT 0,
+            police_rate NUMERIC DEFAULT 50,
+            police_minimum NUMERIC DEFAULT 200,
+            police_total NUMERIC DEFAULT 0,
+            production_staff_count INTEGER DEFAULT 0,
+            production_staff_total NUMERIC DEFAULT 0,
+            production_equipment_total NUMERIC DEFAULT 0,
+            production_equipment_notes TEXT,
+            hospitality_rider_estimate NUMERIC DEFAULT 0,
+            hospitality_rider_actual NUMERIC DEFAULT 0,
+            hospitality_rider_notes TEXT,
+            marketing_internal NUMERIC DEFAULT 0,
+            marketing_promoter_contribution NUMERIC DEFAULT 0,
+            marketing_notes TEXT,
+            artist_fee_total NUMERIC DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          )
+        """))
+        conn.commit()
+        row = conn.execute(text("SELECT * FROM event_costs WHERE event_id = :eid"), {"eid": event_id}).fetchone()
+        if not row:
+          return {"event_id": event_id, "exists": False}
+        d = dict(row._mapping)
+        hours = float(d.get("police_hours") or 0)
+        rate = float(d.get("police_rate") or 50)
+        minimum = float(d.get("police_minimum") or 200)
+        d["police_total_calculated"] = max(hours * rate, minimum) if hours > 0 else 0
+        d["hospitality_rider_variance"] = float(d.get("hospitality_rider_actual") or 0) - float(d.get("hospitality_rider_estimate") or 0)
+        d["total_variable_costs"] = sum([float(d.get(f) or 0) for f in ["nightly_operating_cost","security_total","door_girls_total","production_staff_total","production_equipment_total","hospitality_rider_actual","marketing_internal","marketing_promoter_contribution","artist_fee_total"]]) + d["police_total_calculated"]
+        return d
+
+    @api.post("/costs")
+    def create_event_costs(data: dict):
+      if not engine:
+        raise HTTPException(status_code=503, detail="DB not configured")
+      with engine.connect() as conn:
+        hours = float(data.get("police_hours") or 0)
+        rate = float(data.get("police_rate") or 50)
+        minimum = float(data.get("police_minimum") or 200)
+        data["police_total"] = max(hours * rate, minimum) if hours > 0 else 0
+        existing = conn.execute(text("SELECT id FROM event_costs WHERE event_id = :eid"), {"eid": data["event_id"]}).fetchone()
+        if existing:
+          fields = ["nightly_operating_cost","security_total","security_notes","door_girls_count","door_girls_total","police_hours","police_rate","police_minimum","police_total","production_staff_count","production_staff_total","production_equipment_total","production_equipment_notes","hospitality_rider_estimate","hospitality_rider_actual","hospitality_rider_notes","marketing_internal","marketing_promoter_contribution","marketing_notes","artist_fee_total"]
+          set_clause = ", ".join([f"{f}=:{f}" for f in fields if f in data]) + ", updated_at=NOW()"
+          data["id"] = existing.id
+          conn.execute(text(f"UPDATE event_costs SET {set_clause} WHERE id=:id"), data)
+          conn.commit()
+          return {"id": existing.id, "updated": True}
+        else:
+          row = conn.execute(text("""INSERT INTO event_costs (event_id,nightly_operating_cost,security_total,security_notes,door_girls_count,door_girls_total,police_hours,police_rate,police_minimum,police_total,production_staff_count,production_staff_total,production_equipment_total,production_equipment_notes,hospitality_rider_estimate,hospitality_rider_actual,hospitality_rider_notes,marketing_internal,marketing_promoter_contribution,marketing_notes,artist_fee_total) VALUES (:event_id,:nightly_operating_cost,:security_total,:security_notes,:door_girls_count,:door_girls_total,:police_hours,:police_rate,:police_minimum,:police_total,:production_staff_count,:production_staff_total,:production_equipment_total,:production_equipment_notes,:hospitality_rider_estimate,:hospitality_rider_actual,:hospitality_rider_notes,:marketing_internal,:marketing_promoter_contribution,:marketing_notes,:artist_fee_total) RETURNING id"""), {"event_id":data.get("event_id"),"nightly_operating_cost":data.get("nightly_operating_cost",0),"security_total":data.get("security_total",0),"security_notes":data.get("security_notes"),"door_girls_count":data.get("door_girls_count",0),"door_girls_total":data.get("door_girls_total",0),"police_hours":data.get("police_hours",0),"police_rate":data.get("police_rate",50),"police_minimum":data.get("police_minimum",200),"police_total":data["police_total"],"production_staff_count":data.get("production_staff_count",0),"production_staff_total":data.get("production_staff_total",0),"production_equipment_total":data.get("production_equipment_total",0),"production_equipment_notes":data.get("production_equipment_notes"),"hospitality_rider_estimate":data.get("hospitality_rider_estimate",0),"hospitality_rider_actual":data.get("hospitality_rider_actual",0),"hospitality_rider_notes":data.get("hospitality_rider_notes"),"marketing_internal":data.get("marketing_internal",0),"marketing_promoter_contribution":data.get("marketing_promoter_contribution",0),"marketing_notes":data.get("marketing_notes"),"artist_fee_total":data.get("artist_fee_total",0)})
+          conn.commit()
+          return {"id": row.fetchone()[0], "updated": False}
+
+    @api.get("/costs/{event_id}/summary")
+    def get_cost_summary(event_id: int):
+      if not engine:
+        raise HTTPException(status_code=503, detail="DB not configured")
+      with engine.connect() as conn:
+        event = conn.execute(text("SELECT event_name, projected_bar_revenue, projected_door_revenue, artist_fee_landed, artist_fee_travel FROM events WHERE id = :id"), {"id": event_id}).fetchone()
+        if not event:
+          raise HTTPException(status_code=404, detail="Event not found")
+        actuals = conn.execute(text("SELECT total_bar_sales, door_revenue_cash, door_revenue_card, promoter_bar_payout, promoter_door_payout, promoter_table_payout FROM night_of_actuals WHERE event_id = :eid ORDER BY created_at DESC LIMIT 1"), {"eid": event_id}).fetchone()
+        costs = conn.execute(text("SELECT * FROM event_costs WHERE event_id = :eid"), {"eid": event_id}).fetchone()
+        setting = conn.execute(text("SELECT value FROM venue_settings WHERE key = 'nightly_operating_cost'")).fetchone()
+        nightly_op = float(setting.value) if setting else 0
+        bar_revenue = float(actuals.total_bar_sales) if actuals else 0
+        door_revenue = (float(actuals.door_revenue_cash or 0) + float(actuals.door_revenue_card or 0)) if actuals else 0
+        total_revenue = bar_revenue + door_revenue
+        if costs:
+          hours = float(costs.police_hours or 0)
+          police_total = max(hours * float(costs.police_rate or 50), float(costs.police_minimum or 200)) if hours > 0 else 0
+          cost_lines = [
+            {"label": "Nightly operating cost", "amount": float(costs.nightly_operating_cost or nightly_op), "category": "fixed"},
+            {"label": "Security", "amount": float(costs.security_total or 0), "category": "variable"},
+            {"label": "Door girls", "amount": float(costs.door_girls_total or 0), "category": "variable"},
+            {"label": "Police security", "amount": police_total, "category": "variable"},
+            {"label": "Production staff", "amount": float(costs.production_staff_total or 0), "category": "variable"},
+            {"label": "Production equipment + tech rider", "amount": float(costs.production_equipment_total or 0), "category": "variable"},
+            {"label": "Hospitality rider", "amount": float(costs.hospitality_rider_actual or 0), "category": "variable", "estimate": float(costs.hospitality_rider_estimate or 0), "variance": float(costs.hospitality_rider_actual or 0) - float(costs.hospitality_rider_estimate or 0)},
+            {"label": "Marketing — internal", "amount": float(costs.marketing_internal or 0), "category": "marketing"},
+            {"label": "Marketing — promoter", "amount": float(costs.marketing_promoter_contribution or 0), "category": "marketing"},
+            {"label": "Artist fee", "amount": float(costs.artist_fee_total or 0) or (float(event.artist_fee_landed or 0) + float(event.artist_fee_travel or 0)), "category": "talent"},
+          ]
+        else:
+          cost_lines = [{"label": "Nightly operating cost", "amount": nightly_op, "category": "fixed"}]
+        promoter_payouts = sum([float(getattr(actuals, f) or 0) for f in ["promoter_bar_payout","promoter_door_payout","promoter_table_payout"]]) if actuals else 0
+        total_costs = sum(c["amount"] for c in cost_lines) + promoter_payouts
+        net = total_revenue - total_costs
+        return {"event_id": event_id, "event_name": event.event_name, "revenue": {"bar": bar_revenue, "door": door_revenue, "total": total_revenue, "projected_bar": float(event.projected_bar_revenue or 0), "projected_door": float(event.projected_door_revenue or 0)}, "cost_lines": cost_lines, "promoter_payouts": promoter_payouts, "total_costs": total_costs, "net": net, "net_margin_pct": round((net / total_revenue * 100), 1) if total_revenue > 0 else 0}
+
     # ── Venue Settings ────────────────────────────────────────────────────────
 
     @api.get("/settings")
@@ -748,20 +934,6 @@ def create_app(static_dir: str) -> FastAPI:
                 """), {"key": key, "value": json.dumps(value)})
             conn.commit()
         return {"ok": True}
-        if not engine:
-            raise HTTPException(status_code=503, detail="DB not configured")
-        with engine.connect() as conn:
-            row = conn.execute(text("""
-                INSERT INTO historical_events (event_date, event_name, tier1_category,
-                    tier2_subcategory, promoter_name, artist_name, gross_revenue,
-                    attendance, data_source, classification_status)
-                VALUES (:event_date, :event_name, :tier1_category, :tier2_subcategory,
-                    :promoter_name, :artist_name, :gross_revenue, :attendance,
-                    :data_source, :classification_status)
-                RETURNING id
-            """), data.model_dump())
-            conn.commit()
-            return {"id": row.fetchone()[0]}
 
     # ── App wiring ────────────────────────────────────────────────────────────
 

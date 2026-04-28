@@ -49,6 +49,10 @@ type FormValues = {
   deposit_amount: string; deposit_due_date: string
   balance_due: string; balance_due_date: string
   projected_door_revenue: string; projected_bar_revenue: string; projected_table_revenue: string
+  cost_nightly_operating: string
+  cost_hospitality_estimate: string
+  cost_marketing_internal: string
+  cost_marketing_promoter: string
   notes: string
 }
 
@@ -109,6 +113,7 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
   const [saved, setSaved] = useState(false)
   const [dayOfWeek, setDayOfWeek] = useState("")
   const [projTotal, setProjTotal] = useState(0)
+  const [existingCostId, setExistingCostId] = useState<number | null>(null)
 
   // Controlled select states
   const [tier1, setTier1] = useState("")
@@ -177,9 +182,28 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
       projected_door_revenue: v.projected_door_revenue?.toString() || "0",
       projected_bar_revenue: v.projected_bar_revenue?.toString() || "0",
       projected_table_revenue: v.projected_table_revenue?.toString() || "0",
+      cost_nightly_operating: "",
+      cost_hospitality_estimate: "",
+      cost_marketing_internal: "",
+      cost_marketing_promoter: "",
       notes: v.notes || "",
     })
   }, [editEvent, reset])
+
+  useEffect(() => {
+    if (!editEvent?.id) return
+    fetch(`/api/costs/${editEvent.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d && d.exists !== false) {
+          setExistingCostId(d.id)
+          setValue("cost_nightly_operating", d.nightly_operating_cost?.toString() || "")
+          setValue("cost_hospitality_estimate", d.hospitality_rider_estimate?.toString() || "")
+          setValue("cost_marketing_internal", d.marketing_internal?.toString() || "")
+          setValue("cost_marketing_promoter", d.marketing_promoter_contribution?.toString() || "")
+        }
+      })
+  }, [editEvent])
 
   const [pD, pB, pT] = watch(["projected_door_revenue", "projected_bar_revenue", "projected_table_revenue"])
   const watchNetRevPct = parseFloat(watch("net_revenue_promoter_pct")) || 0
@@ -271,6 +295,21 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
         body: JSON.stringify(payload),
       })
       if (res.ok) {
+        const data = await res.json()
+        const eventId = editEvent?.id || data.id
+        const totalFeeForCosts = (parseFloat(values.artist_fee_landed) || 0) + (parseFloat(values.artist_fee_travel) || 0)
+        await fetch("/api/costs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_id: eventId,
+            nightly_operating_cost: parseFloat(values.cost_nightly_operating) || 0,
+            hospitality_rider_estimate: parseFloat(values.cost_hospitality_estimate) || 0,
+            marketing_internal: parseFloat(values.cost_marketing_internal) || 0,
+            marketing_promoter_contribution: parseFloat(values.cost_marketing_promoter) || 0,
+            artist_fee_total: totalFeeForCosts,
+          }),
+        })
         setSaved(true)
         setTimeout(() => { setSaved(false); onSaved() }, 1200)
       }
@@ -523,6 +562,30 @@ export function EventRecordPage({ editEvent, onSaved }: Props) {
             <Input type="date" className={cn(inp, "appearance-none")} {...register("balance_due_date")} />
           </F>
         </div>
+
+        <Sec title="Variable Cost Estimates" />
+        <F label="Nightly Operating Cost ($)">
+          <Input type="number" className={inp} placeholder="0" {...register("cost_nightly_operating")} />
+        </F>
+        <F label="Hospitality Rider — Estimate ($)" hint="from artist rider document">
+          <Input type="number" className={inp} placeholder="0" {...register("cost_hospitality_estimate")} />
+        </F>
+        <F label="Marketing — Internal ($)">
+          <Input type="number" className={inp} placeholder="0" {...register("cost_marketing_internal")} />
+        </F>
+        <F label="Marketing — Promoter Contribution ($)">
+          <Input type="number" className={inp} placeholder="0" {...register("cost_marketing_promoter")} />
+        </F>
+        <F label="Artist Fee (from deal terms)">
+          <div className={cn(inp, "flex items-center px-3 rounded-md border bg-muted/40 text-muted-foreground select-none")}>
+            {(() => {
+              const landed = parseFloat(watch("artist_fee_landed")) || 0
+              const travel = parseFloat(watch("artist_fee_travel")) || 0
+              const total = landed + travel
+              return total > 0 ? "$" + total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"
+            })()}
+          </div>
+        </F>
 
         <Sec title="Revenue Projections" />
         <F label="Projected Door Revenue ($)">

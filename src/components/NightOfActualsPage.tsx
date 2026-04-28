@@ -28,11 +28,21 @@ type FormValues = {
   door_revenue_cash: string; door_revenue_card: string
   ticket_scan_count: string; walk_up_count: string; comp_admissions: string
   total_headcount: string; incident_description: string; incident_department: string; notes: string
-  bar_cogs_deduction: string; bar_threshold_retained: string; door_threshold_retained: string
+  bar_cogs_deduction: string; bar_threshold_retained: string; house_fee_deduction: string; door_threshold_retained: string
   charge_backs: string; promoter_bar_payout: string; promoter_door_payout: string
   promoter_table_payout: string; artist_cost_paid_by_venue: string
   effective_split_percentage: string; settlement_notes: string
   benchmark_effective_split: string
+  cost_security_total: string
+  cost_door_girls_count: string
+  cost_door_girls_total: string
+  cost_police_hours: string
+  cost_production_staff_count: string
+  cost_production_staff_total: string
+  cost_equipment_total: string
+  cost_equipment_notes: string
+  cost_hospitality_actual: string
+  cost_nightly_operating: string
 }
 
 function Sec({ title }: { title: string }) {
@@ -114,13 +124,14 @@ function SettlementSection({ w, register, eventDeal, setValue }: {
 
   const barCogs = parseFloat(w.bar_cogs_deduction) || 0
   const barThresh = parseFloat(w.bar_threshold_retained) || 0
+  const houseFee = parseFloat(w.house_fee_deduction) || 0
   const doorThresh = parseFloat(w.door_threshold_retained) || 0
   const comps = parseFloat(w.comps_total) || 0
   const voids = parseFloat(w.voids) || 0
   const tax = parseFloat(w.tax_collected) || 0
   const tips = parseFloat(w.tips) || 0
   const chargeBacks = parseFloat(w.charge_backs) || 0
-  const totalDeductions = barCogs + barThresh + doorThresh + comps + voids + tax + tips + chargeBacks
+  const totalDeductions = barCogs + barThresh + doorThresh + houseFee + comps + voids + tax + tips + chargeBacks
 
   const netBar = grossBar - barCogs - barThresh - comps - voids - tax - tips
   const netDoor = grossDoor - doorThresh
@@ -195,6 +206,10 @@ function SettlementSection({ w, register, eventDeal, setValue }: {
 
         <ManualRow label="Door threshold retained by venue" hint="— first $X per deal terms">
           <Input type="number" className={settInp} placeholder="0" {...register("door_threshold_retained")} />
+        </ManualRow>
+
+        <ManualRow label="House fee deduction" hint="— auto-calculated from deal terms if applicable, or enter manually">
+          <Input type="number" className={settInp} placeholder="0" {...register("house_fee_deduction")} />
         </ManualRow>
 
         <Row label="Less comps (from above)" value={fmt(comps)} isSub />
@@ -296,6 +311,8 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
   const [timeOfEntry, setTimeOfEntry] = useState("")
   const [existingId, setExistingId] = useState<number | null>(null)
   const [eventDeal, setEventDeal] = useState<EventFull | null>(null)
+  const [costSummary, setCostSummary] = useState<any>(null)
+  const [existingCostRecord, setExistingCostRecord] = useState<any>(null)
 
   const blank: FormValues = {
     event_id: preselectedEventId?.toString() || "", time_of_entry: "",
@@ -306,11 +323,15 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
     tax_collected: "", tips: "", door_revenue_cash: "", door_revenue_card: "",
     ticket_scan_count: "", walk_up_count: "", comp_admissions: "",
     total_headcount: "", incident_description: "", incident_department: "", notes: "",
-    bar_cogs_deduction: "", bar_threshold_retained: "", door_threshold_retained: "",
+    bar_cogs_deduction: "", bar_threshold_retained: "", house_fee_deduction: "", door_threshold_retained: "",
     charge_backs: "", promoter_bar_payout: "", promoter_door_payout: "",
     promoter_table_payout: "", artist_cost_paid_by_venue: "",
     effective_split_percentage: "", settlement_notes: "",
     benchmark_effective_split: "",
+    cost_security_total: "", cost_door_girls_count: "", cost_door_girls_total: "",
+    cost_police_hours: "", cost_production_staff_count: "", cost_production_staff_total: "",
+    cost_equipment_total: "", cost_equipment_notes: "", cost_hospitality_actual: "",
+    cost_nightly_operating: "",
   }
 
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormValues>({ defaultValues: blank })
@@ -320,6 +341,19 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
   useEffect(() => {
     if (!selectedEventId) { setEventDeal(null); return }
     fetch(`/api/events/${selectedEventId}`).then(r => r.ok ? r.json() : null).then(d => setEventDeal(d || null))
+  }, [selectedEventId])
+
+  useEffect(() => {
+    if (!selectedEventId) return
+    fetch(`/api/costs/${selectedEventId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d && d.exists !== false) {
+          setExistingCostRecord(d)
+          // Pre-populate nightly operating cost from pre-event entry
+          setValue("cost_nightly_operating", d.nightly_operating_cost?.toString() || "")
+        }
+      })
   }, [selectedEventId])
 
   useEffect(() => {
@@ -354,6 +388,7 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
           notes: match.notes || "",
           bar_cogs_deduction: match.bar_cogs_deduction?.toString() || "",
           bar_threshold_retained: match.bar_threshold_retained?.toString() || "",
+          house_fee_deduction: match.house_fee_deduction?.toString() || "",
           door_threshold_retained: match.door_threshold_retained?.toString() || "",
           charge_backs: match.charge_backs?.toString() || "",
           promoter_bar_payout: match.promoter_bar_payout?.toString() || "",
@@ -399,6 +434,7 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
       notes: values.notes || null,
       bar_cogs_deduction: parseFloat(values.bar_cogs_deduction) || 0,
       bar_threshold_retained: parseFloat(values.bar_threshold_retained) || 0,
+      house_fee_deduction: parseFloat(values.house_fee_deduction) || 0,
       door_threshold_retained: parseFloat(values.door_threshold_retained) || 0,
       charge_backs: parseFloat(values.charge_backs) || 0,
       promoter_bar_payout: parseFloat(values.promoter_bar_payout) || 0,
@@ -418,6 +454,34 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
       if (res.ok) {
         const data = await res.json()
         if (!existingId && data.id) setExistingId(data.id)
+        if (isClose && values.event_id) {
+          const hours = parseFloat(values.cost_police_hours) || 0
+          const policeTotal = hours > 0 ? Math.max(hours * 50, 200) : 0
+          const costsPayload = {
+            event_id: parseInt(values.event_id),
+            security_total: parseFloat(values.cost_security_total) || 0,
+            door_girls_count: parseInt(values.cost_door_girls_count) || 0,
+            door_girls_total: parseFloat(values.cost_door_girls_total) || 0,
+            police_hours: hours,
+            police_rate: 50,
+            police_minimum: 200,
+            police_total: policeTotal,
+            production_staff_count: parseInt(values.cost_production_staff_count) || 0,
+            production_staff_total: parseFloat(values.cost_production_staff_total) || 0,
+            production_equipment_total: parseFloat(values.cost_equipment_total) || 0,
+            production_equipment_notes: values.cost_equipment_notes || null,
+            hospitality_rider_actual: parseFloat(values.cost_hospitality_actual) || 0,
+            nightly_operating_cost: parseFloat(values.cost_nightly_operating) || 0,
+          }
+          await fetch("/api/costs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(costsPayload),
+          })
+          // Load summary after saving
+          const summaryRes = await fetch(`/api/costs/${values.event_id}/summary`)
+          if (summaryRes.ok) setCostSummary(await summaryRes.json())
+        }
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
       }
@@ -566,6 +630,76 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
         {/* Settlement section — only at Close */}
         {isClose && <SettlementSection w={watchedValues} register={register} eventDeal={eventDeal} setValue={setValue} />}
 
+        {isClose && (
+          <div className="mt-4 rounded-xl overflow-hidden" style={{ background: '#F8F9FB', border: '1px solid #E2E8F0' }}>
+            <div className="px-4 py-3 border-b" style={{ background: 'rgba(44,95,138,0.06)', borderColor: '#E2E8F0' }}>
+              <p className="text-sm font-bold uppercase tracking-wider" style={{ color: '#2C5F8A' }}>Variable Costs — Close</p>
+            </div>
+            <div className="px-4 py-3 space-y-4">
+
+              <ManualRow label="Security ($)">
+                <Input type="number" className={settInp} placeholder="0" {...register("cost_security_total")} />
+              </ManualRow>
+
+              <div className="grid grid-cols-2 gap-3">
+                <ManualRow label="Door girls — count">
+                  <Input type="number" className={settInp} placeholder="0" {...register("cost_door_girls_count")} />
+                </ManualRow>
+                <ManualRow label="Door girls — total ($)">
+                  <Input type="number" className={settInp} placeholder="0" {...register("cost_door_girls_total")} />
+                </ManualRow>
+              </div>
+
+              <div>
+                <ManualRow label="Police — hours worked">
+                  <Input type="number" className={settInp} placeholder="0" {...register("cost_police_hours")} />
+                </ManualRow>
+                {(() => {
+                  const hours = parseFloat(watchedValues.cost_police_hours) || 0
+                  const total = hours > 0 ? Math.max(hours * 50, 200) : 0
+                  return hours > 0 ? (
+                    <p className="text-xs mt-1" style={{ color: '#2C5F8A' }}>
+                      Calculated total: ${total.toLocaleString("en-US", { minimumFractionDigits: 2 })} ($50/hr · $200 min)
+                    </p>
+                  ) : null
+                })()}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <ManualRow label="Production staff — count">
+                  <Input type="number" className={settInp} placeholder="0" {...register("cost_production_staff_count")} />
+                </ManualRow>
+                <ManualRow label="Production staff — total ($)">
+                  <Input type="number" className={settInp} placeholder="0" {...register("cost_production_staff_total")} />
+                </ManualRow>
+              </div>
+
+              <ManualRow label="Production equipment + tech rider ($)">
+                <Input type="number" className={settInp} placeholder="0" {...register("cost_equipment_total")} />
+              </ManualRow>
+              <ManualRow label="Production equipment notes" hint="optional">
+                <Input className={settInp} placeholder="Describe equipment or tech rider items" {...register("cost_equipment_notes")} />
+              </ManualRow>
+
+              <div>
+                <ManualRow label="Hospitality rider — actual ($)">
+                  <Input type="number" className={settInp} placeholder="0" {...register("cost_hospitality_actual")} />
+                </ManualRow>
+                {existingCostRecord?.hospitality_rider_estimate > 0 && (
+                  <p className="text-xs mt-1 text-muted-foreground">
+                    Pre-event estimate: ${parseFloat(existingCostRecord.hospitality_rider_estimate).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  </p>
+                )}
+              </div>
+
+              <ManualRow label="Nightly operating cost ($)" hint="pre-populated from event record">
+                <Input type="number" className={settInp} placeholder="0" {...register("cost_nightly_operating")} />
+              </ManualRow>
+
+            </div>
+          </div>
+        )}
+
         <Sec title="Incidents" />
         <F label="Incident Description" hint="optional">
           <Textarea
@@ -594,6 +728,51 @@ export function NightOfActualsPage({ events, preselectedEventId, checkinTimes }:
         </div>
 
       </form>
+
+      {costSummary && (
+        <div className="mt-4 rounded-xl overflow-hidden" style={{ background: '#F0F7FF', border: '1px solid rgba(44,95,138,0.3)' }}>
+          <div className="px-4 py-3 border-b flex items-center gap-2" style={{ background: 'rgba(44,95,138,0.08)', borderColor: 'rgba(44,95,138,0.2)' }}>
+            <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#2C5F8A' }}>Cost Summary — {costSummary.event_name}</span>
+          </div>
+          <div className="px-4 py-3 space-y-1">
+            {/* Revenue */}
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground pt-1 pb-0.5">Revenue</p>
+            <div className="flex justify-between text-sm py-1"><span className="text-muted-foreground">Bar</span><span className="font-medium">${costSummary.revenue?.bar?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></div>
+            <div className="flex justify-between text-sm py-1"><span className="text-muted-foreground">Door</span><span className="font-medium">${costSummary.revenue?.door?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></div>
+            <div className="flex justify-between text-sm font-semibold py-1.5 border-t border-primary/20 mt-1"><span>Total Revenue</span><span>${costSummary.revenue?.total?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></div>
+
+            {/* Cost lines */}
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground pt-3 pb-0.5">Costs</p>
+            {costSummary.cost_lines?.map((line: any, i: number) => (
+              <div key={i} className="flex justify-between text-sm py-1">
+                <span className="text-muted-foreground">{line.label}</span>
+                <span className="font-medium">${line.amount?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+              </div>
+            ))}
+            {costSummary.promoter_payouts > 0 && (
+              <div className="flex justify-between text-sm py-1">
+                <span className="text-muted-foreground">Promoter payouts</span>
+                <span className="font-medium">${costSummary.promoter_payouts?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm font-semibold py-1.5 border-t border-primary/20 mt-1"><span>Total Costs</span><span>${costSummary.total_costs?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></div>
+
+            {/* Net */}
+            <div className="mt-2 rounded-lg px-3 py-2.5 space-y-1" style={{ background: 'rgba(44,95,138,0.08)', border: '1px solid rgba(44,95,138,0.15)' }}>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold" style={{ color: '#2C5F8A' }}>Net</span>
+                <span className={`text-lg font-bold ${costSummary.net >= 0 ? '' : 'text-red-600'}`} style={costSummary.net >= 0 ? { color: '#2C5F8A' } : {}}>
+                  ${costSummary.net?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Net margin</span>
+                <span className="text-sm font-semibold" style={{ color: '#2C5F8A' }}>{costSummary.net_margin_pct}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
