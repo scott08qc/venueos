@@ -752,10 +752,10 @@ function renderArtistIntelligence(data){
       <div style="font-size:11px;font-weight:600;color:var(--text2);margin:12px 0 8px">Event History</div>
       <div style="overflow-x:auto">
         <table class="hist-table">
-          <thead><tr><th>Event</th><th>Promoter</th><th>Date</th><th>Att.</th><th>Draw</th><th>SPH</th><th>Net</th></tr></thead>
+          <thead><tr><th>Event</th><th>Promoter</th><th>Date</th><th>Att.</th><th>Draw</th><th>SPH</th><th>Net</th><th></th></tr></thead>
           <tbody>${hist.map(h => {
             const drawCls = !h.draw_pct ? '' : h.draw_pct >= 95 ? 'draw-good' : h.draw_pct >= 80 ? 'draw-ok' : 'draw-bad';
-            return `<tr>
+            return `<tr style="cursor:pointer" onclick="openEventDetail(${h.event_id},'${(h.event_name||'').replace(/'/g,'')}')" title="Click to drill down">
               <td>${h.event_name || '—'}</td>
               <td style="color:var(--text2)">${h.promoter_name || '—'}</td>
               <td>${h.event_date ? h.event_date.substring(0,10) : '—'}</td>
@@ -763,6 +763,7 @@ function renderArtistIntelligence(data){
               <td class="${drawCls}">${h.draw_pct ? h.draw_pct+'%' : '—'}</td>
               <td>${h.spend_per_head_actual ? '$'+h.spend_per_head_actual : '—'}</td>
               <td style="color:${h.net_revenue_actual > 0 ? 'var(--green)' : 'var(--red)'}">${h.net_revenue_actual ? '$'+Math.round(h.net_revenue_actual).toLocaleString() : '—'}</td>
+              <td style="color:var(--blue);font-size:10px">▶</td>
             </tr>`;
           }).join('')}</tbody>
         </table>
@@ -1511,17 +1512,13 @@ ${e.what_to_change ? 'What to change: ' + e.what_to_change : ''}
 Write the brief now. Include: (1) a one-paragraph event overview, (2) what the data says about this promoter's performance on this night, (3) specific talking points for the next deal negotiation based on actual performance, (4) recommended deal terms for the next similar event with this promoter.`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(`${WORKSHOP_URL}/api/talking-points`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify({ prompt })
     });
     const result = await response.json();
-    const text = result.content?.[0]?.text || 'Could not generate talking points.';
+    const text = result.text || 'Could not generate talking points.';
 
     body.innerHTML = `<div class="detail-section">
       <div class="detail-section-title">Pre-Meeting Brief — ${e.promoter_name || 'Promoter'}</div>
