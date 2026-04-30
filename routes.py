@@ -85,6 +85,7 @@ def init_db():
             ("artist_venue_dollar", "NUMERIC"),
             ("artist_venue_pct", "NUMERIC"),
             ("artist_promoter_dollar", "NUMERIC"),
+            ("status", "TEXT NOT NULL DEFAULT 'confirmed'"),
         ]:
             conn.execute(text(f"ALTER TABLE events ADD COLUMN IF NOT EXISTS {col} {dtype}"))
 
@@ -1389,7 +1390,7 @@ def create_app(static_dir: str) -> FastAPI:
                   e.projected_door_revenue, e.projected_bar_revenue, e.projected_table_revenue,
                   e.artist_fee_landed, e.artist_fee_travel,
                   e.doors_open_time, e.event_close_time,
-                  e.notes
+                  e.status, e.notes
                 FROM events e
                 WHERE e.event_date >= :start AND e.event_date <= :end
                 ORDER BY e.event_date ASC
