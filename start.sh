@@ -18,14 +18,18 @@ fi
 T0=$(date +%s%3N 2>/dev/null || python3 -c "import time;print(int(time.time()*1000))")
 elapsed() { echo $(( $(date +%s%3N 2>/dev/null || python3 -c "import time;print(int(time.time()*1000))") - T0 )); }
 
+# Keep venv on local container FS (/root) to avoid network-volume hardlink failures.
+# Faster than UV_LINK_MODE=copy and survives within-session restarts via the hash guard.
+export VENV_DIR="/tmp/.venv-venueos"
+export UV_PROJECT_ENVIRONMENT="$VENV_DIR"
+
 # Install Python and JS deps in parallel, with lockfile hash guards
 (
   UV_HASH=$(md5sum uv.lock 2>/dev/null | cut -d' ' -f1)
-  if [ ! -f ".venv/.uv-hash-$UV_HASH" ]; then
+  if [ ! -f "$VENV_DIR/.uv-hash-$UV_HASH" ]; then
     echo "[+$(elapsed)ms] uv sync starting..."
-    uv sync --compile-bytecode --frozen || uv sync --compile-bytecode
-    rm -f .venv/.uv-hash-* 2>/dev/null
-    touch ".venv/.uv-hash-$UV_HASH"
+    UV_LINK_MODE=copy uv sync --compile-bytecode --frozen || UV_LINK_MODE=copy uv sync --compile-bytecode    rm -f "$VENV_DIR"/.uv-hash-* 2>/dev/null
+    touch "$VENV_DIR/.uv-hash-$UV_HASH"
     echo "[+$(elapsed)ms] uv sync done"
   else
     echo "[+$(elapsed)ms] uv sync skipped (lockfile unchanged)"
