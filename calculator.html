@@ -239,7 +239,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       </div>
       <div class="field">
         <label class="fl">Artist Name <span class="fh">optional</span></label>
-        <input type="text" class="fi" id="artist-name" placeholder="e.g. DJ Snake">
+        <input type="text" class="fi" id="artist-name" placeholder="e.g. DJ Snake" oninput="debounceArtistFetch()">
       </div>
     </div>
 
@@ -413,6 +413,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <div class="no-intel-title">Promoter Intelligence</div>
     <div class="no-intel-sub">Enter a promoter name to load historical performance data, reputation score, and recommended projections.</div>
   </div>
+  <div id="artist-intel-panel" style="display:none" class="intel-panel"></div>
   <div id="intel-loading" style="display:none" class="intel-panel">
     <div class="intel-loading">Loading promoter data...</div>
   </div>
@@ -544,6 +545,7 @@ let costMode = 'proj';
 let projCosts = {};
 let tc = 1;
 let fetchTimer = null;
+let artistFetchTimer = null;
 
 function g(id){return document.getElementById(id)}
 function fv(id){return parseFloat(g(id)?.value)||0}
@@ -556,6 +558,114 @@ function debounceFetch(){
   fetchTimer = setTimeout(fetchIntelligence, 600);
 }
 
+function debounceArtistFetch(){
+  clearTimeout(artistFetchTimer);
+  artistFetchTimer = setTimeout(fetchArtistIntelligence, 600);
+}
+
+async function fetchArtistIntelligence(){
+  const artist = g('artist-name').value.trim();
+  const evType = g('ev-type').value;
+  // Only fire artist search if no promoter is entered
+  if (g('promoter-name').value.trim().length >= 2) return;
+  if (artist.length < 2) {
+    g('intel-empty').style.display='block';
+    g('intel-loading').style.display='none';
+    g('intel-panel').style.display='none';
+    g('artist-intel-panel').style.display='none';
+    return;
+  }
+  g('intel-empty').style.display='none';
+  g('intel-loading').style.display='block';
+  g('intel-panel').style.display='none';
+  g('artist-intel-panel').style.display='none';
+  try {
+    const params = new URLSearchParams({artist});
+    if (evType) params.append('event_type', evType);
+    const res = await fetch(`${WORKSHOP_URL}/api/artist-intelligence?${params}`);
+    const data = await res.json();
+    renderArtistIntelligence(data);
+  } catch(e) {
+    g('intel-loading').style.display='none';
+    g('intel-empty').style.display='block';
+  }
+}
+
+function renderArtistIntelligence(data){
+  g('intel-loading').style.display='none';
+  if (!data.found) {
+    g('intel-empty').style.display='block';
+    g('intel-empty').querySelector('.no-intel-title').textContent = 'Artist Intelligence';
+    g('intel-empty').querySelector('.no-intel-sub').textContent = 'No completed events found for this artist yet.';
+    return;
+  }
+  g('artist-intel-panel').style.display='block';
+
+  const panel = g('artist-intel-panel');
+  const rec = data.recommendations;
+  const hist = data.history || [];
+
+  panel.innerHTML = `
+    <div class="intel-header" style="background:var(--purple,#6B3A8C)">
+      <div>
+        <div class="intel-header-name">${data.artist}</div>
+        <div class="intel-header-sub">${data.total_events} event${data.total_events !== 1 ? 's' : ''} on record${data.event_type ? ' · ' + data.event_type : ''}</div>
+      </div>
+      <div class="rep-score-wrap">
+        <div class="rep-score" style="font-size:13px;color:white;text-align:right">
+          ${data.avg_draw_ratio ? Math.round(data.avg_draw_ratio * 100) + '% draw' : '—'}
+        </div>
+        <div class="rep-score-lbl">${data.avg_spend_per_head ? '$' + data.avg_spend_per_head + '/head' : ''}</div>
+      </div>
+    </div>
+    <div class="intel-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <div class="score-item">
+          <div class="score-item-label">Avg Attendance</div>
+          <div class="score-item-value" style="color:var(--blue)">${data.attendance_range?.avg?.toLocaleString() || '—'}</div>
+          <div class="score-item-sub">range ${data.attendance_range?.low || '—'}–${data.attendance_range?.high || '—'}</div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-label">Bar Spend/Head</div>
+          <div class="score-item-value" style="color:var(--green)">$${data.avg_spend_per_head || '—'}</div>
+          <div class="score-item-sub">avg actual</div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-label">Avg Net to Venue</div>
+          <div class="score-item-value" style="color:var(--blue)">$${data.avg_net_to_venue ? Math.round(data.avg_net_to_venue).toLocaleString() : '—'}</div>
+          <div class="score-item-sub">after all costs</div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">Recommended Projections</div>
+      <div>
+        ${rec.attendance?.suggested ? `<div class="rec-row"><div class="rec-label">Attendance<br><span style="font-size:10px;color:var(--text3)">range: ${rec.attendance.range_low}–${rec.attendance.range_high}</span></div><div class="rec-right"><div class="rec-value">${rec.attendance.suggested.toLocaleString()}</div><div class="apply-btn" onclick="applyRec('attend',${rec.attendance.suggested})">Apply</div></div></div>` : ''}
+        ${rec.spend_per_head?.suggested ? `<div class="rec-row"><div class="rec-label">Bar Spend / Head</div><div class="rec-right"><div class="rec-value">$${rec.spend_per_head.suggested}</div><div class="apply-btn" onclick="applyRec('sph',${rec.spend_per_head.suggested})">Apply</div></div></div>` : ''}
+        ${rec.artist_fee?.suggested ? `<div class="rec-row"><div class="rec-label">Artist Fee (avg)</div><div class="rec-right"><div class="rec-value">$${Math.round(rec.artist_fee.suggested).toLocaleString()}</div><div class="apply-btn" onclick="applyRec('art-fee',${Math.round(rec.artist_fee.suggested)})">Apply</div></div></div>` : ''}
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin:12px 0 8px">Event History</div>
+      <div style="overflow-x:auto">
+        <table class="hist-table">
+          <thead><tr><th>Event</th><th>Promoter</th><th>Date</th><th>Att.</th><th>Draw</th><th>SPH</th><th>Net</th></tr></thead>
+          <tbody>${hist.map(h => {
+            const drawCls = !h.draw_pct ? '' : h.draw_pct >= 95 ? 'draw-good' : h.draw_pct >= 80 ? 'draw-ok' : 'draw-bad';
+            return `<tr>
+              <td>${h.event_name || '—'}</td>
+              <td style="color:var(--text2)">${h.promoter_name || '—'}</td>
+              <td>${h.event_date ? h.event_date.substring(0,10) : '—'}</td>
+              <td>${h.actual_attendance || '—'}</td>
+              <td class="${drawCls}">${h.draw_pct ? h.draw_pct+'%' : '—'}</td>
+              <td>${h.spend_per_head_actual ? '$'+h.spend_per_head_actual : '—'}</td>
+              <td style="color:${h.net_revenue_actual > 0 ? 'var(--green)' : 'var(--red)'}">${h.net_revenue_actual ? '$'+Math.round(h.net_revenue_actual).toLocaleString() : '—'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 async function fetchIntelligence(){
   const promoter = g('promoter-name').value.trim();
   const evType = g('ev-type').value;
@@ -563,6 +673,7 @@ async function fetchIntelligence(){
     g('intel-empty').style.display='block';
     g('intel-loading').style.display='none';
     g('intel-panel').style.display='none';
+    g('artist-intel-panel').style.display='none';
     g('d-promoter').textContent='Enter promoter to load history';
     g('d-promoter').className='delta nodata';
     intel = null;
