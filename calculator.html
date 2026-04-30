@@ -690,8 +690,12 @@ function applyRec(field, val){
   const el = g(field);
   if (!el) return;
   el.value = val;
+  // Dispatch input event so oninput handlers fire naturally
+  el.dispatchEvent(new Event('input', {bubbles: true}));
+  // Sync slider visuals for range inputs
   if (field === 'd-sl') { syncS('d'); }
   else if (field === 'b-sl') { syncS('b'); }
+  else if (field === 't-sl') { syncS('t'); }
   calc();
   updateDeltas();
 }
