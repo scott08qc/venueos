@@ -1203,6 +1203,109 @@ def create_app(static_dir: str) -> FastAPI:
                 "history": history
             }
 
+    # ── Event Detail ─────────────────────────────────────────────────────────
+
+    @api.get("/event-detail/{event_id}")
+    def get_event_detail(event_id: int):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS event_item_sales (
+                  id SERIAL PRIMARY KEY,
+                  event_id INTEGER NOT NULL,
+                  item_name TEXT,
+                  item_category TEXT,
+                  item_subcategory TEXT,
+                  quantity_sold NUMERIC,
+                  unit_price NUMERIC,
+                  total_revenue NUMERIC,
+                  cost_per_unit NUMERIC,
+                  total_cost NUMERIC,
+                  gross_margin NUMERIC,
+                  created_at TIMESTAMP DEFAULT NOW()
+                )
+            """))
+            conn.commit()
+            event = conn.execute(text("""
+                SELECT e.*,
+                  r.actual_attendance, r.actual_bar_revenue, r.actual_door_revenue,
+                  r.actual_table_revenue, r.artist_cost_actual, r.staffing_cost_actual,
+                  r.spend_per_head_actual, r.net_revenue_actual, r.actual_effective_split,
+                  r.crowd_demographic_observations, r.promoter_performance_notes,
+                  r.what_to_replicate, r.what_to_change, r.review_status,
+                  n.total_bar_sales, n.total_headcount, n.door_revenue_cash,
+                  n.door_revenue_card, n.table_bottle_service, n.tables_active,
+                  n.comps_total, n.voids, n.tips, n.tax_collected,
+                  n.promoter_bar_payout, n.promoter_door_payout, n.promoter_table_payout,
+                  n.artist_cost_paid_by_venue, n.effective_split_percentage, n.settlement_notes
+                FROM events e
+                LEFT JOIN post_event_reviews r ON r.event_id = e.id
+                LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry = 'Close'
+                WHERE e.id = :eid
+            """), {"eid": event_id}).fetchone()
+            if not event:
+                raise HTTPException(status_code=404, detail="Event not found")
+            d = dict(event._mapping)
+            for f in ["event_date", "deposit_due_date", "balance_due_date", "created_at", "updated_at"]:
+                if d.get(f): d[f] = str(d[f])
+            for f in ["doors_open_time", "event_close_time"]:
+                if d.get(f): d[f] = str(d[f])
+            for k, v in d.items():
+                if hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                    d[k] = float(v)
+
+            items = conn.execute(text("""
+                SELECT item_name, item_category, item_subcategory,
+                  quantity_sold, unit_price, total_revenue, cost_per_unit, total_cost, gross_margin
+                FROM event_item_sales
+                WHERE event_id = :eid
+                ORDER BY total_revenue DESC
+            """), {"eid": event_id}).fetchall()
+
+            item_list = []
+            for row in items:
+                item = dict(row._mapping)
+                for k, v in item.items():
+                    if hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                        item[k] = float(v)
+                item_list.append(item)
+
+            bottles = [i for i in item_list if i.get('item_category') == 'Bottle Service']
+            spirits = [i for i in item_list if i.get('item_category') == 'Spirits']
+            beer = [i for i in item_list if i.get('item_category') == 'Beer']
+            na = [i for i in item_list if i.get('item_category') == 'Non-Alcoholic']
+            cocktails = [i for i in item_list if i.get('item_category') == 'Cocktails']
+            fees = [i for i in item_list if i.get('item_category') == 'Fees']
+
+            def cat_total(lst): return round(sum(i.get('total_revenue', 0) for i in lst), 2)
+            def cat_cogs(lst): return round(sum(i.get('total_cost', 0) for i in lst), 2)
+
+            return {
+                "event": d,
+                "items": item_list,
+                "summary": {
+                    "bottle_service_revenue": cat_total(bottles),
+                    "bottle_service_cogs": cat_cogs(bottles),
+                    "bottle_count": sum(i.get('quantity_sold', 0) for i in bottles if 'Table Charge' not in i.get('item_name', '')),
+                    "spirits_revenue": cat_total(spirits),
+                    "beer_revenue": cat_total(beer),
+                    "cocktail_revenue": cat_total(cocktails),
+                    "na_revenue": cat_total(na),
+                    "fee_revenue": cat_total(fees),
+                    "total_item_revenue": round(sum(i.get('total_revenue', 0) for i in item_list), 2),
+                    "total_item_cogs": round(sum(i.get('total_cost', 0) for i in item_list), 2),
+                },
+                "categories": {
+                    "bottles": bottles,
+                    "spirits": spirits,
+                    "beer": beer,
+                    "cocktails": cocktails,
+                    "na": na,
+                    "fees": fees,
+                }
+            }
+
     # ── Venue Settings ────────────────────────────────────────────────────────
 
     @api.get("/settings")
