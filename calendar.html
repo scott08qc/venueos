@@ -753,6 +753,9 @@ async function loadInternalEvents() {
     const res = await fetch(`/api/events-by-date?start=2026-01-01&end=2026-12-31`);
     const rows = await res.json();
     console.log('events-by-date response:', rows);
+    console.log('first event_date raw value:', rows.length > 0 ? rows[0].event_date : 'no rows');
+    console.log('first date after slice:', rows.length > 0 && rows[0].event_date ? rows[0].event_date.slice(0, 10) : 'null');
+    console.log('sample dateKey for May 2:', dateKey(2026, 4, 2));
     internalEvents = rows.map(e => ({
       id: e.id,
       date: e.event_date ? e.event_date.slice(0, 10) : null,
