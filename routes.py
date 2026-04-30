@@ -1367,6 +1367,13 @@ def create_app(static_dir: str) -> FastAPI:
         calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
         return FileResponse(calc_path, media_type="text/html")
 
+    # ── Calendar ──────────────────────────────────────────────────────────────
+
+    @api.get("/calendar", response_class=FileResponse)
+    def serve_calendar():
+        cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
+        return FileResponse(cal_path, media_type="text/html")
+
     # ── App wiring ────────────────────────────────────────────────────────────
 
     from fastapi.middleware.cors import CORSMiddleware
