@@ -668,12 +668,13 @@ function renderIntelligence(data){
   const hist = data.history || [];
   g('ip-history').innerHTML = hist.length ? `
     <thead><tr>
-      <th>Event</th><th>Date</th><th>Att.</th><th>Draw</th><th>SPH</th><th>Net</th>
+      <th>Event</th><th>Artist</th><th>Date</th><th>Att.</th><th>Draw</th><th>SPH</th><th>Net</th>
     </tr></thead>
     <tbody>${hist.map(h => {
       const drawCls = !h.draw_pct ? '' : h.draw_pct >= 95 ? 'draw-good' : h.draw_pct >= 80 ? 'draw-ok' : 'draw-bad';
       return `<tr>
         <td>${h.event_name || '—'}</td>
+        <td style="color:var(--text2);font-style:italic">${h.artist_name || '—'}</td>
         <td>${h.event_date ? h.event_date.substring(0,10) : '—'}</td>
         <td>${h.actual_attendance || '—'}</td>
         <td class="${drawCls}">${h.draw_pct ? h.draw_pct+'%' : '—'}</td>
