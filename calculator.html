@@ -1530,6 +1530,15 @@ Write the brief now. Include: (1) a one-paragraph event overview, (2) what the d
   }
 }
 
+// Auto-load event from URL query param on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('event_id');
+  if (eventId) {
+    openEventDetail(parseInt(eventId, 10), '');
+  }
+});
+
 </script>
 
 <!-- Event Detail Modal -->
