@@ -1279,7 +1279,7 @@ function switchTab(tab) {
 async function openEventDetail(eventId, eventName) {
   const modal = document.getElementById('detail-modal');
   const body = document.getElementById('modal-body');
-  document.getElementById('modal-title').textContent = eventName || 'Event Detail';
+  document.getElementById('modal-title').textContent = 'Loading...';
   document.getElementById('modal-sub').textContent = 'Loading...';
   modal.classList.add('open');
   body.innerHTML = '<div class="modal-loading">Loading event data...</div>';
@@ -1292,6 +1292,7 @@ async function openEventDetail(eventId, eventName) {
     const data = await res.json();
     currentEventData = data;
     const e = data.event;
+    document.getElementById('modal-title').textContent = e.event_name || eventName || 'Event Detail';
     document.getElementById('modal-sub').textContent =
       `${e.event_date ? e.event_date.substring(0,10) : ''} · ${e.tier1_category || ''} · ${e.promoter_name || ''}`;
     renderPLTab(data);
