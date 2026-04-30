@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VenueOS · Deal Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg:#F7F5F2;--surface:#FFFFFF;--surface2:#F4F2EF;--border:#E8E4DF;--border2:#D8D4CF;
+  --text1:#1A1714;--text2:#5A5652;--text3:#9B9793;
+  --blue:#2C5F8A;--blue-light:#EBF2F9;--blue-mid:#C5D9EC;
+  --green:#2A7A4B;--green-light:#EBF5F0;--green-mid:#B6DFC8;
+  --red:#B83232;--red-light:#FDEAEA;
+  --amber:#B85C00;--amber-light:#FDF3EA;--amber-mid:#F5CEAA;
+  --purple:#6B3A8C;--purple-light:#F5EEF8;
+  --gold:#8C6A00;--gold-light:#FDF8E8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* Header */
+.hdr{background:#FFFFFF;border-bottom:1px solid var(--border);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.logo{font-size:17px;font-weight:600;letter-spacing:-0.02em;color:var(--text1)}
+.logo span{color:var(--blue)}
+.hdr-badge{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-mid);margin-left:10px}
+.net-row{display:flex;align-items:center;gap:14px}
+.ni{text-align:right}
+.nl{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+.nv{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;letter-spacing:-0.02em}
+.nv.pos{color:var(--green)}.nv.neg{color:var(--red)}.nv.neu{color:var(--text2)}
+.dv{width:1px;height:30px;background:var(--border)}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:1fr 370px;min-height:calc(100vh - 58px)}
+.main{padding:22px 26px;border-right:1px solid var(--border)}
+.side{padding:22px 20px;background:var(--surface2);overflow-y:auto}
+
+/* Sections */
+.sec{margin-bottom:26px}
+.sec-title{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.sec-title-left{display:flex;align-items:center;gap:8px}
+.snum{width:20px;height:20px;border-radius:50%;background:var(--blue-light);border:1px solid var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--blue);font-weight:600;flex-shrink:0}
+
+/* Grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+
+/* Fields */
+.field{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:11px;font-weight:500;color:var(--text2)}
+.fh{font-weight:400;color:var(--text3);font-style:italic;margin-left:4px;font-size:10px}
+.fi{background:#FFFFFF;border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'DM Mono',monospace;color:var(--text1);width:100%;transition:border-color .15s}
+.fi:focus{outline:none;border-color:var(--blue)}
+.fi.dl{padding-left:25px}
+.iw{position:relative}
+.ip{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:13px;color:var(--text3);pointer-events:none}
+.is{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);pointer-events:none}
+
+/* Delta indicators */
+.delta-row{display:flex;align-items:center;gap:6px;margin-top:4px;min-height:16px}
+.delta{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
+.delta.above{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-mid)}
+.delta.below{background:var(--green-light);color:var(--green);border:1px solid var(--green-mid)}
+.delta.match{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-mid)}
+.delta.nodata{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.delta-label{font-size:10px;color:var(--text3)}
+
+/* Projected badge */
+.proj-badge{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-mid)}
+
+/* Tiers */
+.tier-card{background:#FFFFFF;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:9px}
+.tier-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.tier-nm{font-size:12px;font-weight:600;color:var(--blue)}
+.tier-rm{font-size:11px;color:var(--text3);cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
+.tier-rm:hover{color:var(--red);border-color:var(--red)}
+.tier-calc{margin-top:6px;font-size:11px;color:var(--text3)}
+.tier-calc span{color:var(--text2);font-family:'DM Mono',monospace}
+.add-tier{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px dashed var(--border2);border-radius:8px;cursor:pointer;font-size:12px;color:var(--text3);transition:all .15s}
+.add-tier:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+
+/* Sliders */
+.sf{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.sh{display:flex;justify-content:space-between;align-items:center}
+.sl-lbl{font-size:11px;font-weight:500;color:var(--text2)}
+.sl-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--text1)}
+.st{position:relative;height:4px;background:var(--border);border-radius:2px}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:transparent;position:relative;z-index:2;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--blue);border:2px solid #FFFFFF;box-shadow:0 0 0 1px var(--blue);margin-top:-6px;cursor:pointer}
+.sf-fill{position:absolute;top:0;left:0;height:4px;background:var(--blue);border-radius:2px;pointer-events:none}
+.sp-row{display:flex;gap:8px;margin-top:7px}
+.sp{flex:1;padding:6px 8px;border-radius:6px;text-align:center}
+.sp.v{background:var(--blue-light);border:1px solid var(--blue-mid)}
+.sp.p{background:var(--purple-light);border:1px solid #D4B8E8}
+.sp-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em}
+.sp-val{font-family:'DM Mono',monospace;font-size:15px;font-weight:500}
+.sp.v .sp-val{color:var(--blue)}.sp.p .sp-val{color:var(--purple)}
+
+/* Cost rows */
+.cr{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.cr:last-child{border-bottom:none}
+.cr-lbl{font-size:12px;color:var(--text2)}
+.cr-inp{width:108px}
+
+/* Mode toggle */
+.mode-toggle{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.mt-btn{padding:3px 10px;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;cursor:pointer;transition:all .15s;background:#FFFFFF;color:var(--text3)}
+.mt-btn.active{background:var(--blue-light);color:var(--blue)}
+
+/* Intelligence panel */
+.intel-panel{background:#FFFFFF;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.intel-loading{padding:16px;text-align:center;font-size:12px;color:var(--text3)}
+.intel-header{background:var(--blue);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.intel-header-name{font-size:13px;font-weight:600;color:#FFFFFF}
+.intel-header-sub{font-size:11px;color:rgba(255,255,255,0.7);margin-top:1px}
+.rep-score-wrap{display:flex;flex-direction:column;align-items:flex-end}
+.rep-score{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:#FFFFFF;line-height:1}
+.rep-score-lbl{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:2px}
+.intel-body{padding:14px 16px}
+
+/* Score components */
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.score-item{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)}
+.score-item-label{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.score-item-value{font-family:'DM Mono',monospace;font-size:16px;font-weight:500}
+.score-item-sub{font-size:10px;color:var(--text2);margin-top:2px;line-height:1.4}
+.score-item-weight{font-size:10px;color:var(--text3)}
+.score-bar{height:3px;border-radius:2px;background:var(--border);margin-top:5px}
+.score-bar-fill{height:3px;border-radius:2px}
+
+/* Legend */
+.legend-toggle{font-size:11px;color:var(--blue);cursor:pointer;text-decoration:underline;margin-bottom:10px;display:inline-block}
+.legend-panel{display:none;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:11px}
+.legend-panel.open{display:block}
+.legend-row{display:flex;gap:8px;margin-bottom:6px;align-items:flex-start}
+.legend-row:last-child{margin-bottom:0}
+.legend-score{font-family:'DM Mono',monospace;font-weight:600;color:var(--blue);min-width:32px}
+.legend-desc{color:var(--text2);line-height:1.4}
+
+/* Recommendations */
+.rec-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.rec-row:last-child{border-bottom:none}
+.rec-label{font-size:12px;color:var(--text2)}
+.rec-right{display:flex;align-items:center;gap:8px}
+.rec-value{font-family:'DM Mono',monospace;font-size:12px;color:var(--text1);font-weight:500}
+.rec-range{font-size:10px;color:var(--text3)}
+.apply-btn{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;border:1px solid var(--blue-mid);background:var(--blue-light);color:var(--blue);cursor:pointer;white-space:nowrap}
+.apply-btn:hover{background:var(--blue);color:#FFFFFF}
+
+/* History table */
+.hist-table{width:100%;border-collapse:collapse;font-size:11px}
+.hist-table th{font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:5px 8px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2)}
+.hist-table td{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.04);color:var(--text2)}
+.hist-table tr:last-child td{border-bottom:none}
+.hist-table tr:hover td{background:var(--surface2)}
+.draw-good{color:var(--green);font-weight:600}
+.draw-ok{color:var(--amber);font-weight:600}
+.draw-bad{color:var(--red);font-weight:600}
+
+/* No data state */
+.no-intel{padding:16px;text-align:center;background:var(--surface2);border-radius:10px;border:1px dashed var(--border);margin-bottom:16px}
+.no-intel-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.no-intel-sub{font-size:11px;color:var(--text3);line-height:1.5}
+
+/* Side P&L */
+.ss{margin-bottom:18px}
+.side-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.pl{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
+.pl:last-child{border-bottom:none}
+.pl-l{font-size:12px;color:var(--text2)}
+.pl-v{font-family:'DM Mono',monospace;font-size:12px}
+.pl-v.pos{color:var(--green)}.pl-v.neg{color:var(--red)}.pl-v.dim{color:var(--text3)}
+.pl.tot{padding-top:8px;margin-top:3px;border-top:1px solid var(--border2);border-bottom:none}
+.pl.tot .pl-l{font-weight:600;color:var(--text1);font-size:13px}
+.pl.tot .pl-v{font-size:14px}
+.ph{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:7px 0 3px}
+.var-row{display:flex;justify-content:space-between;padding:2px 0 4px;padding-left:10px}
+.var-l{font-size:10px;color:var(--text3)}
+.var-v{font-family:'DM Mono',monospace;font-size:10px}
+.var-v.over{color:var(--red)}.var-v.under{color:var(--green)}.var-v.flat{color:var(--text3)}
+.mb-wrap{margin-top:10px}
+.mb-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px}
+.mb-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.mb-fill{height:6px;border-radius:3px;transition:width .3s,background .3s}
+
+/* Leverage */
+.lev-card{background:#FFFFFF;border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:7px}
+.lev-lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
+.lev-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+.lev-val.cost{color:var(--red)}.lev-val.gain{color:var(--green)}
+.lev-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* Export */
+.exp-btn{width:100%;padding:11px;background:var(--blue);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:white;cursor:pointer;transition:background .15s;margin-top:14px}
+.exp-btn:hover{background:#245178}
+.exp-panel{display:none;margin-top:12px}
+.exp-inner{background:#FFFFFF;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.exp-hdr{background:var(--blue);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.exp-hdr-lbl{color:white;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase}
+.copy-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.exp-out{padding:16px;font-size:12px;line-height:1.8;color:var(--text1);white-space:pre-wrap;font-family:'DM Sans',sans-serif}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div style="display:flex;align-items:center">
+    <div class="logo">Venue<span>OS</span></div>
+    <div class="hdr-badge">Deal Calculator</div>
+  </div>
+  <div class="net-row">
+    <div class="ni"><div class="nl">Total Revenue</div><div class="nv neu" id="h-rev">$0</div></div>
+    <div class="dv"></div>
+    <div class="ni"><div class="nl">Net to Venue</div><div class="nv neu" id="h-net">$0</div></div>
+    <div class="dv"></div>
+    <div class="ni"><div class="nl">Margin</div><div class="nv neu" id="h-mar">—</div></div>
+  </div>
+</div>
+
+<div class="layout">
+<div class="main">
+
+  <!-- PANEL 1: EVENT SETUP -->
+  <div class="sec">
+    <div class="sec-title">
+      <div class="sec-title-left"><span class="snum">1</span>Event Setup</div>
+    </div>
+
+    <div class="g2" style="margin-bottom:14px">
+      <div class="field">
+        <label class="fl">Promoter Name <span class="fh">triggers historical intelligence</span></label>
+        <input type="text" class="fi" id="promoter-name" placeholder="e.g. Collectiv" oninput="debounceFetch()">
+        <div class="delta-row"><span class="delta nodata" id="d-promoter">Enter promoter to load history</span></div>
+      </div>
+      <div class="field">
+        <label class="fl">Artist Name <span class="fh">optional</span></label>
+        <input type="text" class="fi" id="artist-name" placeholder="e.g. DJ Snake">
+      </div>
+    </div>
+
+    <div class="g2" style="margin-bottom:14px">
+      <div class="field">
+        <label class="fl">Event Name</label>
+        <input type="text" class="fi" id="ev-name" placeholder="e.g. Latin Saturday" oninput="calc()">
+      </div>
+      <div class="field">
+        <label class="fl">Event Type <span class="fh">affects spend per head estimate</span></label>
+        <select class="fi" id="ev-type" onchange="onTypeChange()">
+          <option value="">Select type</option>
+          <option value="Latin">Latin Night</option>
+          <option value="Electronic">Electronic</option>
+          <option value="Hip Hop and R&B">Hip Hop / R&B</option>
+          <option value="Open Format">Open Format</option>
+          <option value="Live Performance">Live Performance</option>
+          <option value="Corporate and Private">Corporate Event</option>
+          <option value="Cover Band">Cover Band</option>
+          <option value="Sports and Viewing">Sports Activation</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Ticket Tiers -->
+    <div class="fl" style="margin-bottom:9px">Ticket Tiers <span class="fh">add as many tiers as needed</span></div>
+    <div id="tiers"></div>
+    <div class="add-tier" onclick="addTier()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Add ticket tier
+    </div>
+
+    <!-- Bar & Attendance -->
+    <div style="margin-top:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+        <div class="fl">Bar &amp; Attendance</div>
+        <span class="proj-badge">Projected</span>
+      </div>
+      <div class="g3">
+        <div class="field">
+          <label class="fl">Attendance</label>
+          <input type="number" class="fi" id="attend" value="200" min="0" step="10" oninput="calc()">
+          <div class="delta-row"><span class="delta nodata" id="d-attend">—</span><span class="delta-label" id="d-attend-lbl"></span></div>
+        </div>
+        <div class="field">
+          <label class="fl">Bar Spend / Head</label>
+          <div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="sph" value="35" min="0" step="1" oninput="calc()"></div>
+          <div class="delta-row"><span class="delta nodata" id="d-sph">—</span><span class="delta-label" id="d-sph-lbl"></span></div>
+        </div>
+        <div class="field">
+          <label class="fl">Bar COGS %</label>
+          <div class="iw"><input type="number" class="fi" id="cogs" value="16.1" min="0" max="100" step="0.1" oninput="calc()"><span class="is">%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="margin-top:14px">
+      <div class="fl" style="margin-bottom:9px">Table / Bottle Service</div>
+      <div class="g3">
+        <div class="field">
+          <label class="fl">Tables Expected</label>
+          <input type="number" class="fi" id="tbl-ct" value="4" min="0" oninput="calc()">
+          <div class="delta-row"><span class="delta nodata" id="d-tables">—</span><span class="delta-label" id="d-tables-lbl"></span></div>
+        </div>
+        <div class="field">
+          <label class="fl">Table Minimum</label>
+          <div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="tbl-min" value="500" min="0" step="50" oninput="calc()"></div>
+        </div>
+        <div class="field">
+          <label class="fl">Avg Table Spend</label>
+          <div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="tbl-spend" value="800" min="0" step="50" oninput="calc()"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: DEAL STRUCTURE -->
+  <div class="sec">
+    <div class="sec-title"><div class="sec-title-left"><span class="snum">2</span>Deal Structure</div></div>
+
+    <div class="fl" style="margin-bottom:10px">Door Revenue</div>
+    <div class="sf">
+      <div class="sh"><div class="sl-lbl">Promoter gets</div><div class="sl-val"><span id="d-sv">20</span>% of door</div></div>
+      <div class="st"><div class="sf-fill" id="d-fill" style="width:20%"></div><input type="range" min="0" max="100" value="20" step="5" id="d-sl" oninput="syncS('d');calc()"></div>
+      <div class="sp-row">
+        <div class="sp v"><div class="sp-lbl">Venue keeps</div><div class="sp-val" id="d-vp">80%</div></div>
+        <div class="sp p"><div class="sp-lbl">Promoter gets</div><div class="sp-val" id="d-pp">20%</div></div>
+      </div>
+      <div class="delta-row" style="margin-top:6px"><span class="delta nodata" id="d-doorsplit">—</span><span class="delta-label" id="d-doorsplit-lbl"></span></div>
+    </div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="field"><label class="fl">Venue keeps first</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="d-thr" value="0" min="0" step="100" oninput="calc()"></div></div>
+      <div class="field"><label class="fl">Promoter floor guarantee</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="d-guar" value="0" min="0" step="100" oninput="calc()"></div></div>
+    </div>
+
+    <div class="fl" style="margin-bottom:10px">Bar Revenue</div>
+    <div class="sf">
+      <div class="sh"><div class="sl-lbl">Promoter gets</div><div class="sl-val"><span id="b-sv">0</span>% of bar</div></div>
+      <div class="st"><div class="sf-fill" id="b-fill" style="width:0%"></div><input type="range" min="0" max="50" value="0" step="5" id="b-sl" oninput="syncS('b');calc()"></div>
+      <div class="sp-row">
+        <div class="sp v"><div class="sp-lbl">Venue keeps</div><div class="sp-val" id="b-vp">100%</div></div>
+        <div class="sp p"><div class="sp-lbl">Promoter gets</div><div class="sp-val" id="b-pp">0%</div></div>
+      </div>
+      <div class="delta-row" style="margin-top:6px"><span class="delta nodata" id="d-barsplit">—</span><span class="delta-label" id="d-barsplit-lbl"></span></div>
+    </div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="field"><label class="fl">Venue keeps first</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="b-thr" value="0" min="0" step="500" oninput="calc()"></div></div>
+      <div class="field"><label class="fl">Bar split basis</label>
+        <select class="fi" id="b-basis" onchange="calc()">
+          <option value="gross">Gross bar sales</option>
+          <option value="net_cogs">Net after COGS</option>
+          <option value="net_thr">Net after threshold</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fl" style="margin-bottom:10px">Table / Bottle Service</div>
+    <div class="sf" style="margin-bottom:16px">
+      <div class="sh"><div class="sl-lbl">Promoter gets</div><div class="sl-val"><span id="t-sv">0</span>% of table</div></div>
+      <div class="st"><div class="sf-fill" id="t-fill" style="width:0%"></div><input type="range" min="0" max="50" value="0" step="5" id="t-sl" oninput="syncS('t');calc()"></div>
+      <div class="sp-row">
+        <div class="sp v"><div class="sp-lbl">Venue keeps</div><div class="sp-val" id="t-vp">100%</div></div>
+        <div class="sp p"><div class="sp-lbl">Promoter gets</div><div class="sp-val" id="t-pp">0%</div></div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="field">
+        <label class="fl">Artist Fee — Landed</label>
+        <div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="art-fee" value="0" min="0" step="250" oninput="calc()"></div>
+        <div class="delta-row"><span class="delta nodata" id="d-artfee">—</span><span class="delta-label" id="d-artfee-lbl"></span></div>
+      </div>
+      <div class="field"><label class="fl">Artist — Travel &amp; Rider</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="art-travel" value="0" min="0" step="100" oninput="calc()"></div></div>
+      <div class="field"><label class="fl">Flat Guarantee to Promoter</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="flat-g" value="0" min="0" step="250" oninput="calc()"></div></div>
+      <div class="field"><label class="fl">House Fee</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" id="house-f" value="0" min="0" step="100" oninput="calc()"></div></div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: OPERATING COSTS -->
+  <div class="sec">
+    <div class="sec-title">
+      <div class="sec-title-left"><span class="snum">3</span>Operating Costs</div>
+      <div class="mode-toggle">
+        <div class="mt-btn active" id="mode-proj" onclick="setMode('proj')">Projection</div>
+        <div class="mt-btn" id="mode-actual" onclick="setMode('actual')">Actual</div>
+      </div>
+    </div>
+    <div id="mode-banner" style="display:none;margin-bottom:12px;padding:8px 12px;background:var(--green-light);border:1px solid var(--green-mid);border-radius:8px;font-size:11px;color:var(--green)">
+      <strong>Actual mode</strong> — enter what was really spent. Variance vs. projection shows in the P&L panel.
+    </div>
+    <div class="cr"><div class="cr-lbl">Nightly operating cost <span style="color:var(--text3);font-size:10px">(fixed overhead allocation)</span></div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-noc" value="3500" min="0" step="100" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Security</div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-sec" value="800" min="0" step="50" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Door girls</div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-dg" value="400" min="0" step="50" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Police security <span style="color:var(--text3);font-size:10px">($50/hr · $200 min)</span></div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-pol" value="200" min="200" step="50" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Production staff</div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-ps" value="600" min="0" step="50" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Production equip + tech rider</div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-pe" value="0" min="0" step="100" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Hospitality rider</div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-rid" value="0" min="0" step="100" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Marketing — internal</div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-mkt" value="300" min="0" step="50" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl">Marketing — promoter contribution <span style="color:var(--text3);font-size:10px">(subtract)</span></div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-mkt-p" value="0" min="0" step="50" oninput="calc()"></div></div>
+    <div class="cr"><div class="cr-lbl"><div>Other</div><input type="text" class="fi" id="c-other-desc" placeholder="Description" style="margin-top:4px;width:180px;font-family:'DM Sans',sans-serif;font-size:12px" oninput="calc()"></div><div class="iw cr-inp"><span class="ip">$</span><input type="number" class="fi dl" id="c-other" value="0" min="0" step="50" oninput="calc()"></div></div>
+  </div>
+
+</div>
+
+<!-- SIDE PANEL -->
+<div class="side">
+
+  <!-- PROMOTER INTELLIGENCE -->
+  <div id="intel-empty" class="no-intel">
+    <div class="no-intel-title">Promoter Intelligence</div>
+    <div class="no-intel-sub">Enter a promoter name to load historical performance data, reputation score, and recommended projections.</div>
+  </div>
+  <div id="intel-loading" style="display:none" class="intel-panel">
+    <div class="intel-loading">Loading promoter data...</div>
+  </div>
+  <div id="intel-panel" style="display:none" class="intel-panel">
+    <div class="intel-header">
+      <div>
+        <div class="intel-header-name" id="ip-name">—</div>
+        <div class="intel-header-sub" id="ip-sub">—</div>
+      </div>
+      <div class="rep-score-wrap">
+        <div class="rep-score" id="ip-score">—</div>
+        <div class="rep-score-lbl">/ 10</div>
+      </div>
+    </div>
+    <div class="intel-body">
+
+      <div class="score-grid" id="ip-scores"></div>
+
+      <div class="legend-toggle" onclick="toggleLegend()">How is the score calculated? ↓</div>
+      <div class="legend-panel" id="legend-panel">
+        <div style="font-size:11px;font-weight:600;color:var(--blue);margin-bottom:8px">Reputation Score — 1 to 10</div>
+        <div class="legend-row"><div class="legend-score">9–10</div><div class="legend-desc"><strong>Exceptional.</strong> Consistently delivers on promised attendance, bar spend above event type average, profitable deals every time.</div></div>
+        <div class="legend-row"><div class="legend-score">7–8</div><div class="legend-desc"><strong>Strong.</strong> Reliable draw, bar yield at or above average, deals work. Minor variance across shows.</div></div>
+        <div class="legend-row"><div class="legend-score">5–6</div><div class="legend-desc"><strong>Solid.</strong> Attendance within range, bar yield average, some deal profitability variance. Dependable but not exceptional.</div></div>
+        <div class="legend-row"><div class="legend-score">3–4</div><div class="legend-desc"><strong>Developing.</strong> Inconsistent draw or below-average bar yield. Deals work but margin is thin. Use thresholds.</div></div>
+        <div class="legend-row"><div class="legend-score">1–2</div><div class="legend-desc"><strong>High risk.</strong> Significant attendance shortfalls or negative margin history. Flat guarantee only, no bar split.</div></div>
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--blue-mid);font-size:10px;color:var(--blue)">
+          <strong>Components:</strong> Draw Accuracy (35%) · Bar Yield (30%) · Deal Profitability (25%) · Consistency (10%)
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;margin-top:4px">Recommended Projections</div>
+      <div id="ip-recs"></div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin:12px 0 8px">Event History</div>
+      <div style="overflow-x:auto">
+        <table class="hist-table" id="ip-history"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- P&L -->
+  <div class="ss">
+    <div class="side-title">Revenue</div>
+    <div class="ph">Door</div>
+    <div class="pl"><div class="pl-l">Gross ticket revenue</div><div class="pl-v" id="s-dg">$0.00</div></div>
+    <div class="pl"><div class="pl-l">Ticket fees retained</div><div class="pl-v pos" id="s-df">$0.00</div></div>
+    <div class="ph">Bar</div>
+    <div class="pl"><div class="pl-l">Gross bar revenue</div><div class="pl-v" id="s-bg">$0.00</div></div>
+    <div class="pl"><div class="pl-l">Less COGS (<span id="s-cp">16.1</span>%)</div><div class="pl-v neg" id="s-bc">$0.00</div></div>
+    <div class="ph">Table</div>
+    <div class="pl"><div class="pl-l">Table &amp; bottle revenue</div><div class="pl-v" id="s-tg">$0.00</div></div>
+    <div class="pl tot"><div class="pl-l">Total Gross Revenue</div><div class="pl-v" id="s-tot">$0.00</div></div>
+  </div>
+  <div class="ss">
+    <div class="side-title">Promoter &amp; Artist Payouts</div>
+    <div class="pl"><div class="pl-l">Door payout</div><div class="pl-v neg" id="s-dp">$0.00</div></div>
+    <div class="pl"><div class="pl-l">Bar payout</div><div class="pl-v neg" id="s-bp">$0.00</div></div>
+    <div class="pl"><div class="pl-l">Table payout</div><div class="pl-v neg" id="s-tp">$0.00</div></div>
+    <div class="pl"><div class="pl-l">Flat guarantee</div><div class="pl-v neg" id="s-fg">$0.00</div></div>
+    <div class="pl"><div class="pl-l">Artist fee</div><div class="pl-v neg" id="s-af">$0.00</div></div>
+    <div class="pl"><div class="pl-l">House fee</div><div class="pl-v pos" id="s-hf">$0.00</div></div>
+    <div class="pl tot"><div class="pl-l">Net to Venue (pre-cost)</div><div class="pl-v" id="s-npc">$0.00</div></div>
+  </div>
+  <div class="ss">
+    <div class="side-title">Operating Costs</div>
+    <div class="pl"><div class="pl-l">Nightly operating</div><div class="pl-v neg" id="s-cn">$0.00</div></div>
+    <div class="var-row" style="display:none" id="vr-cn"><div class="var-l">vs. projection</div><div class="var-v flat" id="vv-cn">—</div></div>
+    <div class="pl"><div class="pl-l">Security</div><div class="pl-v neg" id="s-cs">$0.00</div></div>
+    <div class="var-row" style="display:none" id="vr-cs"><div class="var-l">vs. projection</div><div class="var-v flat" id="vv-cs">—</div></div>
+    <div class="pl"><div class="pl-l">Door girls</div><div class="pl-v neg" id="s-cdg">$0.00</div></div>
+    <div class="var-row" style="display:none" id="vr-cdg"><div class="var-l">vs. projection</div><div class="var-v flat" id="vv-cdg">—</div></div>
+    <div class="pl"><div class="pl-l">Police</div><div class="pl-v neg" id="s-cp2">$0.00</div></div>
+    <div class="var-row" style="display:none" id="vr-cp"><div class="var-l">vs. projection</div><div class="var-v flat" id="vv-cp">—</div></div>
+    <div class="pl"><div class="pl-l">Production staff</div><div class="pl-v neg" id="s-cps">$0.00</div></div>
+    <div class="var-row" style="display:none" id="vr-cps"><div class="var-l">vs. projection</div><div class="var-v flat" id="vv-cps">—</div></div>
+    <div class="pl"><div class="pl-l">Equip + rider</div><div class="pl-v neg" id="s-ce">$0.00</div></div>
+    <div class="var-row" style="display:none" id="vr-ce"><div class="var-l">vs. projection</div><div class="var-v flat" id="vv-ce">—</div></div>
+    <div class="pl"><div class="pl-l">Marketing (net)</div><div class="pl-v neg" id="s-cm">$0.00</div></div>
+    <div class="var-row" style="display:none" id="vr-cm"><div class="var-l">vs. projection</div><div class="var-v flat" id="vv-cm">—</div></div>
+    <div class="pl"><div class="pl-l" id="s-other-lbl">Other</div><div class="pl-v neg" id="s-co">$0.00</div></div>
+    <div class="pl tot"><div class="pl-l">Total Costs</div><div class="pl-v neg" id="s-tc">$0.00</div></div>
+  </div>
+  <div class="ss">
+    <div class="side-title">Bottom Line</div>
+    <div class="pl tot" style="margin-bottom:10px"><div class="pl-l">Net to Venue</div><div class="pl-v" id="s-fn">$0.00</div></div>
+    <div class="mb-wrap">
+      <div class="mb-lbl"><span>Margin</span><span id="s-mp">—</span></div>
+      <div class="mb-track"><div class="mb-fill" id="s-mb" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="ss">
+    <div class="side-title">Negotiation Leverage</div>
+    <div class="lev-card"><div class="lev-lbl">Giving 5% more door</div><div class="lev-val cost" id="l-d5">—</div><div class="lev-sub">cost per 5% door concession</div></div>
+    <div class="lev-card"><div class="lev-lbl">Giving 5% more bar</div><div class="lev-val cost" id="l-b5">—</div><div class="lev-sub">cost per 5% bar concession</div></div>
+    <div class="lev-card"><div class="lev-lbl">+50 attendance</div><div class="lev-val gain" id="l-a50">—</div><div class="lev-sub">incremental revenue, 50 more heads</div></div>
+    <div class="lev-card"><div class="lev-lbl">$5 more bar spend / head</div><div class="lev-val gain" id="l-s5">—</div><div class="lev-sub">incremental net bar revenue</div></div>
+  </div>
+
+  <button class="exp-btn" onclick="exportDeal()">Generate Deal Summary</button>
+  <div class="exp-panel" id="exp-panel">
+    <div class="exp-inner">
+      <div class="exp-hdr">
+        <div class="exp-hdr-lbl">Deal Summary</div>
+        <button class="copy-btn" onclick="copyDeal()" id="copy-btn">Copy to Clipboard</button>
+      </div>
+      <div class="exp-out" id="exp-out"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const WORKSHOP_URL = 'https://a1c5cfef.preview.workshop.ai';
+const sphDefaults = {
+  'Latin':{v:42,n:'Latin avg — tequila-heavy, bottle service strong'},
+  'Electronic':{v:35,n:'Electronic avg — well spirits dominant'},
+  'Hip Hop and R&B':{v:38,n:'Hip Hop/R&B avg — Hennessy and premium spirits'},
+  'Open Format':{v:32,n:'Open Format avg — mixed demographic'},
+  'Live Performance':{v:28,n:'Live Performance avg — lower bar focus'},
+  'Corporate and Private':{v:55,n:'Corporate avg — premium open bar typical'},
+  'Cover Band':{v:30,n:'Cover Band avg — beer-forward, older demo'},
+  'Sports and Viewing':{v:22,n:'Sports avg — beer and casual spend'}
+};
+
+let intel = null;
+let costMode = 'proj';
+let projCosts = {};
+let tc = 1;
+let fetchTimer = null;
+
+function g(id){return document.getElementById(id)}
+function fv(id){return parseFloat(g(id)?.value)||0}
+function iv(id){return parseInt(g(id)?.value)||0}
+function ff(n){const s=Math.abs(n);const v=s>=1000?'$'+(s/1000).toFixed(1)+'K':'$'+s.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return n<0?'-'+v:v}
+
+// Debounced fetch
+function debounceFetch(){
+  clearTimeout(fetchTimer);
+  fetchTimer = setTimeout(fetchIntelligence, 600);
+}
+
+async function fetchIntelligence(){
+  const promoter = g('promoter-name').value.trim();
+  const evType = g('ev-type').value;
+  if (promoter.length < 2) {
+    g('intel-empty').style.display='block';
+    g('intel-loading').style.display='none';
+    g('intel-panel').style.display='none';
+    g('d-promoter').textContent='Enter promoter to load history';
+    g('d-promoter').className='delta nodata';
+    intel = null;
+    clearDeltas();
+    return;
+  }
+  g('intel-empty').style.display='none';
+  g('intel-loading').style.display='block';
+  g('intel-panel').style.display='none';
+  try {
+    const params = new URLSearchParams({promoter});
+    if (evType) params.append('event_type', evType);
+    const res = await fetch(`${WORKSHOP_URL}/api/promoter-intelligence?${params}`);
+    const data = await res.json();
+    intel = data;
+    renderIntelligence(data);
+  } catch(e) {
+    g('intel-loading').style.display='none';
+    g('intel-empty').style.display='block';
+    g('d-promoter').textContent='Could not load — check connection';
+    g('d-promoter').className='delta nodata';
+  }
+}
+
+function renderIntelligence(data){
+  g('intel-loading').style.display='none';
+  if (!data.found) {
+    g('intel-empty').style.display='block';
+    g('d-promoter').textContent='No history found — new promoter';
+    g('d-promoter').className='delta nodata';
+    clearDeltas();
+    return;
+  }
+  g('intel-panel').style.display='block';
+  g('d-promoter').textContent=`${data.total_events} events on record`;
+  g('d-promoter').className='delta match';
+
+  // Header
+  const typeLabel = data.event_type ? ` · ${data.event_type}` : '';
+  g('ip-name').textContent = data.promoter;
+  g('ip-sub').textContent = `${data.total_events} events total · ${data.type_events} matching${typeLabel}`;
+  const score = data.reputation_score;
+  const scoreEl = g('ip-score');
+  scoreEl.textContent = score !== null ? score.toFixed(1) : '—';
+  scoreEl.style.color = score >= 7 ? '#4ADE80' : score >= 5 ? '#FBBF24' : score !== null ? '#F87171' : 'rgba(255,255,255,0.5)';
+
+  // Score components
+  const comps = data.score_components;
+  const compDefs = [
+    {key:'draw_accuracy', label:'Draw Accuracy', weight:'35%'},
+    {key:'bar_yield', label:'Bar Yield', weight:'30%'},
+    {key:'deal_profitability', label:'Deal Profitability', weight:'25%'},
+    {key:'consistency', label:'Consistency', weight:'10%'},
+  ];
+  const scoreGrid = g('ip-scores');
+  scoreGrid.innerHTML = compDefs.map(({key,label,weight}) => {
+    const c = comps[key];
+    const v = c?.score;
+    const col = v >= 7 ? 'var(--green)' : v >= 5 ? 'var(--amber)' : v !== null && v !== undefined ? 'var(--red)' : 'var(--text3)';
+    const barW = v !== null && v !== undefined ? (v/10*100)+'%' : '0%';
+    const barCol = v >= 7 ? 'var(--green)' : v >= 5 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="score-item">
+      <div class="score-item-label">${label} <span class="score-item-weight">${weight}</span></div>
+      <div class="score-item-value" style="color:${col}">${v !== null && v !== undefined ? v.toFixed(1) : '—'}</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:${barW};background:${barCol}"></div></div>
+      <div class="score-item-sub">${c?.label || 'No data'}</div>
+    </div>`;
+  }).join('');
+
+  // Recommendations
+  const rec = data.recommendations;
+  const recRows = [];
+  if (rec.attendance?.suggested) {
+    recRows.push({label:'Attendance', val:`${rec.attendance.suggested.toLocaleString()}`, range:`${rec.attendance.range_low}–${rec.attendance.range_high}`, field:'attend', raw:rec.attendance.suggested});
+  }
+  if (rec.spend_per_head?.suggested) {
+    recRows.push({label:'Bar Spend / Head', val:`$${rec.spend_per_head.suggested}`, field:'sph', raw:rec.spend_per_head.suggested});
+  }
+  if (rec.door_split_promoter?.suggested !== null && rec.door_split_promoter?.suggested !== undefined) {
+    recRows.push({label:'Door Split (Promoter)', val:`${rec.door_split_promoter.suggested.toFixed(0)}%`, field:'d-sl', raw:Math.round(rec.door_split_promoter.suggested)});
+  }
+  if (rec.bar_split_promoter?.suggested !== null && rec.bar_split_promoter?.suggested !== undefined) {
+    recRows.push({label:'Bar Split (Promoter)', val:`${rec.bar_split_promoter.suggested.toFixed(0)}%`, field:'b-sl', raw:Math.round(rec.bar_split_promoter.suggested)});
+  }
+  if (rec.avg_artist_fee) {
+    recRows.push({label:'Artist Fee (avg)', val:`$${Math.round(rec.avg_artist_fee).toLocaleString()}`, field:'art-fee', raw:Math.round(rec.avg_artist_fee)});
+  }
+  if (rec.avg_net_to_venue) {
+    recRows.push({label:'Avg Net to Venue', val:`$${Math.round(rec.avg_net_to_venue).toLocaleString()}`, field:null});
+  }
+
+  g('ip-recs').innerHTML = recRows.map(r => `
+    <div class="rec-row">
+      <div class="rec-label">${r.label}${r.range ? `<br><span style="font-size:10px;color:var(--text3)">range: ${r.range}</span>` : ''}</div>
+      <div class="rec-right">
+        <div class="rec-value">${r.val}</div>
+        ${r.field ? `<div class="apply-btn" onclick="applyRec('${r.field}',${r.raw})">Apply</div>` : ''}
+      </div>
+    </div>
+  `).join('') || '<div style="font-size:11px;color:var(--text3)">No recommendations yet — need completed events</div>';
+
+  // History table
+  const hist = data.history || [];
+  g('ip-history').innerHTML = hist.length ? `
+    <thead><tr>
+      <th>Event</th><th>Date</th><th>Att.</th><th>Draw</th><th>SPH</th><th>Net</th>
+    </tr></thead>
+    <tbody>${hist.map(h => {
+      const drawCls = !h.draw_pct ? '' : h.draw_pct >= 95 ? 'draw-good' : h.draw_pct >= 80 ? 'draw-ok' : 'draw-bad';
+      return `<tr>
+        <td>${h.event_name || '—'}</td>
+        <td>${h.event_date ? h.event_date.substring(0,10) : '—'}</td>
+        <td>${h.actual_attendance || '—'}</td>
+        <td class="${drawCls}">${h.draw_pct ? h.draw_pct+'%' : '—'}</td>
+        <td>${h.spend_per_head_actual ? '$'+h.spend_per_head_actual : '—'}</td>
+        <td style="color:${h.net_revenue_actual > 0 ? 'var(--green)' : 'var(--red)'}">${h.net_revenue_actual ? '$'+Math.round(h.net_revenue_actual).toLocaleString() : '—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  ` : '<thead><tr><th colspan="6">No completed events found</th></tr></thead>';
+
+  updateDeltas();
+}
+
+function applyRec(field, val){
+  const el = g(field);
+  if (!el) return;
+  el.value = val;
+  if (field === 'd-sl') { syncS('d'); }
+  else if (field === 'b-sl') { syncS('b'); }
+  calc();
+  updateDeltas();
+}
+
+function clearDeltas(){
+  ['d-attend','d-sph','d-tables','d-doorsplit','d-barsplit','d-artfee'].forEach(id => {
+    const el = g(id);
+    if (el) { el.textContent='—'; el.className='delta nodata'; }
+  });
+  ['d-attend-lbl','d-sph-lbl','d-tables-lbl','d-doorsplit-lbl','d-barsplit-lbl','d-artfee-lbl'].forEach(id => {
+    const el = g(id);
+    if (el) el.textContent='';
+  });
+}
+
+function updateDeltas(){
+  if (!intel || !intel.found) { clearDeltas(); return; }
+  const rec = intel.recommendations;
+
+  function setDelta(deltaId, lblId, actual, suggested, prefix='', suffix='', isLowerBetter=false){
+    const el = g(deltaId);
+    const lbl = g(lblId);
+    if (!el || suggested === null || suggested === undefined) {
+      if (el) { el.textContent='—'; el.className='delta nodata'; }
+      return;
+    }
+    const diff = actual - suggested;
+    const pct = Math.abs(diff/suggested*100).toFixed(0);
+    if (Math.abs(diff) < suggested * 0.03) {
+      el.textContent = 'Within historical range';
+      el.className = 'delta match';
+      if (lbl) lbl.textContent = '';
+    } else if (diff > 0) {
+      el.textContent = `+${pct}% above historical avg`;
+      el.className = isLowerBetter ? 'delta above' : 'delta above';
+      if (lbl) lbl.textContent = `hist. avg ${prefix}${Math.round(suggested).toLocaleString()}${suffix}`;
+    } else {
+      el.textContent = `-${pct}% below historical avg`;
+      el.className = isLowerBetter ? 'delta match' : 'delta below';
+      if (lbl) lbl.textContent = `hist. avg ${prefix}${Math.round(suggested).toLocaleString()}${suffix}`;
+    }
+  }
+
+  const attend = fv('attend');
+  const sph = fv('sph');
+  const tables = fv('tbl-ct');
+  const doorSplit = iv('d-sl');
+  const barSplit = iv('b-sl');
+  const artFee = fv('art-fee');
+
+  setDelta('d-attend','d-attend-lbl', attend, rec.attendance?.suggested, '', ' guests');
+  setDelta('d-sph','d-sph-lbl', sph, rec.spend_per_head?.suggested, '$', '/head');
+  if (rec.attendance?.suggested) {
+    const histTables = Math.round(rec.attendance.suggested / 50); // rough table estimate
+    setDelta('d-tables','d-tables-lbl', tables, histTables, '', ' tables');
+  }
+  setDelta('d-doorsplit','d-doorsplit-lbl', doorSplit, rec.door_split_promoter?.suggested, '', '%', true);
+  setDelta('d-barsplit','d-barsplit-lbl', barSplit, rec.bar_split_promoter?.suggested, '', '%', true);
+  if (rec.avg_artist_fee) setDelta('d-artfee','d-artfee-lbl', artFee, rec.avg_artist_fee, '$', '');
+}
+
+function onTypeChange(){
+  const t = g('ev-type').value;
+  if (t && sphDefaults[t]) {
+    g('sph').value = sphDefaults[t].v;
+  }
+  if (g('promoter-name').value.trim().length >= 2) fetchIntelligence();
+  else calc();
+}
+
+function addTier(){
+  const n = tc;
+  const names = ['VIP','Early Bird','Presale','Table Minimum','Comp / Guest List'];
+  const d = names[Math.min(n-1, names.length-1)];
+  const div = document.createElement('div');
+  div.className = 'tier-card';
+  div.id = 'tier-'+n;
+  div.innerHTML = `<div class="tier-hdr"><input type="text" class="fi" style="width:180px;font-weight:600" value="${d}" oninput="calc()"><div class="tier-rm" onclick="rmTier(${n})">Remove</div></div><div class="g4"><div class="field"><label class="fl">Price</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="40" min="0" step="5" oninput="calc()"></div></div><div class="field"><label class="fl">Fee</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="3.50" min="0" step="0.25" oninput="calc()"></div></div><div class="field"><label class="fl">Fee to Venue?</label><select class="fi" onchange="calc()"><option value="1">Yes</option><option value="0">No</option></select></div><div class="field"><label class="fl">Qty</label><input type="number" class="fi" value="50" min="0" step="10" oninput="calc()"></div></div><div class="tier-calc">Gross: <span id="tr-${n}-g">$0</span> · Net w/ fees: <span id="tr-${n}-n">$0</span></div>`;
+  g('tiers').appendChild(div);
+  tc++;
+  calc();
+}
+function rmTier(n){const e=g('tier-'+n);if(e)e.remove();calc();}
+
+function syncS(p){
+  const sl=g(p+'-sl');const v=parseInt(sl.value);const mx=parseInt(sl.max);
+  g(p+'-fill').style.width=(v/mx*100)+'%';
+  g(p+'-sv').textContent=v;
+  if(p==='d'){g('d-vp').textContent=(100-v)+'%';g('d-pp').textContent=v+'%';}
+  else if(p==='b'){g('b-vp').textContent=(100-v)+'%';g('b-pp').textContent=v+'%';}
+  else if(p==='t'){g('t-vp').textContent=(100-v)+'%';g('t-pp').textContent=v+'%';}
+}
+
+let costMode2 = 'proj';
+const projCosts2 = {};
+function setMode(mode){
+  costMode2 = mode;
+  const pb=g('mode-proj');const ab=g('mode-actual');const bn=g('mode-banner');
+  if(mode==='proj'){
+    pb.className='mt-btn active';ab.className='mt-btn';bn.style.display='none';
+    document.querySelectorAll('.var-row').forEach(r=>r.style.display='none');
+  } else {
+    ['c-noc','c-sec','c-dg','c-pol','c-ps','c-pe','c-rid','c-mkt','c-mkt-p','c-other'].forEach(id=>{
+      const el=g(id);if(el)projCosts2[id]=parseFloat(el.value)||0;
+    });
+    pb.className='mt-btn';ab.className='mt-btn active';bn.style.display='block';
+    document.querySelectorAll('.var-row').forEach(r=>r.style.display='flex');
+  }
+  calc();
+}
+
+function updateVariances(){
+  if(costMode2!=='actual')return;
+  const pairs=[['c-noc','vv-cn'],['c-sec','vv-cs'],['c-dg','vv-cdg'],['c-pol','vv-cp'],['c-ps','vv-cps'],['c-pe','vv-ce'],['c-rid','vv-ce'],['c-mkt','vv-cm'],['c-other','vv-co']];
+  pairs.forEach(([inp,vid])=>{
+    const el=g(vid);if(!el)return;
+    const actual=parseFloat(g(inp)?.value)||0;
+    const proj=projCosts2[inp]||0;
+    const diff=actual-proj;
+    if(Math.abs(diff)<0.01){el.textContent='On target';el.className='var-v flat';}
+    else if(diff>0){el.textContent='+$'+diff.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})+' over';el.className='var-v over';}
+    else{el.textContent='-$'+Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})+' under';el.className='var-v under';}
+  });
+}
+
+function toggleLegend(){
+  const p=g('legend-panel');
+  p.classList.toggle('open');
+  g('legend-toggle').querySelector ? null : null;
+}
+
+function calc(){
+  let dGross=0,dFees=0;
+  document.querySelectorAll('#tiers .tier-card').forEach(card=>{
+    const ins=card.querySelectorAll('input[type=number]');
+    const sel=card.querySelectorAll('select');
+    const price=parseFloat(ins[0]?.value)||0;const fee=parseFloat(ins[1]?.value)||0;
+    const keep=parseInt(sel[0]?.value)||0;const qty=parseFloat(ins[2]?.value)||0;
+    const gr=price*qty;const fr=keep?fee*qty:0;
+    dGross+=gr;dFees+=fr;
+    const rg=card.querySelector('[id^="tr-"][id$="-g"]');const rn=card.querySelector('[id^="tr-"][id$="-n"]');
+    if(rg)rg.textContent='$'+gr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(rn)rn.textContent='$'+(gr+fr).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  });
+  // Default GA tier
+  const t0=g('tier-0');
+  if(t0){
+    const ins=t0.querySelectorAll('input[type=number]');const sel=t0.querySelectorAll('select');
+    const price=parseFloat(ins[0]?.value)||0;const fee=parseFloat(ins[1]?.value)||0;
+    const keep=parseInt(sel[0]?.value)||0;const qty=parseFloat(ins[2]?.value)||0;
+    const gr=price*qty;const fr=keep?fee*qty:0;
+    dGross+=gr;dFees+=fr;
+    const r0g=g('tr-0-g');const r0n=g('tr-0-n');
+    if(r0g)r0g.textContent='$'+gr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(r0n)r0n.textContent='$'+(gr+fr).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  const attend=fv('attend');const sph=fv('sph');const cogsP=fv('cogs');
+  const tblCt=fv('tbl-ct');const tblSpend=fv('tbl-spend');
+  const bGross=attend*sph;const bCogs=bGross*(cogsP/100);const bNet=bGross-bCogs;
+  const tGross=tblCt*tblSpend;
+  const totGross=dGross+dFees+bGross+tGross;
+
+  const dSplit=iv('d-sl')/100;const bSplit=iv('b-sl')/100;const tSplit=iv('t-sl')/100;
+  const dThr=fv('d-thr');const dGuar=fv('d-guar');const bThr=fv('b-thr');
+  const flatG=fv('flat-g');const artFee=fv('art-fee')+fv('art-travel');const houseF=fv('house-f');
+  const bBasis=g('b-basis').value;
+
+  const dBase=Math.max(0,dGross-dThr);
+  const dPayout=Math.max(dBase*dSplit,dGuar);
+  let bBase=bGross;
+  if(bBasis==='net_cogs')bBase=bNet;
+  else if(bBasis==='net_thr')bBase=Math.max(0,bGross-bThr);
+  const bPayout=Math.max(0,bBase-bThr)*bSplit;
+  const tPayout=tGross*tSplit;
+  const totPayouts=dPayout+bPayout+tPayout+flatG+artFee;
+  const npc=totGross-totPayouts-bCogs+houseF;
+
+  const cn=fv('c-noc');const cs=fv('c-sec');const cdg=fv('c-dg');const cpol=fv('c-pol');
+  const cps=fv('c-ps');const cpe=fv('c-pe');const crid=fv('c-rid');
+  const cmkt=fv('c-mkt');const cmktp=fv('c-mkt-p');const cother=fv('c-other');
+  const totCosts=cn+cs+cdg+cpol+cps+cpe+crid+cmkt-cmktp+cother;
+  const finalNet=npc-totCosts;
+  const margin=totGross>0?(finalNet/totGross*100):0;
+
+  // Update side P&L
+  g('s-dg').textContent='$'+dGross.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-df').textContent=dFees>0?'+$'+dFees.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  g('s-bg').textContent='$'+bGross.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-bc').textContent='-$'+bCogs.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-cp').textContent=cogsP;
+  g('s-tg').textContent='$'+tGross.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-tot').textContent='$'+totGross.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-dp').textContent=dPayout>0?'-$'+dPayout.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  g('s-bp').textContent=bPayout>0?'-$'+bPayout.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  g('s-tp').textContent=tPayout>0?'-$'+tPayout.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  g('s-fg').textContent=flatG>0?'-$'+flatG.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  g('s-af').textContent=artFee>0?'-$'+artFee.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  g('s-hf').textContent=houseF>0?'+$'+houseF.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  const npcEl=g('s-npc');npcEl.textContent='$'+npc.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});npcEl.className='pl-v '+(npc>=0?'pos':'neg');
+  g('s-cn').textContent='-$'+cn.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-cs').textContent='-$'+cs.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-cdg').textContent='-$'+cdg.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-cp2').textContent='-$'+cpol.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-cps').textContent='-$'+cps.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-ce').textContent='-$'+(cpe+crid).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('s-cm').textContent='-$'+(cmkt-cmktp).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const od=g('c-other-desc')?.value||'Other';
+  g('s-other-lbl').textContent=od;
+  g('s-co').textContent=cother>0?'-$'+cother.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
+  g('s-tc').textContent='-$'+totCosts.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fnEl=g('s-fn');fnEl.textContent='$'+finalNet.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});fnEl.className='pl-v '+(finalNet>=0?'pos':'neg');
+  g('s-mp').textContent=margin.toFixed(1)+'%';
+  const mb=g('s-mb');mb.style.width=Math.max(0,Math.min(100,margin))+'%';
+  mb.style.background=margin>=20?'var(--green)':margin>=10?'var(--amber)':'var(--red)';
+
+  // Header
+  g('h-rev').textContent='$'+totGross.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const hn=g('h-net');hn.textContent='$'+finalNet.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});hn.className='nv '+(finalNet>0?'pos':finalNet<0?'neg':'neu');
+  const hm=g('h-mar');hm.textContent=margin.toFixed(1)+'%';hm.className='nv '+(margin>=20?'pos':margin>=10?'neu':'neg');
+
+  // Leverage
+  g('l-d5').textContent='-$'+(dBase*0.05).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('l-b5').textContent='-$'+(bBase*0.05).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('l-a50').textContent='+$'+(50*sph*(1-cogsP/100)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  g('l-s5').textContent='+$'+(attend*5*(1-cogsP/100)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  updateVariances();
+  updateDeltas();
+}
+
+function exportDeal(){
+  const name=g('ev-name').value||'Unnamed Event';
+  const promoter=g('promoter-name').value||'';
+  const artist=g('artist-name').value||'';
+  const evType=g('ev-type').options[g('ev-type').selectedIndex]?.text||'';
+  const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const ds=iv('d-sl');const bs=iv('b-sl');const ts=iv('t-sl');
+  const dThr=fv('d-thr');const dGuar=fv('d-guar');const bThr=fv('b-thr');
+  const flatG=fv('flat-g');const artFee=fv('art-fee');const artTravel=fv('art-travel');const houseF=fv('house-f');
+  const attend=fv('attend');const sph=fv('sph');
+  const tblCt=fv('tbl-ct');const tblMin=fv('tbl-min');
+  const score=intel?.reputation_score;
+
+  const lines=[];
+  lines.push('DEAL PROPOSAL');
+  lines.push('━'.repeat(52));
+  lines.push('');
+  lines.push(`Event:         ${name}`);
+  if(evType&&evType!=='Select type')lines.push(`Type:          ${evType}`);
+  if(promoter)lines.push(`Promoter:      ${promoter}${score!==null&&score!==undefined?' (Reputation Score: '+score.toFixed(1)+'/10)':''}`);
+  if(artist)lines.push(`Artist:        ${artist}`);
+  lines.push(`Prepared:      ${today}`);
+  lines.push(`Prepared by:   District Atlanta`);
+  lines.push('');
+
+  if(intel?.found&&score!==null){
+    lines.push('PROMOTER INTELLIGENCE SUMMARY');
+    lines.push('─'.repeat(52));
+    const c=intel.score_components;
+    lines.push(`  Reputation Score:    ${score.toFixed(1)} / 10`);
+    if(c.draw_accuracy?.score)lines.push(`  Draw Accuracy:       ${c.draw_accuracy.score.toFixed(1)} / 10  —  ${c.draw_accuracy.label}`);
+    if(c.bar_yield?.score)lines.push(`  Bar Yield:           ${c.bar_yield.score.toFixed(1)} / 10  —  ${c.bar_yield.label}`);
+    if(c.deal_profitability?.score)lines.push(`  Deal Profitability:  ${c.deal_profitability.score.toFixed(1)} / 10  —  ${c.deal_profitability.label}`);
+    if(c.consistency?.score)lines.push(`  Consistency:         ${c.consistency.score.toFixed(1)} / 10  —  ${c.consistency.label}`);
+    lines.push('');
+  }
+
+  lines.push('PROJECTED REVENUE');
+  lines.push('─'.repeat(52));
+  lines.push(`  Total Revenue          ${g('s-tot').textContent.padStart(12)}`);
+  lines.push(`  Door Revenue           ${g('s-dg').textContent.padStart(12)}`);
+  lines.push(`  Bar Revenue            ${g('s-bg').textContent.padStart(12)}`);
+  lines.push(`  Table / Bottle         ${g('s-tg').textContent.padStart(12)}`);
+  lines.push('');
+  lines.push('DEAL TERMS');
+  lines.push('─'.repeat(52));
+  let dl=`  Door Revenue       Venue ${100-ds}%  /  Promoter ${ds}%`;
+  if(dThr>0)dl+=`\n  ↳ Venue retains first $${dThr.toLocaleString()} before split`;
+  if(dGuar>0)dl+=`\n  ↳ Promoter floor guarantee: $${dGuar.toLocaleString()}`;
+  lines.push(dl);
+  const bbl={'gross':'gross sales','net_cogs':'net after COGS','net_thr':'net after threshold'}[g('b-basis').value];
+  let bl=`  Bar Revenue        Venue ${100-bs}%  /  Promoter ${bs}% (on ${bbl})`;
+  if(bThr>0)bl+=`\n  ↳ Venue retains first $${bThr.toLocaleString()} before split`;
+  lines.push(bl);
+  lines.push(`  Table / Bottle     Venue ${100-ts}%  /  Promoter ${ts}%`);
+  if(tblCt>0)lines.push(`  ↳ ${tblCt} tables · $${tblMin.toLocaleString()} minimum per table`);
+  if(flatG>0)lines.push(`\n  Flat Guarantee     $${flatG.toLocaleString()} to promoter`);
+  if(artFee>0)lines.push(`  Artist Fee         $${artFee.toLocaleString()} landed${artTravel>0?' + $'+artTravel.toLocaleString()+' travel & rider':''}`);
+  if(houseF>0)lines.push(`  House Fee          $${houseF.toLocaleString()} to venue`);
+  lines.push('');
+  lines.push('EVENT ASSUMPTIONS');
+  lines.push('─'.repeat(52));
+  lines.push(`  Expected Attendance    ${attend.toLocaleString()} guests`);
+  lines.push(`  Bar Spend Per Head     $${sph} (projected)`);
+  if(tblCt>0)lines.push(`  Table Count            ${tblCt} tables expected`);
+  lines.push('');
+  lines.push('PROJECTED COSTS');
+  lines.push('─'.repeat(52));
+  const ci=[['  Nightly Operating',fv('c-noc')],['  Security',fv('c-sec')],['  Door Staff',fv('c-dg')],['  Police Security',fv('c-pol')],['  Production Staff',fv('c-ps')],['  Production Equip + Rider',fv('c-pe')+fv('c-rid')],['  Marketing',fv('c-mkt')-fv('c-mkt-p')]];
+  const cod=fv('c-other');const con=g('c-other-desc')?.value||'Other';
+  if(cod>0)ci.push([`  ${con}`,cod]);
+  ci.forEach(([l,a])=>{if(a>0)lines.push(`${l.padEnd(30)} $${a.toLocaleString()}`);});
+  lines.push('');
+  lines.push('BOTTOM LINE');
+  lines.push('─'.repeat(52));
+  lines.push(`  Net to Venue (pre-cost) ${g('s-npc').textContent.padStart(12)}`);
+  lines.push(`  Total Operating Costs   ${g('s-tc').textContent.padStart(12)}`);
+  lines.push(`${'  NET TO VENUE'.padEnd(28)}${g('s-fn').textContent.padStart(12)}`);
+  lines.push(`${'  MARGIN'.padEnd(28)}${g('s-mp').textContent.padStart(12)}`);
+  lines.push('');
+  lines.push('NEGOTIATION REFERENCE');
+  lines.push('─'.repeat(52));
+  lines.push(`  Cost of 5% door concession    ${g('l-d5').textContent}`);
+  lines.push(`  Cost of 5% bar concession     ${g('l-b5').textContent}`);
+  lines.push(`  Value of +50 attendance       ${g('l-a50').textContent}`);
+  lines.push(`  Value of $5 more spend/head   ${g('l-s5').textContent}`);
+  lines.push('');
+  lines.push('━'.repeat(52));
+  lines.push('Prepared with VenueOS Deal Calculator · Confidential');
+
+  const out=lines.join('\n');
+  g('exp-out').textContent=out;
+  g('exp-panel').style.display='block';
+}
+
+function copyDeal(){
+  navigator.clipboard.writeText(g('exp-out').textContent).then(()=>{
+    const btn=g('copy-btn');
+    btn.textContent='✓ Copied';
+    btn.style.background='rgba(52,211,153,0.25)';
+    setTimeout(()=>{btn.textContent='Copy to Clipboard';btn.style.background='rgba(255,255,255,0.15)';},2000);
+  });
+}
+
+// Init
+syncS('d');syncS('b');syncS('t');
+g('tiers').innerHTML=`<div class="tier-card" id="tier-0"><div class="tier-hdr"><div style="font-size:12px;font-weight:600;color:var(--blue)">General Admission</div></div><div class="g4"><div class="field"><label class="fl">Price</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="20" min="0" step="1" oninput="calc()"></div></div><div class="field"><label class="fl">Fee</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="2.50" min="0" step="0.25" oninput="calc()"></div></div><div class="field"><label class="fl">Fee to Venue?</label><select class="fi" onchange="calc()"><option value="1">Yes</option><option value="0">No</option></select></div><div class="field"><label class="fl">Qty</label><input type="number" class="fi" value="200" min="0" step="10" oninput="calc()"></div></div><div class="tier-calc">Gross: <span id="tr-0-g">$0.00</span> · Net w/ fees: <span id="tr-0-n">$0.00</span></div></div>`;
+calc();
+</script>
+</body>
+</html>
