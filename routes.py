@@ -1306,6 +1306,27 @@ def create_app(static_dir: str) -> FastAPI:
                 }
             }
 
+    # ── AI Talking Points ─────────────────────────────────────────────────────
+
+    @api.post("/talking-points")
+    async def get_talking_points(data: dict):
+        try:
+            import anthropic
+            api_key = os.environ.get("ANTHRO_WORKSHOP_API_KEY")
+            base_url = os.environ.get("ANTHRO_WORKSHOP_BASE_URL")
+            client = anthropic.Anthropic(
+                api_key=api_key,
+                **({"base_url": base_url} if base_url else {})
+            )
+            message = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1000,
+                messages=[{"role": "user", "content": data.get("prompt", "")}]
+            )
+            return {"text": message.content[0].text}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     # ── Venue Settings ────────────────────────────────────────────────────────
 
     @api.get("/settings")
