@@ -750,7 +750,7 @@ let internalEvents = [];
 
 async function loadInternalEvents() {
   try {
-    const res = await fetch(`${BASE_URL}/api/events-by-date?start=2026-05-01&end=2026-07-31`);
+    const res = await fetch(`/api/events-by-date?start=2026-05-01&end=2026-07-31`);
     const rows = await res.json();
     internalEvents = rows.map(e => ({
       id: e.id,
