@@ -255,12 +255,13 @@
   }
   .event-pill:hover { opacity: 0.85; }
   .pill-internal { background: #E8F0F7; color: #2C5F8A; font-weight: 500; }
-  .pill-liveration { background: #E8F4EE; color: #2D6A4F; }
-  .pill-sports { background: #FDF3E0; color: #8B5E0A; }
-  .pill-festival { background: #F0EAF8; color: #5A3A8A; }
-  .pill-convention { background: #F4F2EF; color: #5A5652; border: 1px solid #E8E4DF; }
-  .pill-holiday { background: #FDEAEA; color: #8B2D2D; font-style: italic; }
-  .pill-competitor { background: #F8EAE8; color: #8A3A2C; }
+  .pill-hold { background: #FDF3E0; color: #8B5E0A; font-weight: 500; }
+  .pill-liveration { background: var(--green-light); color: var(--green); }
+  .pill-sports { background: var(--amber-light); color: var(--amber); }
+  .pill-festival { background: var(--purple-light); color: var(--purple); }
+  .pill-convention { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .pill-holiday { background: var(--red-light); color: var(--red); font-style: italic; }
+  .pill-competitor { background: var(--coral-light); color: var(--coral); }
 
   .more-events {
     font-size: 10px;
@@ -667,6 +668,10 @@
     </div>
     <div class="modal-body">
       <div class="modal-field">
+        <label>Date</label>
+        <input type="date" id="new-event-date" min="2026-05-01" max="2026-07-31">
+      </div>
+      <div class="modal-field">
         <label>Event Name</label>
         <input type="text" id="new-event-name" placeholder="e.g. Sample Promoter — Electronic Night">
       </div>
@@ -693,17 +698,7 @@
         <label>Promoter</label>
         <input type="text" id="new-event-promoter" placeholder="Promoter name">
       </div>
-      <div class="modal-field">
-        <label>Deal Structure</label>
-        <select id="new-event-deal">
-          <option>Door deal — 85/15</option>
-          <option>Flat guarantee</option>
-          <option>Flat + % upside</option>
-          <option>Venue buy</option>
-          <option>TBD</option>
-        </select>
-      </div>
-      <div style="background:var(--amber-light); border:1px solid #E8C97A; border-radius:8px; padding:12px; font-size:12px; color:var(--amber); line-height:1.5;">
+      <div style="background:#FDF3E0; border:1px solid #E8C97A; border-radius:8px; padding:12px; font-size:12px; color:#8B5E0A; line-height:1.5;">
         <strong style="display:block; margin-bottom:3px;">This creates a date hold only.</strong>
         Saving here blocks the date and gives your team visibility — it does not finalize the deal. All deal terms, P&amp;L modeling, and promoter intelligence must be completed in the Deal Calculator before a hold can move to Confirmed.
       </div>
@@ -750,7 +745,7 @@ let internalEvents = [];
 
 async function loadInternalEvents() {
   try {
-    const res = await fetch(`/api/events-by-date?start=2026-01-01&end=2026-12-31`);
+    const res = await fetch(`${BASE_URL}/api/events-by-date?start=2026-05-01&end=2026-07-31`);
     const rows = await res.json();
     internalEvents = rows.map(e => ({
       id: e.id,
@@ -844,7 +839,7 @@ const marketEvents = [
 
 // Demand score calculator
 function getDemandScore(dateStr) {
-  const events = [...internalEvents.filter(e => e.date === dateStr), ...marketEvents.filter(e => e.date === dateStr)];
+  const events = getEventsForDate(dateStr);
   const hasWC = !!wcMatches[dateStr];
   const internalCount = events.filter(e => e.source === 'internal').length;
   const marketCount = events.filter(e => e.source === 'market').length;
@@ -947,7 +942,6 @@ function renderMonth(year, month) {
       return activeFilters.has(e.type);
     });
 
-
     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
     const isWeekend = [0, 6].includes(new Date(year, month, d).getDay());
     const isSelected = selectedDate === dk;
@@ -976,10 +970,12 @@ function renderMonth(year, month) {
       const cls2 = ev.competitor ? 'pill-competitor' : pillClass(ev.type);
       const label = ev.name.length > 24 ? ev.name.slice(0,22)+'…' : ev.name;
       if (ev.source === 'internal') {
+        const isHold = ev.status === 'hold';
+        const pillCls = isHold ? 'pill-hold' : cls2;
         const statusTag = ev.status === 'completed' ? '✓' : ev.status === 'confirmed' ? '●' : '◌';
         const statusTitle = ev.status === 'completed' ? 'Completed' : ev.status === 'confirmed' ? 'Confirmed' : 'Hold';
         const tagColor = ev.status === 'completed' ? '#2D6A4F' : ev.status === 'confirmed' ? '#2C5F8A' : '#8B5E0A';
-        html += `<div class="event-pill ${cls2}" onclick="event.stopPropagation(); selectDate('${dk}')" title="${statusTitle}">
+        html += `<div class="event-pill ${pillCls}" onclick="event.stopPropagation(); selectDate('${dk}')" title="${statusTitle}">
           <span style="color:${tagColor}; margin-right:3px; font-size:9px;">${statusTag}</span>${label}
         </div>`;
       } else {
@@ -1187,12 +1183,14 @@ function openCalc() {
 
 function openNewEvent() {
   newEventDate = null;
-  document.getElementById('modal-date-sub').textContent = 'No date selected';
+  document.getElementById('new-event-date').value = '';
+  document.getElementById('modal-date-sub').textContent = 'Select a date below';
   document.getElementById('modal-overlay').classList.add('open');
 }
 
 function openNewEventOnDate(dk) {
   newEventDate = dk;
+  document.getElementById('new-event-date').value = dk;
   const d = new Date(dk + 'T00:00:00');
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('modal-date-sub').textContent = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
@@ -1204,11 +1202,17 @@ function closeModal() {
 }
 
 function saveNewEvent() {
+  const dateInput = document.getElementById('new-event-date').value;
+  const date = dateInput || newEventDate || dateKey(currentYear, currentMonth, 1);
   const name = document.getElementById('new-event-name').value || 'New Event';
   const type = document.getElementById('new-event-type').value;
   const att = parseInt(document.getElementById('new-event-att').value) || 500;
   const promoter = document.getElementById('new-event-promoter').value || 'TBD';
-  const date = newEventDate || dateKey(currentYear, currentMonth, 1);
+
+  if (!dateInput && !newEventDate) {
+    alert('Please select a date for this hold.');
+    return;
+  }
 
   internalEvents.push({
     id: null,
@@ -1217,8 +1221,12 @@ function saveNewEvent() {
   });
 
   closeModal();
+  const d = new Date(date + 'T00:00:00');
+  currentMonth = d.getMonth();
+  currentYear = d.getFullYear();
   renderCalendar();
-  if (selectedDate === date) renderDetailPanel(date);
+  selectedDate = date;
+  selectDate(date);
 }
 
 // Init
