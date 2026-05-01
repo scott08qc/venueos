@@ -2260,7 +2260,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const promoterInput = document.getElementById('promoter-name');
       if (promoterInput) {
         promoterInput.value = promoterParam;
-        promoterInput.dispatchEvent(new Event('input'));
+        promoterInput.dispatchEvent(new InputEvent('input', { bubbles: true }));
+        if (typeof debounceFetch === 'function') debounceFetch();
       }
     }, 300);
   }
