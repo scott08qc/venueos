@@ -1682,7 +1682,8 @@ function renderPLTab(data) {
   }
 
   document.getElementById('modal-body').innerHTML = html;
-  loadMarketNarrative(e.id, data, e.event_date);
+  console.log('about to call loadMarketNarrative, e.event_id:', e.event_id, 'e.id:', e.id);
+  loadMarketNarrative(e.event_id, data, e.event_date);
 }
 
 function renderMarketContextSection(dateStr, eventId, eventData) {
@@ -1729,6 +1730,7 @@ function renderMarketContextSection(dateStr, eventId, eventData) {
 }
 
 async function loadMarketNarrative(eventId, eventData, dateStr) {
+  console.log('loadMarketNarrative fired, eventId:', eventId);
   const el = document.getElementById(`market-narrative-${eventId}`);
   if (!el) return;
 
@@ -1771,11 +1773,13 @@ Keep the narrative factual, specific, and under 60 words. Focus on whether marke
       body: JSON.stringify({ prompt })
     });
     const result = await res.json();
+    console.log('market narrative response:', result);
     const text = result.text || 'Could not generate narrative.';
     const html = `<span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Market Narrative</span>${text}`;
     marketNarrativeCache[eventId] = html;
     el.innerHTML = html;
-  } catch(_) {
+  } catch(err) {
+    console.error('market narrative error:', err);
     el.innerHTML = '<span style="color:var(--text3);font-style:italic">Could not generate narrative — check connection.</span>';
   }
 }
@@ -1827,7 +1831,7 @@ function renderNightSummaryTab(data) {
     </div>
   </div>
 
-  ${renderMarketContextSection(e.event_date, e.id, data)}
+  ${renderMarketContextSection(e.event_date, e.event_id, data)}
 
   <div class="detail-section">
     <div class="detail-section-title">Revenue Overview</div>
@@ -2048,7 +2052,7 @@ async function renderSettlementReportTab(data) {
     </div>
   </div>
 
-  ${renderMarketContextSection(e.event_date, e.id, data)}
+  ${renderMarketContextSection(e.event_date, e.event_id, data)}
 
   <!-- Section 2–4: Full P&L table -->
   <div class="detail-section">
@@ -2160,7 +2164,7 @@ async function renderSettlementReportTab(data) {
   <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>`;
 
   document.getElementById('modal-body').innerHTML = html;
-  loadMarketNarrative(e.id, data, e.event_date);
+  loadMarketNarrative(e.event_id, data, e.event_date);
 }
 
 async function renderTPTab(data) {
