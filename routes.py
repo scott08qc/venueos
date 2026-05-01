@@ -1397,6 +1397,11 @@ def create_app(static_dir: str) -> FastAPI:
         promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
         return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
+    @api.get("/hub/promoters", response_class=FileResponse)
+    def serve_promoters_hub():
+        promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
+        return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
     @api.get("/promoters/summary")
     def get_promoters_summary():
         if not engine:
