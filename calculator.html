@@ -1892,7 +1892,6 @@ function renderNightSummaryTab(data) {
     </div>`;
   }
 
-  const marketHtml = renderMarketContextSection(e.event_date, e.id, data);
   document.getElementById('modal-body').innerHTML = html;
   loadMarketNarrative(e.id, data, e.event_date);
 }
