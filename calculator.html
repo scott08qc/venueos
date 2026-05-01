@@ -1363,7 +1363,6 @@ async function openEventDetail(eventId, eventName) {
     const data = await res.json();
     currentEventData = data;
     const e = data.event;
-    console.log('event status:', e.status);
 
     // ── Hold events: populate form, stay on calculator ────────────────────
     if (e.status === 'hold') {
@@ -1718,9 +1717,6 @@ function renderNightSummaryTab(data) {
 
 async function renderSettlementReportTab(data) {
   const e = data.event;
-  console.log('Settlement Report e.actual_bar_revenue:', e.actual_bar_revenue);
-  console.log('Settlement Report e.actual_door_revenue:', e.actual_door_revenue);
-  console.log('Settlement Report e.staffing_cost_actual:', e.staffing_cost_actual);
   const s = data.summary;
 
   // ── helpers ──────────────────────────────────────────────────────────────
