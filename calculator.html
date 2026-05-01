@@ -1145,7 +1145,7 @@ function calc(){
   if (currentEventData?.event?.id) {
     clearTimeout(window._costSaveTimer);
     window._costSaveTimer = setTimeout(() => {
-      fetch(`${WORKSHOP_URL}/api/event-costs`, {
+      fetch(`${WORKSHOP_URL}/api/costs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1314,16 +1314,15 @@ function copyDeal(){
   });
 }
 
-// Init
-syncS('d');syncS('b');syncS('t');
-g('tiers').innerHTML=`<div class="tier-card" id="tier-0"><div class="tier-hdr"><div style="font-size:12px;font-weight:600;color:var(--blue)">General Admission</div></div><div class="g4"><div class="field"><label class="fl">Price</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="20" min="0" step="1" oninput="calc()"></div></div><div class="field"><label class="fl">Fee</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="2.50" min="0" step="0.25" oninput="calc()"></div></div><div class="field"><label class="fl">Fee to Venue?</label><select class="fi" onchange="calc()"><option value="1">Yes</option><option value="0">No</option></select></div><div class="field"><label class="fl">Qty</label><input type="number" class="fi" value="200" min="0" step="10" oninput="calc()"></div></div><div class="tier-calc">Gross: <span id="tr-0-g">$0.00</span> · Net w/ fees: <span id="tr-0-n">$0.00</span></div></div>`;
-calc();
-
-
 // ── Event Detail Drill-Down ───────────────────────────────────────────────────
 
 let currentEventData = null;
 let currentTab = 'pl';
+
+// Init
+syncS('d');syncS('b');syncS('t');
+g('tiers').innerHTML=`<div class="tier-card" id="tier-0"><div class="tier-hdr"><div style="font-size:12px;font-weight:600;color:var(--blue)">General Admission</div></div><div class="g4"><div class="field"><label class="fl">Price</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="20" min="0" step="1" oninput="calc()"></div></div><div class="field"><label class="fl">Fee</label><div class="iw"><span class="ip">$</span><input type="number" class="fi dl" value="2.50" min="0" step="0.25" oninput="calc()"></div></div><div class="field"><label class="fl">Fee to Venue?</label><select class="fi" onchange="calc()"><option value="1">Yes</option><option value="0">No</option></select></div><div class="field"><label class="fl">Qty</label><input type="number" class="fi" value="200" min="0" step="10" oninput="calc()"></div></div><div class="tier-calc">Gross: <span id="tr-0-g">$0.00</span> · Net w/ fees: <span id="tr-0-n">$0.00</span></div></div>`;
+calc();
 
 function closeModal(e) {
   if (e.target === document.getElementById('detail-modal')) {
@@ -1367,6 +1366,28 @@ async function openEventDetail(eventId, eventName) {
     document.getElementById('modal-sub').textContent =
       `${e.event_date ? e.event_date.substring(0,10) : ''} · ${e.tier1_category || ''} · ${e.promoter_name || ''}`;
     renderPLTab(data);
+
+    // Pre-populate cost inputs from saved event_costs record
+    fetch(`${WORKSHOP_URL}/api/costs/${eventId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(costs => {
+        if (!costs || !costs.event_id) return;
+        const set = (id, val) => {
+          const el = document.getElementById(id);
+          if (el && val !== null && val !== undefined && val !== 0) el.value = val;
+        };
+        set('c-noc',   costs.nightly_operating_cost);
+        set('c-sec',   costs.security_total);
+        set('c-dg',    costs.door_girls_total);
+        set('c-pol',   costs.police_total);
+        set('c-ps',    costs.production_staff_total);
+        set('c-pe',    costs.production_equipment_total);
+        set('c-mkt',   costs.marketing_internal);
+        set('c-mkt-p', costs.marketing_promoter_contribution);
+        if (currentEventData) calc();
+      })
+      .catch(() => {});
+
   } catch(err) {
     body.innerHTML = '<div class="modal-loading">Could not load event data.</div>';
   }
@@ -1756,7 +1777,7 @@ async function renderSettlementReportTab(data) {
   // Fetch per-line projected costs from event_costs table
   let ec = null;
   try {
-    const ecRes = await fetch(`${WORKSHOP_URL}/api/event-costs/${data.event.id}`);
+    const ecRes = await fetch(`${WORKSHOP_URL}/api/costs/${data.event.id}`);
     if (ecRes.ok) ec = await ecRes.json();
   } catch(_) {}
   const ecN = v => (ec && ec[v] !== null && ec[v] !== undefined) ? parseFloat(ec[v]) : 0;
