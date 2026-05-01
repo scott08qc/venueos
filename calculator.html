@@ -378,6 +378,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       <div class="sec-title-left"><span class="snum">1</span>Event Setup</div>
     </div>
 
+    <div id="hold-banner" style="display:none;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#fbbf24">
+      <div style="font-weight:700;margin-bottom:3px">📌 Hold Event Loaded</div>
+      <div id="hold-banner-notes" style="color:var(--text2);line-height:1.5"></div>
+    </div>
+
     <div class="g2" style="margin-bottom:14px">
       <div class="field">
         <label class="fl">Promoter Name <span class="fh">triggers historical intelligence</span></label>
@@ -1347,10 +1352,6 @@ function switchTab(tab) {
 async function openEventDetail(eventId, eventName) {
   const modal = document.getElementById('detail-modal');
   const body = document.getElementById('modal-body');
-  document.getElementById('modal-title').textContent = 'Loading...';
-  document.getElementById('modal-sub').textContent = 'Loading...';
-  modal.classList.add('open');
-  body.innerHTML = '<div class="modal-loading">Loading event data...</div>';
   currentTab = 'pl';
   document.getElementById('tab-pl').className = 'modal-tab active';
   document.getElementById('tab-night').className = 'modal-tab';
@@ -1362,9 +1363,46 @@ async function openEventDetail(eventId, eventName) {
     const data = await res.json();
     currentEventData = data;
     const e = data.event;
+    console.log('event status:', e.status);
+
+    // ── Hold events: populate form, stay on calculator ────────────────────
+    if (e.status === 'hold') {
+      // Populate form fields
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+      setVal('ev-name',       e.event_name);
+      setVal('promoter-name', e.promoter_name);
+      setVal('attend',        e.expected_attendance);
+
+      // Match tier1_category to select option value
+      const typeEl = document.getElementById('ev-type');
+      if (typeEl && e.tier1_category) {
+        const opt = Array.from(typeEl.options).find(o => o.value === e.tier1_category);
+        if (opt) { typeEl.value = e.tier1_category; onTypeChange(); }
+      }
+
+      // Show hold banner with notes
+      const banner = document.getElementById('hold-banner');
+      const bannerNotes = document.getElementById('hold-banner-notes');
+      if (banner) {
+        bannerNotes.textContent = e.notes
+          ? `Hold notes: ${e.notes}`
+          : `${e.event_name || 'Event'} — complete the deal setup below.`;
+        banner.style.display = 'block';
+        banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      // Trigger promoter intelligence
+      debounceFetch();
+      calc();
+      return; // Do NOT open modal
+    }
+
+    // ── Confirmed / completed events: open modal as normal ────────────────
     document.getElementById('modal-title').textContent = e.event_name || eventName || 'Event Detail';
     document.getElementById('modal-sub').textContent =
       `${e.event_date ? e.event_date.substring(0,10) : ''} · ${e.tier1_category || ''} · ${e.promoter_name || ''}`;
+    modal.classList.add('open');
+    body.innerHTML = '<div class="modal-loading">Loading event data...</div>';
     renderPLTab(data);
 
     // Pre-populate cost inputs from saved event_costs record
@@ -1680,10 +1718,14 @@ function renderNightSummaryTab(data) {
 
 async function renderSettlementReportTab(data) {
   const e = data.event;
+  console.log('Settlement Report e.actual_bar_revenue:', e.actual_bar_revenue);
+  console.log('Settlement Report e.actual_door_revenue:', e.actual_door_revenue);
+  console.log('Settlement Report e.staffing_cost_actual:', e.staffing_cost_actual);
   const s = data.summary;
 
   // ── helpers ──────────────────────────────────────────────────────────────
-  const n = v => parseFloat(v) || 0;
+  const n  = v => parseFloat(v) || 0;
+  const na = v => (v === null || v === undefined || v === '') ? null : parseFloat(v);
   const d = v => (v !== null && v !== undefined && parseFloat(v) !== 0)
     ? '$' + Math.round(Math.abs(parseFloat(v))).toLocaleString() : '—';
   // Variance: positive = favorable for revenue lines, unfavorable for cost lines
@@ -1735,19 +1777,19 @@ async function renderSettlementReportTab(data) {
   const barProj    = n(e.projected_bar_revenue);
   const tableProj  = n(e.projected_table_revenue);
 
-  const doorActual  = n(e.actual_door_revenue);
+  const doorActual  = na(e.actual_door_revenue);
   const doorCash    = n(e.door_revenue_cash);
   const doorCard    = n(e.door_revenue_card);
-  const barActual   = n(e.actual_bar_revenue || e.total_bar_sales);
+  const barActual   = na(e.actual_bar_revenue ?? e.total_bar_sales);
   const barCogsProj = barProj * 0.161; // default 16.1% if not stored
   const barCogsActual = barActual - n(e.actual_bar_revenue); // net calc if available; fallback below
   // COGS: no per-event projected COGS stored; use bar * cogs pct from events if present
   const cogsProj   = barProj > 0 ? barProj * (n(e.bar_cogs_percentage) || 16.1) / 100 : 0;
   const cogsActual = barActual > 0 ? barActual * (n(e.bar_cogs_percentage) || 16.1) / 100 : 0;
-  const tableActual = n(e.actual_table_revenue || e.table_bottle_service);
+  const tableActual = na(e.actual_table_revenue ?? e.table_bottle_service);
 
   const grossRevProj   = doorProj + barProj + tableProj;
-  const grossRevActual = doorActual + barActual + tableActual;
+  const grossRevActual = n(doorActual) + n(barActual) + n(tableActual);
 
   // ticket fees: no projected field; actual from door breakdown
   const ticketFeesActual = doorCard > 0 ? 0 : 0; // not stored discretely; show — for now
@@ -1760,15 +1802,15 @@ async function renderSettlementReportTab(data) {
   const artFeeProj      = n(e.artist_fee_landed) + n(e.artist_fee_travel);
   const houseFeeProj    = n(e.house_fee_amount);
 
-  const doorPayoutActual  = n(e.promoter_door_payout);
-  const barPayoutActual   = n(e.promoter_bar_payout);
-  const tablePayoutActual = n(e.promoter_table_payout);
+  const doorPayoutActual  = na(e.promoter_door_payout);
+  const barPayoutActual   = na(e.promoter_bar_payout);
+  const tablePayoutActual = na(e.promoter_table_payout);
   const flatGActual       = 0;
-  const artFeeActualVal   = n(e.artist_cost_actual || e.artist_cost_paid_by_venue);
+  const artFeeActualVal   = na(e.artist_cost_actual ?? e.artist_cost_paid_by_venue);
   const houseFeeActual    = 0; // not stored post-event
 
   const totalPayoutsProj   = doorPayoutProj + barPayoutProj + tablePayoutProj + artFeeProj - houseFeeProj;
-  const totalPayoutsActual = doorPayoutActual + barPayoutActual + tablePayoutActual + artFeeActualVal;
+  const totalPayoutsActual = n(doorPayoutActual) + n(barPayoutActual) + n(tablePayoutActual) + n(artFeeActualVal);
 
   const npcProj   = grossRevProj   - totalPayoutsProj   - cogsProj;
   const npcActual = grossRevActual - totalPayoutsActual - cogsActual;
@@ -1795,7 +1837,7 @@ async function renderSettlementReportTab(data) {
   const artFeeCostProj = artFeeFromEC || (n(e.artist_fee_landed) + n(e.artist_fee_travel));
 
   // Actual: staffing_cost_actual is the only rolled-up actual cost field
-  const staffActual = n(e.staffing_cost_actual);
+  const staffActual = na(e.staffing_cost_actual);
   // artist_cost_actual already counted in payouts above
 
   const totalCostProj   = nocProj + secProj + dgProj + polProj + psProj + peProj + mktProj2;
@@ -1803,15 +1845,15 @@ async function renderSettlementReportTab(data) {
 
   // ── net to venue ──────────────────────────────────────────────────────────
   const netProj   = npcProj   - totalCostProj;
-  const netActual = n(e.net_revenue_actual);
+  const netActual = na(e.net_revenue_actual);
 
   const marginProj   = grossRevProj   > 0 ? (netProj   / grossRevProj   * 100) : 0;
-  const marginActual = grossRevActual > 0 ? (netActual / grossRevActual * 100) : 0;
+  const marginActual = grossRevActual > 0 ? (n(netActual) / grossRevActual * 100) : 0;
 
   const effectiveSplit = n(e.actual_effective_split || e.effective_split_percentage);
   const sph    = n(e.spend_per_head_actual);
   const tips   = n(e.tips);
-  const bottlePct = barActual > 0 ? (s.bottle_service_revenue / barActual * 100) : 0;
+  const bottlePct = n(barActual) > 0 ? (s.bottle_service_revenue / n(barActual) * 100) : 0;
 
   // ── HTML ──────────────────────────────────────────────────────────────────
   let html = `

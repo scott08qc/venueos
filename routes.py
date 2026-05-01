@@ -252,6 +252,7 @@ class EventCreate(BaseModel):
     projected_bar_revenue: Optional[float] = 0
     projected_table_revenue: Optional[float] = 0
     notes: Optional[str] = None
+    status: Optional[str] = 'confirmed'
 
 
 class NightOfActualsCreate(BaseModel):
@@ -423,7 +424,7 @@ def create_app(static_dir: str) -> FastAPI:
                     table_split_promoter, table_split_basis,
                     artist_cost_split_method, artist_venue_dollar, artist_venue_pct, artist_promoter_dollar,
                     deposit_amount, deposit_due_date, balance_due, balance_due_date,
-                    projected_door_revenue, projected_bar_revenue, projected_table_revenue, notes
+                    projected_door_revenue, projected_bar_revenue, projected_table_revenue, notes, status
                 ) VALUES (
                     :event_name, :event_date, :day_of_week, :tier1_category, :tier2_subcategory,
                     :promoter_name, :artist_name, :artist_genre, :expected_attendance, :venue_capacity,
@@ -438,7 +439,7 @@ def create_app(static_dir: str) -> FastAPI:
                     :table_split_promoter, :table_split_basis,
                     :artist_cost_split_method, :artist_venue_dollar, :artist_venue_pct, :artist_promoter_dollar,
                     :deposit_amount, :deposit_due_date, :balance_due, :balance_due_date,
-                    :projected_door_revenue, :projected_bar_revenue, :projected_table_revenue, :notes
+                    :projected_door_revenue, :projected_bar_revenue, :projected_table_revenue, :notes, :status
                 ) RETURNING id
             """), params)
             conn.commit()
@@ -488,7 +489,7 @@ def create_app(static_dir: str) -> FastAPI:
                     projected_door_revenue=:projected_door_revenue,
                     projected_bar_revenue=:projected_bar_revenue,
                     projected_table_revenue=:projected_table_revenue,
-                    notes=:notes, updated_at=NOW()
+                    notes=:notes, status=:status, updated_at=NOW()
                 WHERE id=:id
             """), params)
             conn.commit()
