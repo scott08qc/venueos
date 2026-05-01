@@ -2254,6 +2254,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (eventId) {
     openEventDetail(parseInt(eventId, 10), '');
   }
+  const promoterParam = params.get('promoter');
+  if (promoterParam) {
+    const promoterInput = document.getElementById('promoter-name');
+    if (promoterInput) {
+      promoterInput.value = promoterParam;
+      promoterInput.dispatchEvent(new Event('input'));
+    }
+  }
 });
 
 </script>
