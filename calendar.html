@@ -849,7 +849,7 @@ const marketEvents = [
 
 // Demand score calculator
 function getDemandScore(dateStr) {
-  const events = getEventsForDate(dateStr);
+  const events = [...internalEvents.filter(e => e.date === dateStr), ...marketEvents.filter(e => e.date === dateStr)];
   const hasWC = !!wcMatches[dateStr];
   const internalCount = events.filter(e => e.source === 'internal').length;
   const marketCount = events.filter(e => e.source === 'market').length;
