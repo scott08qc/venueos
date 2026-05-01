@@ -1390,6 +1390,42 @@ def create_app(static_dir: str) -> FastAPI:
         cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
         return FileResponse(cal_path, media_type="text/html")
 
+    # ── Promoter Hub ──────────────────────────────────────────────────────────
+
+    @api.get("/promoters", response_class=FileResponse)
+    def serve_promoters():
+        promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
+        return FileResponse(promo_path, media_type="text/html")
+
+    @api.get("/promoters/summary")
+    def get_promoters_summary():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT
+                    e.promoter_name,
+                    e.tier1_category,
+                    COUNT(r.id) AS total_events,
+                    ROUND(AVG(r.actual_attendance)::numeric, 0) AS avg_attendance,
+                    ROUND(AVG(e.expected_attendance)::numeric, 0) AS avg_expected,
+                    ROUND(AVG(r.actual_attendance::float / NULLIF(e.expected_attendance, 0) * 100)::numeric, 1) AS draw_accuracy,
+                    ROUND(AVG(r.spend_per_head_actual)::numeric, 2) AS avg_sph,
+                    ROUND(AVG(r.net_revenue_actual)::numeric, 0) AS avg_net,
+                    ROUND(AVG(r.actual_effective_split)::numeric, 1) AS avg_split,
+                    ROUND(AVG(r.artist_cost_actual)::numeric, 0) AS avg_artist_cost,
+                    COUNT(CASE WHEN r.promoter_attendance_vs_projection = 'above' THEN 1 END) AS nights_above,
+                    COUNT(CASE WHEN r.promoter_attendance_vs_projection = 'below' THEN 1 END) AS nights_below,
+                    COUNT(CASE WHEN r.promoter_attendance_vs_projection = 'met'   THEN 1 END) AS nights_met
+                FROM events e
+                JOIN post_event_reviews r ON r.event_id = e.id
+                WHERE e.promoter_name IS NOT NULL
+                  AND LOWER(r.review_status) = 'complete'
+                GROUP BY e.promoter_name, e.tier1_category
+                ORDER BY total_events DESC, avg_net DESC
+            """)).mappings().fetchall()
+        return [dict(r) for r in rows]
+
     @api.get("/events-by-date")
     def get_events_by_date(start: str, end: str):
         if not engine:
