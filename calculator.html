@@ -1141,6 +1141,29 @@ function calc(){
   const finalNet=npc-totCosts;
   const margin=totGross>0?(finalNet/totGross*100):0;
 
+  // Persist costs to DB when an event is loaded in the modal
+  if (currentEventData?.event?.id) {
+    clearTimeout(window._costSaveTimer);
+    window._costSaveTimer = setTimeout(() => {
+      fetch(`${WORKSHOP_URL}/api/event-costs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_id: currentEventData.event.id,
+          nightly_operating_cost: cn,
+          security_total: cs,
+          door_girls_total: cdg,
+          police_total: cpol,
+          production_staff_total: cps,
+          production_equipment_total: cpe + crid,
+          marketing_internal: cmkt,
+          marketing_promoter_contribution: cmktp,
+          artist_fee_total: artFee
+        })
+      }).catch(err => console.error('Failed to save costs:', err));
+    }, 800);
+  }
+
   // Update side P&L
   g('s-dg').textContent='$'+dGross.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   g('s-df').textContent=dFees>0?'+$'+dFees.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';
@@ -1634,7 +1657,7 @@ function renderNightSummaryTab(data) {
   document.getElementById('modal-body').innerHTML = html;
 }
 
-function renderSettlementReportTab(data) {
+async function renderSettlementReportTab(data) {
   const e = data.event;
   const s = data.summary;
 
@@ -1730,20 +1753,31 @@ function renderSettlementReportTab(data) {
   const npcActual = grossRevActual - totalPayoutsActual - cogsActual;
 
   // ── operating costs ───────────────────────────────────────────────────────
-  // Projected: from events table stored fields (set pre-event)
-  const nocProj    = 0; // not stored in events table
-  const secProj    = n(e.security_cost_total);
-  const dgProj     = 0; // not stored
-  const polProj    = 0; // not stored
-  const psProj     = 0; // not stored
-  const peProj     = n(e.production_cost_total);
-  const mktProj2   = n(e.marketing_cost_total);
+  // Fetch per-line projected costs from event_costs table
+  let ec = null;
+  try {
+    const ecRes = await fetch(`${WORKSHOP_URL}/api/event-costs/${data.event.id}`);
+    if (ecRes.ok) ec = await ecRes.json();
+  } catch(_) {}
+  const ecN = v => (ec && ec[v] !== null && ec[v] !== undefined) ? parseFloat(ec[v]) : 0;
+
+  // Projected: from event_costs record (written by calculator when costs are entered)
+  const nocProj  = ecN('nightly_operating_cost');
+  const secProj  = ecN('security_total');
+  const dgProj   = ecN('door_girls_total');
+  const polProj  = ecN('police_total');
+  const psProj   = ecN('production_staff_total');
+  const peProj   = ecN('production_equipment_total');   // already includes hospitality_rider_estimate in save
+  const mktProj2 = ecN('marketing_internal');
+  const artFeeFromEC = ecN('artist_fee_total');
+  // For the cost breakdown row: prefer event_costs record, fall back to deal field
+  const artFeeCostProj = artFeeFromEC || (n(e.artist_fee_landed) + n(e.artist_fee_travel));
 
   // Actual: staffing_cost_actual is the only rolled-up actual cost field
   const staffActual = n(e.staffing_cost_actual);
   // artist_cost_actual already counted in payouts above
 
-  const totalCostProj   = secProj + peProj + mktProj2; // only fields we have
+  const totalCostProj   = nocProj + secProj + dgProj + polProj + psProj + peProj + mktProj2;
   const totalCostActual = staffActual;
 
   // ── net to venue ──────────────────────────────────────────────────────────
@@ -1808,16 +1842,15 @@ function renderSettlementReportTab(data) {
 
         ${divider()}
         ${ph('Operating Costs')}
-        ${row('Nightly operating',       nocProj,   null,        true)}
-        ${row('Security',                secProj,   null,        true)}
-        ${row('Door girls',              dgProj,    null,        true)}
-        ${row('Police',                  polProj,   null,        true)}
-        ${row('Production staff',        psProj,    null,        true)}
-        ${row('Equip + rider',           peProj,    null,        true)}
-        ${row('Marketing',               mktProj2,  null,        true)}
-        ${row('Staffing (actual total)', null,       staffActual, true)}
-        ${row('Total Costs',             totalCostProj, totalCostActual, true, {total:true})}
-
+        ${row('Nightly operating',       nocProj,        null,        true)}
+        ${row('Security',                secProj,        null,        true)}
+        ${row('Door girls',              dgProj,         null,        true)}
+        ${row('Police',                  polProj,        null,        true)}
+        ${row('Production staff',        psProj,         null,        true)}
+        ${row('Equip + rider',           peProj,         null,        true)}
+        ${row('Marketing',               mktProj2,       null,        true)}
+        ${row('Staffing (actual total)', null,            staffActual, true)}
+        ${row('Total Costs',             totalCostProj,  totalCostActual, true, {total:true})}
         ${divider()}
         ${ph('Bottom Line')}
         <tr class="total-row">
