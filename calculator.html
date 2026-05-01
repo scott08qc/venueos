@@ -1732,6 +1732,7 @@ function renderMarketContextSection(dateStr, eventId, eventData) {
 async function loadMarketNarrative(eventId, eventData, dateStr) {
   console.log('loadMarketNarrative fired, eventId:', eventId);
   const el = document.getElementById(`market-narrative-${eventId}`);
+  console.log('market-narrative element:', el, 'looking for id:', `market-narrative-${eventId}`);
   if (!el) return;
 
   // Return cached result without re-calling API
