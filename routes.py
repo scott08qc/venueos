@@ -1381,21 +1381,21 @@ def create_app(static_dir: str) -> FastAPI:
     @api.get("/calculator", response_class=FileResponse)
     def serve_calculator():
         calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
-        return FileResponse(calc_path, media_type="text/html")
+        return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
     # ── Calendar ──────────────────────────────────────────────────────────────
 
     @api.get("/calendar", response_class=FileResponse)
     def serve_calendar():
         cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
-        return FileResponse(cal_path, media_type="text/html")
+        return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
     # ── Promoter Hub ──────────────────────────────────────────────────────────
 
     @api.get("/promoters", response_class=FileResponse)
     def serve_promoters():
         promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
-        return FileResponse(promo_path, media_type="text/html")
+        return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
     @api.get("/promoters/summary")
     def get_promoters_summary():
