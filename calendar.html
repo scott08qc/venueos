@@ -875,7 +875,9 @@ function getDemandScore(dateStr) {
 
 function getEventsForDate(dateStr) {
   if (dateStr === '2026-05-02') {
-    console.log('looking for May 2, internalEvents:', internalEvents.map(e => e.date));
+    const matched = internalEvents.filter(e => e.date === dateStr);
+    console.log('May 2 matched:', matched.length, matched);
+    console.log('May 2 strict equality test:', internalEvents[9].date === '2026-05-02', JSON.stringify(internalEvents[9].date), internalEvents[9].date.length);
   }
   const internal = internalEvents
     .filter(e => e.date === dateStr)
