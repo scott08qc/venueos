@@ -752,10 +752,6 @@ async function loadInternalEvents() {
   try {
     const res = await fetch(`/api/events-by-date?start=2026-01-01&end=2026-12-31`);
     const rows = await res.json();
-    console.log('events-by-date response:', rows);
-    console.log('first event_date raw value:', rows.length > 0 ? rows[0].event_date : 'no rows');
-    console.log('first date after slice:', rows.length > 0 && rows[0].event_date ? rows[0].event_date.slice(0, 10) : 'null');
-    console.log('sample dateKey for May 2:', dateKey(2026, 4, 2));
     internalEvents = rows.map(e => ({
       id: e.id,
       date: e.event_date ? e.event_date.slice(0, 10) : null,
@@ -767,7 +763,6 @@ async function loadInternalEvents() {
       projBar: e.projected_bar_revenue,
       projDoor: e.projected_door_revenue,
     })).filter(e => e.date);
-    console.log('internalEvents after map:', internalEvents);
   } catch (err) {
     console.error('Failed to load events:', err);
     internalEvents = [];
@@ -874,11 +869,6 @@ function getDemandScore(dateStr) {
 }
 
 function getEventsForDate(dateStr) {
-  if (dateStr === '2026-05-02') {
-    const matched = internalEvents.filter(e => e.date === dateStr);
-    console.log('May 2 matched:', matched.length, matched);
-    console.log('May 2 strict equality test:', internalEvents[9].date === '2026-05-02', JSON.stringify(internalEvents[9].date), internalEvents[9].date.length);
-  }
   const internal = internalEvents
     .filter(e => e.date === dateStr)
     .map(e => ({...e, source: 'internal', type: 'internal'}));
@@ -957,9 +947,6 @@ function renderMonth(year, month) {
       return activeFilters.has(e.type);
     });
 
-    if (dk === '2026-05-02') {
-      console.log('May 2 filtered:', filtered.length, filtered);
-    }
 
     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
     const isWeekend = [0, 6].includes(new Date(year, month, d).getDay());
