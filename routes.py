@@ -1383,10 +1383,20 @@ def create_app(static_dir: str) -> FastAPI:
         calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
         return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
+    @api.get("/hub/calculator", response_class=FileResponse)
+    def serve_calculator_hub():
+        calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
+        return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
     # ── Calendar ──────────────────────────────────────────────────────────────
 
     @api.get("/calendar", response_class=FileResponse)
     def serve_calendar():
+        cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
+        return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
+    @api.get("/hub/calendar", response_class=FileResponse)
+    def serve_calendar_hub():
         cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
         return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
