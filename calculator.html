@@ -1683,7 +1683,7 @@ function renderPLTab(data) {
 
   document.getElementById('modal-body').innerHTML = html;
   console.log('about to call loadMarketNarrative, e.event_id:', e.event_id, 'e.id:', e.id);
-  loadMarketNarrative(e.event_id, data, e.event_date);
+  loadMarketNarrative(e.id, data, e.event_date);
 }
 
 function renderMarketContextSection(dateStr, eventId, eventData) {
@@ -1831,7 +1831,7 @@ function renderNightSummaryTab(data) {
     </div>
   </div>
 
-  ${renderMarketContextSection(e.event_date, e.event_id, data)}
+  ${renderMarketContextSection(e.event_date, e.id, data)}
 
   <div class="detail-section">
     <div class="detail-section-title">Revenue Overview</div>
@@ -2052,7 +2052,7 @@ async function renderSettlementReportTab(data) {
     </div>
   </div>
 
-  ${renderMarketContextSection(e.event_date, e.event_id, data)}
+  ${renderMarketContextSection(e.event_date, e.id, data)}
 
   <!-- Section 2–4: Full P&L table -->
   <div class="detail-section">
@@ -2164,7 +2164,7 @@ async function renderSettlementReportTab(data) {
   <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>`;
 
   document.getElementById('modal-body').innerHTML = html;
-  loadMarketNarrative(e.event_id, data, e.event_date);
+  loadMarketNarrative(e.id, data, e.event_date);
 }
 
 async function renderTPTab(data) {
