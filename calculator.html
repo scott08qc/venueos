@@ -1728,9 +1728,7 @@ function renderMarketContextSection(dateStr, eventId, eventData) {
 }
 
 async function loadMarketNarrative(eventId, eventData, dateStr) {
-  console.log('loadMarketNarrative fired, eventId:', eventId);
   const el = document.getElementById(`market-narrative-${eventId}`);
-  console.log('market-narrative element:', el, 'looking for id:', `market-narrative-${eventId}`);
   if (!el) return;
 
   // Return cached result without re-calling API
@@ -1772,7 +1770,6 @@ Keep the narrative factual, specific, and under 60 words. Focus on whether marke
       body: JSON.stringify({ prompt })
     });
     const result = await res.json();
-    console.log('market narrative response:', result);
     const text = result.text || 'Could not generate narrative.';
     const html = `<span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Market Narrative</span>${text}`;
     marketNarrativeCache[eventId] = html;
@@ -1896,10 +1893,7 @@ function renderNightSummaryTab(data) {
   }
 
   const marketHtml = renderMarketContextSection(e.event_date, e.id, data);
-  console.log('marketHtml length:', marketHtml.length, 'contains narrative div:', marketHtml.includes('market-narrative'));
   document.getElementById('modal-body').innerHTML = html;
-  console.log('about to call loadMarketNarrative, e.event_id:', e.event_id, 'e.id:', e.id);
-  console.log('market-narrative element:', document.getElementById(`market-narrative-${e.id}`), 'looking for id:', `market-narrative-${e.id}`);
   loadMarketNarrative(e.id, data, e.event_date);
 }
 
