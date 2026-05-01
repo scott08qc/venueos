@@ -692,6 +692,46 @@ const sphDefaults = {
   'Sports and Viewing':{v:22,n:'Sports avg — beer and casual spend'}
 };
 
+const ATLANTA_MARKET_EVENTS = [
+  { date: '2026-05-01', name: 'Morgan Wallen @ State Farm Arena', type: 'liveration', demo: 'Country 25-45', cap: 21000, competitor: false },
+  { date: '2026-05-03', name: 'Kendrick Lamar @ State Farm Arena', type: 'liveration', demo: 'Hip Hop 18-35', cap: 21000, competitor: false },
+  { date: '2026-05-08', name: 'Dead & Company @ Ameris', type: 'liveration', demo: 'Classic Rock 35-55', cap: 12000, competitor: false },
+  { date: '2026-05-10', name: 'Zedd @ Believe Music Hall', type: 'liveration', demo: 'EDM 21-30', cap: 1500, competitor: true },
+  { date: '2026-05-15', name: 'Bad Bunny @ State Farm Arena', type: 'liveration', demo: 'Latin 18-35', cap: 21000, competitor: false },
+  { date: '2026-05-17', name: 'Eric Church @ Ameris', type: 'liveration', demo: 'Country 30-50', cap: 12000, competitor: false },
+  { date: '2026-05-22', name: 'SZA @ State Farm Arena', type: 'liveration', demo: 'R&B/Soul 20-35', cap: 21000, competitor: false },
+  { date: '2026-05-24', name: 'Fisher @ Tabernacle', type: 'liveration', demo: 'House 25-38', cap: 2500, competitor: true },
+  { date: '2026-05-29', name: 'Luke Bryan @ Ameris', type: 'liveration', demo: 'Country 28-48', cap: 12000, competitor: false },
+  { date: '2026-05-31', name: 'Post Malone @ State Farm Arena', type: 'liveration', demo: 'Pop/Hip Hop 18-30', cap: 21000, competitor: false },
+  { date: '2026-06-05', name: 'Dua Lipa @ State Farm Arena', type: 'liveration', demo: 'Pop 20-34', cap: 21000, competitor: false },
+  { date: '2026-06-07', name: 'John Summit @ Believe', type: 'liveration', demo: 'House 22-35', cap: 1500, competitor: true },
+  { date: '2026-06-12', name: 'Drake @ State Farm Arena', type: 'liveration', demo: 'Hip Hop 20-35', cap: 21000, competitor: false },
+  { date: '2026-06-14', name: 'Metallica @ Truist Park', type: 'liveration', demo: 'Metal/Rock 28-50', cap: 41000, competitor: false },
+  { date: '2026-06-19', name: 'Chris Brown @ State Farm Arena', type: 'liveration', demo: 'R&B 22-38', cap: 21000, competitor: false },
+  { date: '2026-06-26', name: 'Ariana Grande @ State Farm Arena', type: 'liveration', demo: 'Pop 18-30', cap: 21000, competitor: false },
+  { date: '2026-06-28', name: 'Skrillex @ Believe', type: 'liveration', demo: 'EDM 21-32', cap: 1500, competitor: true },
+  { date: '2026-07-03', name: 'Luke Combs @ Ameris', type: 'liveration', demo: 'Country 25-45', cap: 12000, competitor: false },
+  { date: '2026-07-10', name: 'Billie Eilish @ State Farm Arena', type: 'liveration', demo: 'Alt/Pop 16-28', cap: 21000, competitor: false },
+  { date: '2026-07-17', name: 'Travis Scott @ State Farm Arena', type: 'liveration', demo: 'Hip Hop 18-30', cap: 21000, competitor: false },
+  { date: '2026-07-24', name: 'DJ Snake @ Believe', type: 'liveration', demo: 'EDM 21-32', cap: 1500, competitor: true },
+  { date: '2026-07-31', name: 'Usher @ State Farm Arena', type: 'liveration', demo: 'R&B 25-42', cap: 21000, competitor: false },
+  { date: '2026-05-02', name: 'Braves vs Dodgers', type: 'sports', demo: 'Sports 25-55', cap: 41000, competitor: false },
+  { date: '2026-05-07', name: 'Atlanta United vs NYCFC', type: 'sports', demo: 'Soccer 20-40', cap: 42500, competitor: false },
+  { date: '2026-05-14', name: 'Atlanta United — Home', type: 'sports', demo: 'Soccer 20-40', cap: 42500, competitor: false },
+  { date: '2026-05-22', name: 'Music Midtown — Preview', type: 'festival', demo: 'Mixed 18-35', cap: 30000, competitor: false },
+  { date: '2026-05-23', name: 'Music Midtown — Day 1', type: 'festival', demo: 'Mixed 18-35', cap: 30000, competitor: false },
+  { date: '2026-05-24', name: 'Music Midtown — Day 2', type: 'festival', demo: 'Mixed 18-35', cap: 30000, competitor: false },
+  { date: '2026-05-25', name: 'Memorial Day', type: 'holiday', demo: null, cap: null, competitor: false },
+  { date: '2026-06-19', name: 'Juneteenth', type: 'holiday', demo: null, cap: null, competitor: false },
+  { date: '2026-06-27', name: 'ONE Music Fest — Day 1', type: 'festival', demo: 'Hip Hop/R&B 20-40', cap: 25000, competitor: false },
+  { date: '2026-06-28', name: 'ONE Music Fest — Day 2', type: 'festival', demo: 'Hip Hop/R&B 20-40', cap: 25000, competitor: false },
+  { date: '2026-07-04', name: 'Independence Day', type: 'holiday', demo: null, cap: null, competitor: false },
+  { date: '2026-07-18', name: 'ATLien Fest', type: 'festival', demo: 'Hip Hop 18-35', cap: 15000, competitor: false },
+  { date: '2026-07-26', name: 'Shaky Knees — Day 1', type: 'festival', demo: 'Indie/Rock 25-45', cap: 20000, competitor: false },
+  { date: '2026-07-27', name: 'Shaky Knees — Day 2', type: 'festival', demo: 'Indie/Rock 25-45', cap: 20000, competitor: false },
+];
+// TODO: migrate to market_events DB table when expanding to second venue or city
+
 let intel = null;
 let costMode = 'proj';
 let projCosts = {};
@@ -703,6 +743,25 @@ function g(id){return document.getElementById(id)}
 function fv(id){return parseFloat(g(id)?.value)||0}
 function iv(id){return parseInt(g(id)?.value)||0}
 function ff(n){const s=Math.abs(n);const v=s>=1000?'$'+(s/1000).toFixed(1)+'K':'$'+s.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return n<0?'-'+v:v}
+
+const marketNarrativeCache = {};
+
+function getMarketContext(dateStr) {
+  if (!dateStr) return { events: [], competitors: [], hasHoliday: false, hasFestival: false, demandLevel: 'low' };
+  const d = dateStr.substring(0, 10);
+  const events = ATLANTA_MARKET_EVENTS.filter(e => e.date === d);
+  const competitors = events.filter(e => e.competitor);
+  const hasHoliday = events.some(e => e.type === 'holiday');
+  const hasFestival = events.some(e => e.type === 'festival');
+  // Demand: high = holiday or festival or 2+ events; medium = 1 large non-competitor; low = nothing significant
+  let demandLevel = 'low';
+  if (hasHoliday || hasFestival || competitors.length >= 1 || events.filter(e => (e.cap || 0) >= 10000).length >= 2) {
+    demandLevel = 'high';
+  } else if (events.length >= 1) {
+    demandLevel = 'medium';
+  }
+  return { events, competitors, hasHoliday, hasFestival, demandLevel };
+}
 
 // Debounced fetch
 function debounceFetch(){
@@ -1623,6 +1682,102 @@ function renderPLTab(data) {
   }
 
   document.getElementById('modal-body').innerHTML = html;
+  loadMarketNarrative(e.id, data, e.event_date);
+}
+
+function renderMarketContextSection(dateStr, eventId, eventData) {
+  const ctx = getMarketContext(dateStr);
+  const typeLabel = { liveration: 'Live Nation', sports: 'Sports', festival: 'Festival', holiday: 'Holiday' };
+  const typeColor = { liveration: 'var(--blue)', sports: '#60A5FA', festival: '#A78BFA', holiday: '#34D399' };
+
+  const evRows = ctx.events.map(ev => {
+    const isComp = ev.competitor;
+    const label = typeLabel[ev.type] || ev.type;
+    const color = typeColor[ev.type] || 'var(--text2)';
+    const capStr = ev.cap ? ` · cap ${ev.cap.toLocaleString()}` : '';
+    const demoStr = ev.demo ? ` · ${ev.demo}` : '';
+    if (isComp) {
+      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;margin-bottom:4px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#FBBF24;min-width:60px;padding-top:1px">⚠ Competitor</span>
+        <span style="font-size:12px;color:#FBBF24;font-weight:500">${ev.name}<span style="color:var(--text3);font-weight:400">${demoStr}${capStr}</span></span>
+      </div>`;
+    }
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;margin-bottom:2px">
+      <span style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${color};min-width:60px;padding-top:1px">${label}</span>
+      <span style="font-size:12px;color:var(--text2)">${ev.name}${demoStr ? `<span style="color:var(--text3)"> · ${ev.demo}</span>` : ''}${capStr ? `<span style="color:var(--text3)">${capStr}</span>` : ''}</span>
+    </div>`;
+  }).join('');
+
+  const demandColor = ctx.demandLevel === 'high' ? 'var(--green)' : ctx.demandLevel === 'medium' ? 'var(--amber)' : 'var(--text3)';
+  const demandLabel = ctx.demandLevel === 'high' ? 'High' : ctx.demandLevel === 'medium' ? 'Medium' : 'Low';
+
+  const noEventsMsg = ctx.events.length === 0
+    ? `<div style="font-size:12px;color:var(--text3);padding:4px 0">No major market events on record for this date.</div>` : '';
+
+  const narrativePlaceholderId = `market-narrative-${eventId}`;
+
+  return `<div class="detail-section" id="market-ctx-section-${eventId}">
+    <div class="detail-section-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Market Context — Atlanta</span>
+      <span style="font-size:11px;font-weight:600;color:${demandColor};letter-spacing:0.05em;text-transform:uppercase">● ${demandLabel} Demand Night</span>
+    </div>
+    ${ctx.events.length > 0 ? `<div style="margin-bottom:10px">${evRows}</div>` : noEventsMsg}
+    <div id="${narrativePlaceholderId}" style="margin-top:8px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.6">
+      <span style="color:var(--text3);font-style:italic">Generating market narrative…</span>
+    </div>
+  </div>`;
+}
+
+async function loadMarketNarrative(eventId, eventData, dateStr) {
+  const el = document.getElementById(`market-narrative-${eventId}`);
+  if (!el) return;
+
+  // Return cached result without re-calling API
+  if (marketNarrativeCache[eventId]) {
+    el.innerHTML = marketNarrativeCache[eventId];
+    return;
+  }
+
+  const ctx = getMarketContext(dateStr);
+  const e = eventData.event;
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+  const projNet = parseFloat(e.projected_bar_revenue || 0) + parseFloat(e.projected_door_revenue || 0) + parseFloat(e.projected_table_revenue || 0);
+
+  const marketList = ctx.events.length > 0
+    ? ctx.events.map(ev => `- ${ev.name} (${ev.type}${ev.demo ? ', ' + ev.demo : ''})`).join('\n')
+    : '- No major market events recorded for this date';
+  const compList = ctx.competitors.length > 0
+    ? ctx.competitors.map(ev => `${ev.name} (${ev.demo || 'similar demo'})`).join(', ')
+    : 'none';
+
+  const prompt = `You are a venue performance analyst. Write 2-3 sentences interpreting how market conditions on ${dateStr ? dateStr.substring(0,10) : 'this date'} in Atlanta may have influenced this event's performance. Be specific and factual.
+
+Event: ${e.event_name || '—'}, ${e.tier1_category || '—'}, Promoter: ${e.promoter_name || '—'}
+Attendance: ${e.actual_attendance || '—'} actual vs ${e.expected_attendance || '—'} projected${drawPct ? ' (' + drawPct + '% draw)' : ''}
+Revenue: $${parseFloat(e.actual_bar_revenue || e.total_bar_sales || 0).toLocaleString()} bar actual vs $${parseFloat(e.projected_bar_revenue || 0).toLocaleString()} projected
+Net to Venue: $${parseFloat(e.net_revenue_actual || 0).toLocaleString()} actual vs projected $${Math.round(projNet).toLocaleString()}
+
+Market conditions that night:
+${marketList}
+Direct competitors (same demographic): ${compList}
+
+Keep the narrative factual, specific, and under 60 words. Focus on whether market conditions likely helped, hurt, or were neutral to performance. Do not use filler phrases like 'it's worth noting' or 'overall'.`;
+
+  try {
+    const res = await fetch(`${WORKSHOP_URL}/api/talking-points`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const result = await res.json();
+    const text = result.text || 'Could not generate narrative.';
+    const html = `<span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Market Narrative</span>${text}`;
+    marketNarrativeCache[eventId] = html;
+    el.innerHTML = html;
+  } catch(_) {
+    el.innerHTML = '<span style="color:var(--text3);font-style:italic">Could not generate narrative — check connection.</span>';
+  }
 }
 
 function renderNightSummaryTab(data) {
@@ -1671,6 +1826,8 @@ function renderNightSummaryTab(data) {
       </div>
     </div>
   </div>
+
+  ${renderMarketContextSection(e.event_date, e.id, data)}
 
   <div class="detail-section">
     <div class="detail-section-title">Revenue Overview</div>
@@ -1891,6 +2048,8 @@ async function renderSettlementReportTab(data) {
     </div>
   </div>
 
+  ${renderMarketContextSection(e.event_date, e.id, data)}
+
   <!-- Section 2–4: Full P&L table -->
   <div class="detail-section">
     <div class="detail-section-title">Full P&amp;L — Projected vs. Actual</div>
@@ -2001,6 +2160,7 @@ async function renderSettlementReportTab(data) {
   <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>`;
 
   document.getElementById('modal-body').innerHTML = html;
+  loadMarketNarrative(e.id, data, e.event_date);
 }
 
 async function renderTPTab(data) {
