@@ -716,8 +716,8 @@
 </div>
 
 <script>
-const CALC_URL = 'https://unnecessary-tarantula-germaine.workshop.build/api/calculator';
-const BASE_URL = 'https://unnecessary-tarantula-germaine.workshop.build';
+const CALC_URL = `${window.location.origin}/api/calculator`;
+const BASE_URL = window.location.origin;
 
 let currentMonth = 4; // 0-indexed: April=3, May=4
 let currentYear = 2026;
