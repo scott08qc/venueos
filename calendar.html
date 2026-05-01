@@ -255,7 +255,7 @@
   }
   .event-pill:hover { opacity: 0.85; }
   .pill-internal { background: #E8F0F7; color: #2C5F8A; font-weight: 500; }
-  .pill-hold { background: #FDF3E0; color: #8B5E0A; font-weight: 500; }
+  .pill-hold { background: #FDEAEA; color: #8B2D2D; font-weight: 500; }
   .pill-liveration { background: var(--green-light); color: var(--green); }
   .pill-sports { background: var(--amber-light); color: var(--amber); }
   .pill-festival { background: var(--purple-light); color: var(--purple); }
@@ -698,6 +698,10 @@
         <label>Promoter</label>
         <input type="text" id="new-event-promoter" placeholder="Promoter name">
       </div>
+      <div class="modal-field">
+        <label>Notes <span style="color:var(--text3); font-weight:400;">(internal — visible to all stakeholders)</span></label>
+        <textarea id="new-event-notes" placeholder="Early discussions, terms being considered, open questions..." style="width:100%; height:72px; border:1px solid var(--border-strong); border-radius:6px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text1); background:var(--surface); resize:none;"></textarea>
+      </div>
       <div style="background:#FDF3E0; border:1px solid #E8C97A; border-radius:8px; padding:12px; font-size:12px; color:#8B5E0A; line-height:1.5;">
         <strong style="display:block; margin-bottom:3px;">This creates a date hold only.</strong>
         Saving here blocks the date and gives your team visibility — it does not finalize the deal. All deal terms, P&amp;L modeling, and promoter intelligence must be completed in the Deal Calculator before a hold can move to Confirmed.
@@ -757,6 +761,7 @@ async function loadInternalEvents() {
       status: e.status || 'confirmed',
       projBar: e.projected_bar_revenue,
       projDoor: e.projected_door_revenue,
+      notes: e.notes || null,
     })).filter(e => e.date);
   } catch (err) {
     console.error('Failed to load events:', err);
@@ -1122,20 +1127,25 @@ function renderDetailPanel(dk) {
       const statusLabel = ev.status === 'completed' ? '✓ COMPLETED' : ev.status === 'confirmed' ? '● CONFIRMED' : '◌ HOLD — Not finalized';
       const hasActuals = ev.status === 'completed' && ev.barNet;
       const hasProjected = ev.status === 'confirmed' && ev.projBar;
-      const clickFn = ev.status === 'hold' ? `openNewEventOnDate('${dk}')` : `openEventInCalc(${ev.id})`;
-      const ctaLabel = ev.status === 'hold' ? 'Finalize in Calculator →' : 'Open in Calculator →';
+      const clickFn = ev.id ? `openEventInCalc(${ev.id})` : `openNewEventOnDate('${dk}')`;
+      const ctaLabel = ev.status === 'hold' ? 'Continue setup in Calculator →' : 'Open in Calculator →';
+      const ctaColor = ev.status === 'hold' ? '#8B5E0A' : '#2C5F8A';
       const revenueTotal = hasActuals ? (ev.barNet + ev.doorNet) : hasProjected ? (ev.projBar + ev.projDoor) : null;
       html += `
         <div class="detail-event-card" onclick="${clickFn}">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
             <div class="detail-event-badge" style="background:${statusBg}; color:${statusColor};">${statusLabel}</div>
-            ${revenueTotal ? `<div style="font-size:12px; font-weight:500; color:var(--text1);">$${revenueTotal.toLocaleString()}<span style="font-size:10px; font-weight:400; color:var(--text3); margin-left:3px;">${hasProjected ? 'proj.' : 'actual'}</span></div>` : ''}
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${revenueTotal ? `<div style="font-size:12px; font-weight:500; color:#1A1714;">$${revenueTotal.toLocaleString()}<span style="font-size:10px; font-weight:400; color:#9B9793; margin-left:3px;">${hasProjected ? 'proj.' : 'actual'}</span></div>` : ''}
+              ${ev.status === 'hold' ? `<button onclick="event.stopPropagation(); deleteHold(${ev.id}, '${ev.date}')" style="border:none; background:none; cursor:pointer; color:#9B9793; font-size:12px; padding:2px 4px; border-radius:4px;" title="Remove hold">✕</button>` : ''}
+            </div>
           </div>
           <div class="detail-event-name">${ev.name}</div>
           <div class="detail-event-meta">${ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''}</div>
-          ${hasActuals ? `<div style="font-size:11px; color:var(--text3); margin-top:4px;">Bar: $${ev.barNet.toLocaleString()} · Door: $${ev.doorNet.toLocaleString()}</div>` : ''}
-          ${hasProjected ? `<div style="font-size:11px; color:var(--text3); margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
-          <div style="font-size:11px; color:${ev.status === 'hold' ? 'var(--amber)' : 'var(--blue)'}; margin-top:6px; font-weight:500;">${ctaLabel}</div>
+          ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.barNet.toLocaleString()} · Door: $${ev.doorNet.toLocaleString()}</div>` : ''}
+          ${hasProjected ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
+          ${ev.notes ? `<div style="font-size:11px; color:#5A5652; margin-top:6px; padding:6px 8px; background:#F4F2EF; border-radius:4px; border-left:2px solid #D4CFC9;">${ev.notes}</div>` : ''}
+          <div style="font-size:11px; color:${ctaColor}; margin-top:6px; font-weight:500;">${ctaLabel}</div>
         </div>
       `;
     });
@@ -1177,6 +1187,21 @@ function openEventInCalc(id) {
   window.open(url, '_blank');
 }
 
+async function deleteHold(id, date) {
+  if (!confirm('Remove this hold from the calendar?')) return;
+  if (id) {
+    try {
+      await fetch(`${BASE_URL}/api/events/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete hold:', err);
+    }
+  }
+  const idx = internalEvents.findIndex(e => e.id === id || (e.date === date && e.status === 'hold'));
+  if (idx !== -1) internalEvents.splice(idx, 1);
+  renderCalendar();
+  if (selectedDate === date) renderDetailPanel(date);
+}
+
 function openCalc() {
   window.open(CALC_URL, '_blank');
 }
@@ -1201,23 +1226,48 @@ function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
 }
 
-function saveNewEvent() {
+async function saveNewEvent() {
   const dateInput = document.getElementById('new-event-date').value;
-  const date = dateInput || newEventDate || dateKey(currentYear, currentMonth, 1);
+  const date = dateInput || newEventDate;
   const name = document.getElementById('new-event-name').value || 'New Event';
   const type = document.getElementById('new-event-type').value;
   const att = parseInt(document.getElementById('new-event-att').value) || 500;
   const promoter = document.getElementById('new-event-promoter').value || 'TBD';
+  const notes = document.getElementById('new-event-notes').value || '';
 
-  if (!dateInput && !newEventDate) {
+  if (!date) {
     alert('Please select a date for this hold.');
     return;
   }
 
+  // Save to DB
+  let eventId = null;
+  try {
+    const res = await fetch(`${BASE_URL}/api/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_name: name,
+        event_date: date,
+        tier1_category: type,
+        promoter_name: promoter,
+        expected_attendance: att,
+        venue_capacity: 500,
+        status: 'hold',
+        notes: notes
+      })
+    });
+    const data = await res.json();
+    eventId = data.id || null;
+  } catch (err) {
+    console.error('Failed to save hold to DB:', err);
+  }
+
+  // Add to local state
   internalEvents.push({
-    id: null,
-    date, name, type: type.replace(' ', ''), promoter, att,
-    status: 'hold', projBar: null, projDoor: null
+    id: eventId,
+    date, name, type, promoter, att,
+    status: 'hold', projBar: null, projDoor: null, notes
   });
 
   closeModal();

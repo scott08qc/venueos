@@ -494,6 +494,20 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             return {"ok": True, "day_of_week": day_of_week}
 
+    @api.delete("/events/{event_id}")
+    def delete_event(event_id: int):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            result = conn.execute(
+                text("DELETE FROM events WHERE id = :eid RETURNING id"),
+                {"eid": event_id}
+            )
+            conn.commit()
+            if not result.fetchone():
+                raise HTTPException(status_code=404, detail="Event not found")
+            return {"ok": True}
+
     # ── Night of Actuals ──────────────────────────────────────────────────────
 
     @api.get("/actuals/{event_id}")
@@ -935,7 +949,7 @@ def create_app(static_dir: str) -> FastAPI:
           LEFT JOIN night_of_actuals n ON n.event_id = e.id
             AND n.time_of_entry = 'Close'
           WHERE LOWER(e.promoter_name) LIKE LOWER(:promoter)
-            AND r.review_status = 'Complete'
+            AND LOWER(r.review_status) = 'complete'
           ORDER BY e.event_date DESC
           LIMIT 20
         """), {"promoter": f"%{promoter}%"}).fetchall()
