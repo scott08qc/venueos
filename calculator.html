@@ -1785,7 +1785,8 @@ Direct competitors (same demographic): ${compList}
 Internal event type: ${e.tier1_category || '—'}
 Demographic overlap events (same audience as internal event): ${overlapList}
 
-Keep the narrative factual, specific, and under 60 words. Focus on whether market conditions likely helped, hurt, or were neutral to performance. Do not use filler phrases like 'it's worth noting' or 'overall'.`;
+Keep the narrative factual, specific, and under 60 words. Focus on whether market conditions likely helped, hurt, or were neutral to performance. Do not use filler phrases like 'it's worth noting' or 'overall'.
+Event status: ${e.status || 'unknown'} — if 'completed', write in past tense analyzing what happened. If 'confirmed' or 'hold', write in conditional/future tense describing what market conditions the event will face and what to watch for.`;
 
   try {
     const res = await fetch(`${WORKSHOP_URL}/api/talking-points`, {
