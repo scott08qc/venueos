@@ -957,6 +957,10 @@ function renderMonth(year, month) {
       return activeFilters.has(e.type);
     });
 
+    if (dk === '2026-05-02') {
+      console.log('May 2 filtered:', filtered.length, filtered);
+    }
+
     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
     const isWeekend = [0, 6].includes(new Date(year, month, d).getDay());
     const isSelected = selectedDate === dk;
