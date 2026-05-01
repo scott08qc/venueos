@@ -843,6 +843,15 @@ async function fetchIntelligence(){
     const data = await res.json();
     intel = data;
     renderIntelligence(data);
+    // Auto-apply all recommendations when loading a hold event with history
+    if (data.found && currentEventData && currentEventData.event?.status === 'hold') {
+      const rec = data.recommendations;
+      if (rec.attendance?.suggested)              applyRec('attend', rec.attendance.suggested);
+      if (rec.spend_per_head?.suggested)          applyRec('sph',    rec.spend_per_head.suggested);
+      if (rec.door_split_promoter?.suggested != null) applyRec('d-sl', Math.round(rec.door_split_promoter.suggested));
+      if (rec.bar_split_promoter?.suggested != null)  applyRec('b-sl', Math.round(rec.bar_split_promoter.suggested));
+      if (rec.avg_artist_fee)                     applyRec('art-fee', Math.round(rec.avg_artist_fee));
+    }
   } catch(e) {
     g('intel-loading').style.display='none';
     g('intel-empty').style.display='block';
@@ -1389,6 +1398,20 @@ async function openEventDetail(eventId, eventName) {
         banner.style.display = 'block';
         banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+
+      // Clear ticket tier defaults so P&L starts blank
+      const priceInput = document.querySelector('.tier-price');
+      const qtyInput = document.querySelector('.tier-qty');
+      const feeInput = document.querySelector('.tier-fee');
+      if (priceInput) priceInput.value = '';
+      if (qtyInput) qtyInput.value = '';
+      if (feeInput) feeInput.value = '';
+
+      // Clear operating cost defaults
+      ['c-noc','c-sec','c-dg','c-pol','c-ps','c-pe','c-rid','c-mkt','c-mkt-p','c-other'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
 
       // Trigger promoter intelligence
       debounceFetch();
