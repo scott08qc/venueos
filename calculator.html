@@ -309,6 +309,48 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 .obs-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; }
 .obs-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
 
+/* Settlement report — projected vs actual table */
+.sr-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.sr-table th { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.sr-table th:first-child { text-align: left; }
+.sr-table td { padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: right; font-family: 'DM Mono', monospace; }
+.sr-table td:first-child { text-align: left; font-family: 'DM Sans', sans-serif; color: var(--text2); }
+.sr-table tr.total-row td { font-weight: 600; border-top: 2px solid var(--border2); border-bottom: none; color: var(--text1); }
+.sr-table td.var-pos { color: var(--green); }
+.sr-table td.var-neg { color: var(--red); }
+.sr-table td.var-flat { color: var(--text3); }
+
+/* Cost breakdown table */
+.cb-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cb-table th { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.cb-table th:first-child { text-align: left; }
+.cb-table td { padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: right; font-family: 'DM Mono', monospace; color: var(--text2); }
+.cb-table td:first-child { text-align: left; font-family: 'DM Sans', sans-serif; }
+.cb-table tr.total-row td { font-weight: 600; border-top: 2px solid var(--border2); border-bottom: none; color: var(--text1); }
+.cb-table td.pct-col { color: var(--text3); font-size: 11px; }
+
+/* Print button */
+.print-btn {
+  display: block; width: 100%; margin-top: 24px; padding: 12px;
+  background: var(--blue); border: none; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  color: white; cursor: pointer; transition: background .15s;
+  text-align: center;
+}
+.print-btn:hover { background: #245178; }
+
+/* Print styles */
+@media print {
+  body > *:not(.modal-overlay) { display: none !important; }
+  .modal-overlay { display: block !important; position: static !important;
+    background: none !important; padding: 0 !important; backdrop-filter: none !important; }
+  .modal { box-shadow: none !important; max-width: 100% !important; border-radius: 0 !important; }
+  .modal-close, .modal-tabs, .print-btn, .tp-copy-btn { display: none !important; }
+  .modal-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .modal-body { max-height: none !important; overflow: visible !important; }
+  .detail-stat { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 </style>
 </head>
 <body>
@@ -1268,10 +1310,14 @@ function closeModal(e) {
 
 function switchTab(tab) {
   currentTab = tab;
-  document.getElementById('tab-pl').className = 'modal-tab' + (tab === 'pl' ? ' active' : '');
-  document.getElementById('tab-tp').className = 'modal-tab' + (tab === 'tp' ? ' active' : '');
+  ['pl','night','report','tp'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.className = 'modal-tab' + (t === tab ? ' active' : '');
+  });
   if (currentEventData) {
     if (tab === 'pl') renderPLTab(currentEventData);
+    else if (tab === 'night') renderNightSummaryTab(currentEventData);
+    else if (tab === 'report') renderSettlementReportTab(currentEventData);
     else renderTPTab(currentEventData);
   }
 }
@@ -1285,6 +1331,8 @@ async function openEventDetail(eventId, eventName) {
   body.innerHTML = '<div class="modal-loading">Loading event data...</div>';
   currentTab = 'pl';
   document.getElementById('tab-pl').className = 'modal-tab active';
+  document.getElementById('tab-night').className = 'modal-tab';
+  document.getElementById('tab-report').className = 'modal-tab';
   document.getElementById('tab-tp').className = 'modal-tab';
 
   try {
@@ -1473,6 +1521,373 @@ function renderPLTab(data) {
   document.getElementById('modal-body').innerHTML = html;
 }
 
+function renderNightSummaryTab(data) {
+  const e = data.event;
+  const s = data.summary;
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+  const drawCls = !drawPct ? '' : drawPct >= 95 ? 'green' : drawPct >= 80 ? 'amber' : 'red';
+
+  const barActual = parseFloat(e.actual_bar_revenue || e.total_bar_sales || 0);
+  const doorActual = parseFloat(e.actual_door_revenue || 0);
+  const tableActual = parseFloat(e.actual_table_revenue || e.table_bottle_service || 0);
+  const totalActual = barActual + doorActual + tableActual;
+
+  let html = `<div class="detail-section">
+    <div class="detail-section-title">Event Details</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat">
+        <div class="detail-stat-label">Event</div>
+        <div class="detail-stat-value" style="font-size:13px">${e.event_name || '—'}</div>
+        <div class="detail-stat-sub">${e.event_date ? e.event_date.substring(0,10) : '—'} · ${e.day_of_week || ''}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Type</div>
+        <div class="detail-stat-value" style="font-size:13px">${e.tier1_category || '—'}</div>
+        <div class="detail-stat-sub">${e.tier2_subcategory || ''}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Promoter</div>
+        <div class="detail-stat-value" style="font-size:13px">${e.promoter_name || '—'}</div>
+        <div class="detail-stat-sub">${e.artist_name || ''}</div>
+      </div>
+      <div class="detail-stat ${drawCls}">
+        <div class="detail-stat-label">Attendance</div>
+        <div class="detail-stat-value">${e.actual_attendance || '—'} <span style="font-size:12px;font-weight:400">actual</span></div>
+        <div class="detail-stat-sub">of ${e.expected_attendance || '—'} expected · ${drawPct ? drawPct + '%' : '—'} draw</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Doors</div>
+        <div class="detail-stat-value" style="font-size:13px">${e.doors_open_time || '—'}</div>
+        <div class="detail-stat-sub">close: ${e.event_close_time || '—'}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Artist Genre</div>
+        <div class="detail-stat-value" style="font-size:13px">${e.artist_genre || '—'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Revenue Overview</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat highlight">
+        <div class="detail-stat-label">Total Revenue</div>
+        <div class="detail-stat-value">${fmt2(totalActual)}</div>
+        <div class="detail-stat-sub">proj. ${fmt2(parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0))}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Bar Revenue</div>
+        <div class="detail-stat-value">${fmt2(barActual)}</div>
+        <div class="detail-stat-sub">proj. ${fmt2(e.projected_bar_revenue)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Door Revenue</div>
+        <div class="detail-stat-value">${fmt2(doorActual)}</div>
+        <div class="detail-stat-sub">proj. ${fmt2(e.projected_door_revenue)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Table / Bottle</div>
+        <div class="detail-stat-value">${fmt2(tableActual)}</div>
+        <div class="detail-stat-sub">proj. ${fmt2(e.projected_table_revenue)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Bar Spend / Head</div>
+        <div class="detail-stat-value">${e.spend_per_head_actual ? '$'+parseFloat(e.spend_per_head_actual).toFixed(2) : '—'}</div>
+        <div class="detail-stat-sub">actual</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Tips</div>
+        <div class="detail-stat-value">${fmt2(e.tips)}</div>
+        <div class="detail-stat-sub">${barActual ? (parseFloat(e.tips||0)/barActual*100).toFixed(1)+'% of bar' : ''}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Settlement</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat ${parseFloat(e.net_revenue_actual) >= 0 ? 'green' : 'red'}">
+        <div class="detail-stat-label">Net to Venue</div>
+        <div class="detail-stat-value">${fmt2(e.net_revenue_actual)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Effective Split</div>
+        <div class="detail-stat-value">${fmtPct(e.actual_effective_split || e.effective_split_percentage)}</div>
+        <div class="detail-stat-sub">promoter's total take</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Bottle Service</div>
+        <div class="detail-stat-value">${fmt2(s.bottle_service_revenue)}</div>
+        <div class="detail-stat-sub">${s.bottle_count} bottles · ${barActual > 0 ? Math.round(s.bottle_service_revenue/barActual*100)+'% of bar' : ''}</div>
+      </div>
+    </div>
+  </div>`;
+
+  if (e.settlement_notes) {
+    html += `<div class="detail-section">
+      <div class="detail-section-title">Settlement Notes</div>
+      <div class="obs-box"><div class="obs-body">${e.settlement_notes}</div></div>
+    </div>`;
+  }
+
+  document.getElementById('modal-body').innerHTML = html;
+}
+
+function renderSettlementReportTab(data) {
+  const e = data.event;
+  const s = data.summary;
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const n = v => parseFloat(v) || 0;
+  const d = v => (v !== null && v !== undefined && parseFloat(v) !== 0)
+    ? '$' + Math.round(Math.abs(parseFloat(v))).toLocaleString() : '—';
+  // Variance: positive = favorable for revenue lines, unfavorable for cost lines
+  function vr(actual, proj, costLine) {
+    if (actual === null || actual === undefined || proj === null || proj === undefined) return { t: '—', c: 'var-flat' };
+    const a = parseFloat(actual) || 0; const p = parseFloat(proj) || 0;
+    if (!p && !a) return { t: '—', c: 'var-flat' };
+    if (!p || !a) return { t: '—', c: 'var-flat' };
+    const diff = a - p;
+    if (Math.abs(diff) < 0.01) return { t: '±$0', c: 'var-flat' };
+    const sign = diff >= 0 ? '+' : '-';
+    const abs = '$' + Math.round(Math.abs(diff)).toLocaleString();
+    // For cost lines: over budget (positive diff) = bad (red). For revenue: positive = good (green).
+    const cls = costLine
+      ? (diff > 0 ? 'var-neg' : 'var-pos')
+      : (diff > 0 ? 'var-pos' : 'var-neg');
+    return { t: sign + abs, c: cls };
+  }
+  function row(label, proj, actual, costLine, opts = {}) {
+    const pv = (proj   !== null && proj   !== undefined) ? parseFloat(proj)   : null;
+    const av = (actual !== null && actual !== undefined) ? parseFloat(actual) : null;
+    // Skip the row only when both sides are absent or zero
+    if (!opts.total && (pv === null || pv === 0) && (av === null || av === 0)) return '';
+    const v = vr(av, pv, costLine);
+    const projFmt = (pv !== null && pv !== 0) ? '$' + Math.round(Math.abs(pv)).toLocaleString() : '—';
+    const actFmt  = (av !== null && av !== 0) ? '$' + Math.round(Math.abs(av)).toLocaleString()  : '—';
+    const isTotal = opts.total ? ' class="total-row"' : '';
+    const isSub   = opts.sub   ? `style="color:var(--text3);font-size:11px"` : '';
+    return `<tr${isTotal}>
+      <td ${isSub}>${label}</td>
+      <td>${projFmt}</td>
+      <td>${actFmt}</td>
+      <td class="${v.c}">${v.t}</td>
+    </tr>`;
+  }
+  function ph(label) {
+    return `<tr><td colspan="4" style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:10px 10px 4px;background:var(--surface2)">${label}</td></tr>`;
+  }
+  function divider() {
+    return `<tr><td colspan="4" style="padding:0;height:1px;background:var(--border)"></td></tr>`;
+  }
+
+  // ── event metadata ────────────────────────────────────────────────────────
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+
+  // ── revenue ───────────────────────────────────────────────────────────────
+  const doorProj   = n(e.projected_door_revenue);
+  const barProj    = n(e.projected_bar_revenue);
+  const tableProj  = n(e.projected_table_revenue);
+
+  const doorActual  = n(e.actual_door_revenue);
+  const doorCash    = n(e.door_revenue_cash);
+  const doorCard    = n(e.door_revenue_card);
+  const barActual   = n(e.actual_bar_revenue || e.total_bar_sales);
+  const barCogsProj = barProj * 0.161; // default 16.1% if not stored
+  const barCogsActual = barActual - n(e.actual_bar_revenue); // net calc if available; fallback below
+  // COGS: no per-event projected COGS stored; use bar * cogs pct from events if present
+  const cogsProj   = barProj > 0 ? barProj * (n(e.bar_cogs_percentage) || 16.1) / 100 : 0;
+  const cogsActual = barActual > 0 ? barActual * (n(e.bar_cogs_percentage) || 16.1) / 100 : 0;
+  const tableActual = n(e.actual_table_revenue || e.table_bottle_service);
+
+  const grossRevProj   = doorProj + barProj + tableProj;
+  const grossRevActual = doorActual + barActual + tableActual;
+
+  // ticket fees: no projected field; actual from door breakdown
+  const ticketFeesActual = doorCard > 0 ? 0 : 0; // not stored discretely; show — for now
+
+  // ── promoter & artist payouts ─────────────────────────────────────────────
+  const doorPayoutProj  = doorProj  * (n(e.door_split_promoter) / 100);
+  const barPayoutProj   = barProj   * (n(e.bar_split_promoter)  / 100);
+  const tablePayoutProj = tableProj * (n(e.table_split_promoter || e.table_split_promoter_overage) / 100);
+  const flatGProj       = 0; // not stored in events table
+  const artFeeProj      = n(e.artist_fee_landed) + n(e.artist_fee_travel);
+  const houseFeeProj    = n(e.house_fee_amount);
+
+  const doorPayoutActual  = n(e.promoter_door_payout);
+  const barPayoutActual   = n(e.promoter_bar_payout);
+  const tablePayoutActual = n(e.promoter_table_payout);
+  const flatGActual       = 0;
+  const artFeeActualVal   = n(e.artist_cost_actual || e.artist_cost_paid_by_venue);
+  const houseFeeActual    = 0; // not stored post-event
+
+  const totalPayoutsProj   = doorPayoutProj + barPayoutProj + tablePayoutProj + artFeeProj - houseFeeProj;
+  const totalPayoutsActual = doorPayoutActual + barPayoutActual + tablePayoutActual + artFeeActualVal;
+
+  const npcProj   = grossRevProj   - totalPayoutsProj   - cogsProj;
+  const npcActual = grossRevActual - totalPayoutsActual - cogsActual;
+
+  // ── operating costs ───────────────────────────────────────────────────────
+  // Projected: from events table stored fields (set pre-event)
+  const nocProj    = 0; // not stored in events table
+  const secProj    = n(e.security_cost_total);
+  const dgProj     = 0; // not stored
+  const polProj    = 0; // not stored
+  const psProj     = 0; // not stored
+  const peProj     = n(e.production_cost_total);
+  const mktProj2   = n(e.marketing_cost_total);
+
+  // Actual: staffing_cost_actual is the only rolled-up actual cost field
+  const staffActual = n(e.staffing_cost_actual);
+  // artist_cost_actual already counted in payouts above
+
+  const totalCostProj   = secProj + peProj + mktProj2; // only fields we have
+  const totalCostActual = staffActual;
+
+  // ── net to venue ──────────────────────────────────────────────────────────
+  const netProj   = npcProj   - totalCostProj;
+  const netActual = n(e.net_revenue_actual);
+
+  const marginProj   = grossRevProj   > 0 ? (netProj   / grossRevProj   * 100) : 0;
+  const marginActual = grossRevActual > 0 ? (netActual / grossRevActual * 100) : 0;
+
+  const effectiveSplit = n(e.actual_effective_split || e.effective_split_percentage);
+  const sph    = n(e.spend_per_head_actual);
+  const tips   = n(e.tips);
+  const bottlePct = barActual > 0 ? (s.bottle_service_revenue / barActual * 100) : 0;
+
+  // ── HTML ──────────────────────────────────────────────────────────────────
+  let html = `
+  <!-- Section 1: Event Header -->
+  <div class="detail-section">
+    <div class="detail-section-title">Event Header</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Event Name</span><span style="font-weight:600">${e.event_name || '—'}</span></div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Date</span>${e.event_date ? e.event_date.substring(0,10) : '—'} · ${e.day_of_week || ''}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Event Type</span>${e.tier1_category || '—'}${e.tier2_subcategory ? ' · ' + e.tier2_subcategory : ''}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Promoter</span>${e.promoter_name || '—'}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Artist</span>${e.artist_name || '—'}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Attendance</span>${e.actual_attendance || '—'} actual / ${e.expected_attendance || '—'} expected${drawPct ? ' (' + drawPct + '% draw)' : ''}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Doors Open</span>${e.doors_open_time || '—'}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Close Time</span>${e.event_close_time || '—'}</div>
+    </div>
+  </div>
+
+  <!-- Section 2–4: Full P&L table -->
+  <div class="detail-section">
+    <div class="detail-section-title">Full P&amp;L — Projected vs. Actual</div>
+    <table class="sr-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">Line Item</th>
+          <th>Projected</th>
+          <th>Actual</th>
+          <th>Variance</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        ${ph('Revenue')}
+        ${row('Gross ticket revenue',       doorProj,                             doorActual,                        false)}
+        ${row('Gross bar revenue',          barProj,                              barActual,                         false)}
+        ${row('Less COGS',                  cogsProj > 0 ? -cogsProj : 0,        cogsActual > 0 ? -cogsActual : 0,  true)}
+        ${row('Table &amp; bottle service', tableProj,                            tableActual,                       false)}
+        ${row('Total Gross Revenue',        grossRevProj,                         grossRevActual,                    false, {total:true})}
+
+        ${divider()}
+        ${ph('Promoter &amp; Artist Payouts')}
+        ${row('Door payout',             doorPayoutProj,  doorPayoutActual,  true)}
+        ${row('Bar payout',              barPayoutProj,   barPayoutActual,   true)}
+        ${row('Table payout',            tablePayoutProj, tablePayoutActual, true)}
+        ${row('Flat guarantee',          flatGProj,       flatGActual,       true)}
+        ${row('Artist fee',              artFeeProj,      artFeeActualVal,   true)}
+        ${row('House fee',               houseFeeProj,    houseFeeActual,    false)}
+        ${row('Net to Venue (pre-cost)', npcProj,         npcActual,         false, {total:true})}
+
+        ${divider()}
+        ${ph('Operating Costs')}
+        ${row('Nightly operating',       nocProj,   null,        true)}
+        ${row('Security',                secProj,   null,        true)}
+        ${row('Door girls',              dgProj,    null,        true)}
+        ${row('Police',                  polProj,   null,        true)}
+        ${row('Production staff',        psProj,    null,        true)}
+        ${row('Equip + rider',           peProj,    null,        true)}
+        ${row('Marketing',               mktProj2,  null,        true)}
+        ${row('Staffing (actual total)', null,       staffActual, true)}
+        ${row('Total Costs',             totalCostProj, totalCostActual, true, {total:true})}
+
+        ${divider()}
+        ${ph('Bottom Line')}
+        <tr class="total-row">
+          <td>Net to Venue</td>
+          <td>${netProj ? '$' + Math.round(netProj).toLocaleString() : '—'}</td>
+          <td style="color:${netActual >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600">${netActual ? '$' + Math.round(netActual).toLocaleString() : '—'}</td>
+          <td class="${vr(netActual, netProj, false).c}">${vr(netActual, netProj, false).t}</td>
+        </tr>
+        <tr>
+          <td>Margin %</td>
+          <td>${marginProj ? marginProj.toFixed(1) + '%' : '—'}</td>
+          <td>${marginActual ? marginActual.toFixed(1) + '%' : '—'}</td>
+          <td class="${vr(marginActual, marginProj, false).c}">${marginProj && marginActual ? (marginActual - marginProj >= 0 ? '+' : '') + (marginActual - marginProj).toFixed(1) + 'pp' : '—'}</td>
+        </tr>
+
+      </tbody>
+    </table>
+    <div style="font-size:11px;font-style:italic;color:var(--text3);margin-top:8px">
+      Some cost lines are tracked as projections only or actuals only — full variance available where both are recorded.
+      Staffing actual is a rolled-up field (door + police + production combined).
+    </div>
+  </div>
+
+  <!-- Section 5: Net to Venue Summary cards -->
+  <div class="detail-section">
+    <div class="detail-section-title">Net to Venue Summary</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat highlight">
+        <div class="detail-stat-label">Total Revenue</div>
+        <div class="detail-stat-value">${fmt2(grossRevActual || grossRevProj)}</div>
+        <div class="detail-stat-sub">${grossRevActual ? 'actual' : 'projected'}</div>
+      </div>
+      <div class="detail-stat ${netActual >= 0 ? 'green' : 'red'}">
+        <div class="detail-stat-label">Net to Venue</div>
+        <div class="detail-stat-value">${fmt2(netActual || netProj)}</div>
+        <div class="detail-stat-sub">${netActual ? 'actual' : 'projected'}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Effective Split %</div>
+        <div class="detail-stat-value">${effectiveSplit ? fmtPct(effectiveSplit) : '—'}</div>
+        <div class="detail-stat-sub">promoter's share</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Bar Spend / Head</div>
+        <div class="detail-stat-value">${sph ? '$' + sph.toFixed(2) : '—'}</div>
+        <div class="detail-stat-sub">actual</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Tips</div>
+        <div class="detail-stat-value">${fmt2(tips)}</div>
+        <div class="detail-stat-sub">${barActual > 0 ? (tips / barActual * 100).toFixed(1) + '% of bar' : ''}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Bottle Svc % of Bar</div>
+        <div class="detail-stat-value">${bottlePct > 0 ? bottlePct.toFixed(1) + '%' : '—'}</div>
+        <div class="detail-stat-sub">${fmt2(s.bottle_service_revenue)} · ${s.bottle_count} bottles</div>
+      </div>
+    </div>
+  </div>
+
+  ${e.settlement_notes ? `<div class="detail-section">
+    <div class="detail-section-title">Settlement Notes</div>
+    <div class="obs-box"><div class="obs-body">${e.settlement_notes}</div></div>
+  </div>` : ''}
+
+  <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>`;
+
+  document.getElementById('modal-body').innerHTML = html;
+}
+
 async function renderTPTab(data) {
   const body = document.getElementById('modal-body');
   body.innerHTML = '<div class="tp-loading">Generating talking points...</div>';
@@ -1554,6 +1969,8 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     <div class="modal-tabs">
       <div class="modal-tab active" id="tab-pl" onclick="switchTab('pl')">Full P&L</div>
+      <div class="modal-tab" id="tab-night" onclick="switchTab('night')">Night Summary</div>
+      <div class="modal-tab" id="tab-report" onclick="switchTab('report')">Settlement Report</div>
       <div class="modal-tab" id="tab-tp" onclick="switchTab('tp')">Talking Points</div>
     </div>
     <div class="modal-body" id="modal-body">
