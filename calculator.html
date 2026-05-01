@@ -746,21 +746,40 @@ function ff(n){const s=Math.abs(n);const v=s>=1000?'$'+(s/1000).toFixed(1)+'K':'
 
 const marketNarrativeCache = {};
 
-function getMarketContext(dateStr) {
-  if (!dateStr) return { events: [], competitors: [], hasHoliday: false, hasFestival: false, demandLevel: 'low' };
+function getMarketContext(dateStr, eventType) {
+  if (!dateStr) return { events: [], competitors: [], overlapEvents: [], hasHoliday: false, hasFestival: false, demandLevel: 'low' };
   const d = dateStr.substring(0, 10);
   const events = ATLANTA_MARKET_EVENTS.filter(e => e.date === d);
-  const competitors = events.filter(e => e.competitor);
   const hasHoliday = events.some(e => e.type === 'holiday');
   const hasFestival = events.some(e => e.type === 'festival');
-  // Demand: high = holiday or festival or 2+ events; medium = 1 large non-competitor; low = nothing significant
-  let demandLevel = 'low';
-  if (hasHoliday || hasFestival || competitors.length >= 1 || events.filter(e => (e.cap || 0) >= 10000).length >= 2) {
-    demandLevel = 'high';
-  } else if (events.length >= 1) {
-    demandLevel = 'medium';
-  }
-  return { events, competitors, hasHoliday, hasFestival, demandLevel };
+
+  const DEMO_OVERLAP = {
+    'Latin':               ['Latin', 'Reggaeton', 'Salsa'],
+    'Electronic':          ['EDM', 'House', 'Techno', 'Bass', 'EDM 21-30', 'EDM 21-32', 'House 22-35', 'House 25-38'],
+    'Hip Hop':             ['Hip Hop', 'Trap', 'R&B', 'Hip Hop 18-35', 'Hip Hop 20-35', 'R&B 22-38', 'R&B 25-42'],
+    'Open Format':         [],
+    'Cover Band':          [],
+    'Corporate':           [],
+    'Sports Activation':   [],
+    'Live Nation':         [],
+  };
+
+  const internalDemos = DEMO_OVERLAP[eventType] || [];
+  const overlapEvents = events.filter(e =>
+    e.demo && internalDemos.some(d => e.demo.toLowerCase().includes(d.toLowerCase()))
+  );
+  const directCompetitors = events.filter(e => e.competitor);
+  const highOverlap = overlapEvents.length > 0;
+  const hasLargeShow = events.some(e => e.cap && e.cap >= 10000);
+
+  let demandLevel;
+  if (hasHoliday || hasFestival) demandLevel = 'high';
+  else if (directCompetitors.length > 0 || highOverlap) demandLevel = 'high';
+  else if (events.length > 0 && hasLargeShow) demandLevel = 'medium';
+  else if (events.length > 0) demandLevel = 'low';
+  else demandLevel = 'low';
+
+  return { events, competitors: directCompetitors, overlapEvents, hasHoliday, hasFestival, demandLevel };
 }
 
 // Debounced fetch
@@ -1685,7 +1704,7 @@ function renderPLTab(data) {
 }
 
 function renderMarketContextSection(dateStr, eventId, eventData) {
-  const ctx = getMarketContext(dateStr);
+  const ctx = getMarketContext(dateStr, eventData.event?.tier1_category);
   const typeLabel = { liveration: 'Live Nation', sports: 'Sports', festival: 'Festival', holiday: 'Holiday' };
   const typeColor = { liveration: 'var(--blue)', sports: '#60A5FA', festival: '#A78BFA', holiday: '#34D399' };
 
@@ -1737,8 +1756,8 @@ async function loadMarketNarrative(eventId, eventData, dateStr) {
     return;
   }
 
-  const ctx = getMarketContext(dateStr);
   const e = eventData.event;
+  const ctx = getMarketContext(dateStr, e.tier1_category);
   const drawPct = e.actual_attendance && e.expected_attendance
     ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
   const projNet = parseFloat(e.projected_bar_revenue || 0) + parseFloat(e.projected_door_revenue || 0) + parseFloat(e.projected_table_revenue || 0);
@@ -1748,6 +1767,9 @@ async function loadMarketNarrative(eventId, eventData, dateStr) {
     : '- No major market events recorded for this date';
   const compList = ctx.competitors.length > 0
     ? ctx.competitors.map(ev => `${ev.name} (${ev.demo || 'similar demo'})`).join(', ')
+    : 'none';
+  const overlapList = ctx.overlapEvents.length > 0
+    ? ctx.overlapEvents.map(ev => `${ev.name} (${ev.demo || ''})`).join(', ')
     : 'none';
 
   const prompt = `You are a venue performance analyst. Write 2-3 sentences interpreting how market conditions on ${dateStr ? dateStr.substring(0,10) : 'this date'} in Atlanta may have influenced this event's performance. Be specific and factual.
@@ -1760,6 +1782,8 @@ Net to Venue: $${parseFloat(e.net_revenue_actual || 0).toLocaleString()} actual 
 Market conditions that night:
 ${marketList}
 Direct competitors (same demographic): ${compList}
+Internal event type: ${e.tier1_category || '—'}
+Demographic overlap events (same audience as internal event): ${overlapList}
 
 Keep the narrative factual, specific, and under 60 words. Focus on whether market conditions likely helped, hurt, or were neutral to performance. Do not use filler phrases like 'it's worth noting' or 'overall'.`;
 
