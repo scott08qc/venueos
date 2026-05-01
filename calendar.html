@@ -874,6 +874,9 @@ function getDemandScore(dateStr) {
 }
 
 function getEventsForDate(dateStr) {
+  if (dateStr === '2026-05-02') {
+    console.log('looking for May 2, internalEvents:', internalEvents.map(e => e.date));
+  }
   const internal = internalEvents
     .filter(e => e.date === dateStr)
     .map(e => ({...e, source: 'internal', type: 'internal'}));
