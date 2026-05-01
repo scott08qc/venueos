@@ -1682,6 +1682,8 @@ function renderPLTab(data) {
   }
 
   document.getElementById('modal-body').innerHTML = html;
+  console.log('market-narrative-18 in DOM:', !!document.getElementById('market-narrative-18'));
+  console.log('innerHTML snippet:', document.getElementById('market-narrative-18')?.outerHTML?.substring(0, 200));
   console.log('about to call loadMarketNarrative, e.event_id:', e.event_id, 'e.id:', e.id);
   loadMarketNarrative(e.id, data, e.event_date);
 }
@@ -1897,6 +1899,8 @@ function renderNightSummaryTab(data) {
     </div>`;
   }
 
+  const marketHtml = renderMarketContextSection(e.event_date, e.id, data);
+  console.log('marketHtml length:', marketHtml.length, 'contains narrative div:', marketHtml.includes('market-narrative'));
   document.getElementById('modal-body').innerHTML = html;
 }
 
