@@ -767,6 +767,7 @@ async function loadInternalEvents() {
       projBar: e.projected_bar_revenue,
       projDoor: e.projected_door_revenue,
     })).filter(e => e.date);
+    console.log('internalEvents after map:', internalEvents);
   } catch (err) {
     console.error('Failed to load events:', err);
     internalEvents = [];
