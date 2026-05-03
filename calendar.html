@@ -262,6 +262,7 @@
   .pill-convention { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
   .pill-holiday { background: var(--red-light); color: var(--red); font-style: italic; }
   .pill-competitor { background: var(--coral-light); color: var(--coral); }
+  .pill-college_university { background: #5B2D8E; color: #FFFFFF; font-weight: 500; }
 
   .more-events {
     font-size: 10px;
@@ -567,6 +568,11 @@
         <span style="background:#8B2D2D; width:8px; height:8px; border-radius:50%; display:inline-block;"></span>
         Holidays
       </button>
+      <button class="filter-btn active" data-filter="college_university" onclick="toggleFilter('college_university', this)">
+        <span class="filter-check"><span class="check-mark">✓</span></span>
+        <span style="background:#5B2D8E; width:8px; height:8px; border-radius:50%; display:inline-block;"></span>
+        College &amp; University
+      </button>
     </div>
 
     <div class="sidebar-divider"></div>
@@ -687,6 +693,7 @@
             <option>Corporate</option>
             <option>Sports Activation</option>
             <option>Live Nation</option>
+            <option value="college_university">College &amp; University</option>
           </select>
         </div>
         <div class="modal-field">
@@ -721,7 +728,7 @@ const BASE_URL = window.location.origin;
 
 let currentMonth = 4; // 0-indexed: April=3, May=4
 let currentYear = 2026;
-let activeFilters = new Set(['internal','liveration','sports','festival','convention','holiday']);
+let activeFilters = new Set(['internal','liveration','sports','festival','convention','holiday','college_university']);
 let selectedDate = null;
 let newEventDate = null;
 
@@ -899,6 +906,7 @@ function pillClass(type) {
     convention: 'pill-convention',
     holiday: 'pill-holiday',
     competitor: 'pill-competitor',
+    college_university: 'pill-college_university',
   };
   return map[type] || 'pill-convention';
 }

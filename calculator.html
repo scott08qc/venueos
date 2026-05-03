@@ -293,6 +293,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 .cat-beer { background: #FDF8E8; color: var(--gold); }
 .cat-cocktail { background: var(--green-light); color: var(--green); }
 .cat-na { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.badge-college_university { background: #5B2D8E; color: #FFFFFF; }
 
 /* Talking points */
 .tp-loading { text-align: center; padding: 32px; color: var(--text3); }
@@ -402,7 +403,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       </div>
       <div class="field">
         <label class="fl">Event Type <span class="fh">affects spend per head estimate</span></label>
-        <select class="fi" id="ev-type" onchange="onTypeChange()">
+        <select class="fi" id="ev-type" name="tier1_category" onchange="onTypeChange()">
           <option value="">Select type</option>
           <option value="Latin">Latin Night</option>
           <option value="Electronic">Electronic</option>
@@ -412,7 +413,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
           <option value="Corporate and Private">Corporate Event</option>
           <option value="Cover Band">Cover Band</option>
           <option value="Sports and Viewing">Sports Activation</option>
+          <option value="college_university">College &amp; University</option>
         </select>
+        <div id="college-warning" style="display:none;background:var(--amber-light);border:1px solid var(--amber-mid);border-radius:8px;padding:12px 14px;margin-top:10px;gap:10px;align-items:flex-start;flex-direction:row;"><div style="font-size:16px;flex-shrink:0;">⚠</div><div><div style="font-weight:600;color:var(--amber);font-size:12px;margin-bottom:4px;">College event — venue-favorable door terms required.</div><div style="font-size:11px;color:var(--text2);line-height:1.5;">Bar spend per head is the lowest of all event types. Door revenue must carry this event's margin.</div><div style="font-size:10px;color:var(--text3);margin-top:6px;">Elevated security staffing required · 18+/21+ wristbanding required</div></div></div>
       </div>
     </div>
 
@@ -1115,6 +1118,8 @@ function onTypeChange(){
   if (t && sphDefaults[t]) {
     g('sph').value = sphDefaults[t].v;
   }
+  const w = document.getElementById('college-warning');
+  if (w) w.style.display = t === 'college_university' ? 'flex' : 'none';
   if (g('promoter-name').value.trim().length >= 2) fetchIntelligence();
   else calc();
 }
@@ -2266,6 +2271,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   }
 });
+
+document.querySelector('[name="tier1_category"]').addEventListener('change', function() { const w = document.getElementById('college-warning'); if (w) w.style.display = this.value === 'college_university' ? 'flex' : 'none'; });
 
 </script>
 

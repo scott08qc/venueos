@@ -23,6 +23,50 @@ engine = create_engine(
     connect_args={"sslmode": "require"},
 ) if DATABASE_URL else None
 
+# ── Tier 1 category constants ─────────────────────────────────────────────────
+
+TIER1_CATEGORIES = [
+    "electronic",
+    "open_format",
+    "hip_hop_rnb",
+    "latin",
+    "live_performance",
+    "corporate_private",
+    "sports_viewing",
+    "themed_holiday",
+    "college_university",
+]
+
+TIER1_LABELS = {
+    "electronic":          "Electronic",
+    "open_format":         "Open Format",
+    "hip_hop_rnb":         "Hip Hop & R&B",
+    "latin":               "Latin",
+    "live_performance":    "Live Performance",
+    "corporate_private":   "Corporate & Private",
+    "sports_viewing":      "Sports & Viewing",
+    "themed_holiday":      "Themed & Holiday",
+    "college_university":  "College & University",
+}
+
+VALID_TIER1_CATEGORIES = set(TIER1_CATEGORIES)
+
+
+def get_deal_guidance(event_tier1_category: str) -> dict:
+    guidance = {}
+    if event_tier1_category == "college_university":
+        guidance["door_structure"] = "venue_favorable"
+        guidance["bar_yield_warning"] = True
+        guidance["bar_yield_note"] = (
+            "College events index lowest bar spend per head across all categories. "
+            "Door revenue must carry margin. Ensure ticket split heavily favors venue."
+        )
+        guidance["security_flag"] = True
+        guidance["security_note"] = "Elevated security staffing required. Budget accordingly."
+        guidance["wristband_required"] = True
+        guidance["wristband_note"] = "18+/21+ wristbanding required for alcohol service."
+    return guidance
+
 
 def init_db():
     if not engine:
