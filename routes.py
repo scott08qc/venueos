@@ -200,6 +200,164 @@ def init_db():
             ON CONFLICT (key) DO NOTHING
         """))
 
+        # ── Deal Intelligence tables ──────────────────────────────────────────
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS distributors (
+                id                  SERIAL PRIMARY KEY,
+                name                VARCHAR(200) NOT NULL,
+                license_number      VARCHAR(50) UNIQUE,
+                provi_connected     BOOLEAN DEFAULT FALSE,
+                primary_rep_name    VARCHAR(100),
+                primary_rep_email   VARCHAR(150),
+                primary_rep_phone   VARCHAR(20),
+                last_contact_date   DATE,
+                deal_sheet_received BOOLEAN DEFAULT FALSE,
+                deal_sheet_date     DATE,
+                notes               TEXT,
+                active              BOOLEAN DEFAULT TRUE,
+                created_at          TIMESTAMPTZ DEFAULT NOW(),
+                updated_at          TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS product_catalog (
+                id                    SERIAL PRIMARY KEY,
+                distributor_id        INTEGER NOT NULL REFERENCES distributors(id),
+                sku                   VARCHAR(100),
+                product_name          VARCHAR(200) NOT NULL,
+                brand                 VARCHAR(100),
+                category              VARCHAR(50) NOT NULL,
+                subcategory           VARCHAR(50),
+                unit_size_ml          INTEGER,
+                case_pack             INTEGER,
+                frontline_price_unit  NUMERIC(10,2),
+                frontline_price_case  NUMERIC(10,2),
+                price_effective_date  DATE,
+                last_verified_date    DATE,
+                source                VARCHAR(50) DEFAULT 'deal_sheet',
+                provi_sku_id          VARCHAR(100),
+                active                BOOLEAN DEFAULT TRUE,
+                created_at            TIMESTAMPTZ DEFAULT NOW(),
+                updated_at            TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_product_catalog_distributor ON product_catalog(distributor_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_product_catalog_category ON product_catalog(category, subcategory)"))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS deal_schedules (
+                id                       SERIAL PRIMARY KEY,
+                product_catalog_id       INTEGER NOT NULL REFERENCES product_catalog(id),
+                deal_type                VARCHAR(50) NOT NULL,
+                quantity_threshold_cases INTEGER,
+                free_cases_awarded       INTEGER,
+                discounted_price_case    NUMERIC(10,2),
+                discount_pct             NUMERIC(5,2),
+                condition_text           TEXT,
+                valid_from               DATE,
+                valid_to                 DATE,
+                source                   VARCHAR(50) NOT NULL,
+                source_file_ref          VARCHAR(300),
+                state_posting_ref        VARCHAR(100),
+                verified                 BOOLEAN DEFAULT FALSE,
+                verified_date            DATE,
+                verified_by              VARCHAR(100),
+                discrepancy_flag         BOOLEAN DEFAULT FALSE,
+                discrepancy_notes        TEXT,
+                active                   BOOLEAN DEFAULT TRUE,
+                created_at               TIMESTAMPTZ DEFAULT NOW(),
+                updated_at               TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_deal_schedules_product ON deal_schedules(product_catalog_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_deal_schedules_active ON deal_schedules(active, valid_to)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_deal_schedules_type ON deal_schedules(deal_type)"))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS purchase_recommendations (
+                id                       SERIAL PRIMARY KEY,
+                product_catalog_id       INTEGER NOT NULL REFERENCES product_catalog(id),
+                deal_schedule_id         INTEGER REFERENCES deal_schedules(id),
+                lookahead_days           INTEGER DEFAULT 60,
+                projected_cases_needed   NUMERIC(8,2),
+                deal_threshold_cases     INTEGER,
+                cases_to_order           INTEGER,
+                cases_already_on_hand    NUMERIC(8,2),
+                recommended_order_date   DATE,
+                estimated_saving_total   NUMERIC(10,2),
+                saving_per_case          NUMERIC(10,2),
+                confidence_score         NUMERIC(4,2),
+                status                   VARCHAR(30) DEFAULT 'pending',
+                ordered_date             DATE,
+                ordered_cases            INTEGER,
+                actual_saving            NUMERIC(10,2),
+                notes                    TEXT,
+                generated_at             TIMESTAMPTZ DEFAULT NOW(),
+                updated_at               TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_purchase_rec_product ON purchase_recommendations(product_catalog_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_purchase_rec_status ON purchase_recommendations(status)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_purchase_rec_date ON purchase_recommendations(recommended_order_date)"))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS event_consumption_model (
+                id                    SERIAL PRIMARY KEY,
+                event_tier1_category  VARCHAR(50) NOT NULL,
+                product_subcategory   VARCHAR(50) NOT NULL,
+                cases_per_100_guests  NUMERIC(6,3),
+                confidence_level      VARCHAR(20) DEFAULT 'estimated',
+                sample_event_count    INTEGER DEFAULT 0,
+                last_updated          DATE,
+                notes                 TEXT,
+                created_at            TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        conn.execute(text("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_consumption_model_unique
+            ON event_consumption_model(event_tier1_category, product_subcategory)
+        """))
+
+        # Seed consumption model (skips rows that already exist)
+        conn.execute(text("""
+            INSERT INTO event_consumption_model
+            (event_tier1_category, product_subcategory, cases_per_100_guests, confidence_level, notes)
+            VALUES
+            ('latin',             'tequila', 0.80, 'estimated', 'High tequila index — Don Julio, Patron dominant'),
+            ('latin',             'vodka',   0.30, 'estimated', 'Secondary spirit'),
+            ('latin',             'rum',     0.25, 'estimated', 'Bacardi, Malibu'),
+            ('latin',             'beer',    0.60, 'estimated', 'Corona, Modelo heavy'),
+            ('latin',             'whiskey', 0.10, 'estimated', 'Minimal'),
+            ('electronic',        'vodka',   0.70, 'estimated', 'Grey Goose, Tito dominant'),
+            ('electronic',        'tequila', 0.35, 'estimated', 'Secondary'),
+            ('electronic',        'beer',    0.50, 'estimated', 'Domestic heavy'),
+            ('electronic',        'whiskey', 0.15, 'estimated', 'Minimal'),
+            ('hip_hop_rnb',       'whiskey', 0.55, 'estimated', 'Hennessy, Crown Royal dominant'),
+            ('hip_hop_rnb',       'vodka',   0.45, 'estimated', 'Ciroc, Tito dominant'),
+            ('hip_hop_rnb',       'tequila', 0.25, 'estimated', 'Secondary'),
+            ('hip_hop_rnb',       'beer',    0.55, 'estimated', 'Domestic + premium mix'),
+            ('open_format',       'vodka',   0.55, 'estimated', 'Broadest mix'),
+            ('open_format',       'tequila', 0.40, 'estimated', NULL),
+            ('open_format',       'whiskey', 0.30, 'estimated', NULL),
+            ('open_format',       'beer',    0.55, 'estimated', NULL),
+            ('corporate_private', 'vodka',   0.45, 'estimated', 'Premium spirits — client-dependent'),
+            ('corporate_private', 'wine',    0.40, 'estimated', 'Higher wine index than nightlife'),
+            ('corporate_private', 'whiskey', 0.30, 'estimated', NULL),
+            ('corporate_private', 'beer',    0.35, 'estimated', 'Lower beer index'),
+            ('corporate_private', 'tequila', 0.25, 'estimated', NULL),
+            ('sports_viewing',    'beer',    1.10, 'estimated', 'Dominant category — domestic heavy'),
+            ('sports_viewing',    'vodka',   0.30, 'estimated', 'Shots and simple drinks'),
+            ('sports_viewing',    'whiskey', 0.25, 'estimated', 'Bourbon shots common'),
+            ('sports_viewing',    'tequila', 0.15, 'estimated', 'Minimal'),
+            ('live_performance',  'beer',    0.75, 'estimated', 'Highest beer index after sports'),
+            ('live_performance',  'whiskey', 0.35, 'estimated', 'Genre-dependent'),
+            ('live_performance',  'vodka',   0.35, 'estimated', NULL),
+            ('live_performance',  'tequila', 0.25, 'estimated', NULL)
+            ON CONFLICT (event_tier1_category, product_subcategory) DO NOTHING
+        """))
+
         conn.commit()
 
 
@@ -1476,6 +1634,809 @@ def create_app(static_dir: str) -> FastAPI:
                         d[k] = float(v)
                 result.append(d)
             return result
+
+    # ── Deal Intelligence — Distributors ──────────────────────────────────────
+
+    @api.get("/distributors")
+    def list_distributors():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT * FROM distributors WHERE active = TRUE ORDER BY name
+            """)).mappings().fetchall()
+        return [dict(r) for r in rows]
+
+    @api.post("/distributors")
+    def create_distributor(body: dict):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            row = conn.execute(text("""
+                INSERT INTO distributors
+                  (name, license_number, provi_connected, primary_rep_name,
+                   primary_rep_email, primary_rep_phone, last_contact_date,
+                   deal_sheet_received, deal_sheet_date, notes)
+                VALUES
+                  (:name, :license_number, :provi_connected, :primary_rep_name,
+                   :primary_rep_email, :primary_rep_phone, :last_contact_date,
+                   :deal_sheet_received, :deal_sheet_date, :notes)
+                RETURNING *
+            """), {
+                "name": body.get("name"),
+                "license_number": body.get("license_number"),
+                "provi_connected": body.get("provi_connected", False),
+                "primary_rep_name": body.get("primary_rep_name"),
+                "primary_rep_email": body.get("primary_rep_email"),
+                "primary_rep_phone": body.get("primary_rep_phone"),
+                "last_contact_date": body.get("last_contact_date"),
+                "deal_sheet_received": body.get("deal_sheet_received", False),
+                "deal_sheet_date": body.get("deal_sheet_date"),
+                "notes": body.get("notes"),
+            }).mappings().fetchone()
+            conn.commit()
+        return dict(row)
+
+    @api.put("/distributors/{dist_id}")
+    def update_distributor(dist_id: int, body: dict):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            row = conn.execute(text("""
+                UPDATE distributors SET
+                  name = COALESCE(:name, name),
+                  license_number = COALESCE(:license_number, license_number),
+                  provi_connected = COALESCE(:provi_connected, provi_connected),
+                  primary_rep_name = COALESCE(:primary_rep_name, primary_rep_name),
+                  primary_rep_email = COALESCE(:primary_rep_email, primary_rep_email),
+                  primary_rep_phone = COALESCE(:primary_rep_phone, primary_rep_phone),
+                  last_contact_date = COALESCE(:last_contact_date, last_contact_date),
+                  deal_sheet_received = COALESCE(:deal_sheet_received, deal_sheet_received),
+                  deal_sheet_date = COALESCE(:deal_sheet_date, deal_sheet_date),
+                  notes = COALESCE(:notes, notes),
+                  updated_at = NOW()
+                WHERE id = :id
+                RETURNING *
+            """), {**body, "id": dist_id}).mappings().fetchone()
+            conn.commit()
+        if not row:
+            raise HTTPException(status_code=404, detail="Distributor not found")
+        return dict(row)
+
+    # ── Deal Intelligence — Product Catalog ───────────────────────────────────
+
+    @api.get("/catalog")
+    def list_catalog(distributor_id: Optional[int] = None, category: Optional[str] = None):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT p.*, d.name AS distributor_name
+                FROM product_catalog p
+                JOIN distributors d ON d.id = p.distributor_id
+                WHERE p.active = TRUE
+                  AND (:distributor_id IS NULL OR p.distributor_id = :distributor_id)
+                  AND (:category IS NULL OR p.category = :category)
+                ORDER BY d.name, p.category, p.product_name
+            """), {"distributor_id": distributor_id, "category": category}).mappings().fetchall()
+        return [dict(r) for r in rows]
+
+    @api.post("/catalog/import")
+    async def import_catalog(request: Request):
+        """
+        Accepts JSON array. Each record may include nested deal_schedules list.
+        { distributor_id, product_name, category, subcategory,
+          frontline_price_case, source, deal_schedules: [...] }
+        """
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        body = await request.json()
+        created_products = 0
+        created_deals = 0
+        with engine.connect() as conn:
+            for item in body:
+                source = item.get("source", "deal_sheet")
+                if not source:
+                    raise HTTPException(status_code=400, detail="source is required on every record")
+                row = conn.execute(text("""
+                    INSERT INTO product_catalog
+                      (distributor_id, sku, product_name, brand, category, subcategory,
+                       unit_size_ml, case_pack, frontline_price_unit, frontline_price_case,
+                       price_effective_date, source, provi_sku_id)
+                    VALUES
+                      (:distributor_id, :sku, :product_name, :brand, :category, :subcategory,
+                       :unit_size_ml, :case_pack, :frontline_price_unit, :frontline_price_case,
+                       :price_effective_date, :source, :provi_sku_id)
+                    RETURNING id
+                """), {
+                    "distributor_id": item.get("distributor_id"),
+                    "sku": item.get("sku"),
+                    "product_name": item.get("product_name"),
+                    "brand": item.get("brand"),
+                    "category": item.get("category"),
+                    "subcategory": item.get("subcategory"),
+                    "unit_size_ml": item.get("unit_size_ml"),
+                    "case_pack": item.get("case_pack"),
+                    "frontline_price_unit": item.get("frontline_price_unit"),
+                    "frontline_price_case": item.get("frontline_price_case"),
+                    "price_effective_date": item.get("price_effective_date"),
+                    "source": source,
+                    "provi_sku_id": item.get("provi_sku_id"),
+                }).mappings().fetchone()
+                product_id = row["id"]
+                created_products += 1
+                for ds in item.get("deal_schedules", []):
+                    ds_source = ds.get("source", source)
+                    if not ds_source:
+                        raise HTTPException(status_code=400, detail="source is required on deal_schedules")
+                    conn.execute(text("""
+                        INSERT INTO deal_schedules
+                          (product_catalog_id, deal_type, quantity_threshold_cases,
+                           free_cases_awarded, discounted_price_case, discount_pct,
+                           condition_text, valid_from, valid_to, source,
+                           source_file_ref, state_posting_ref)
+                        VALUES
+                          (:product_catalog_id, :deal_type, :quantity_threshold_cases,
+                           :free_cases_awarded, :discounted_price_case, :discount_pct,
+                           :condition_text, :valid_from, :valid_to, :source,
+                           :source_file_ref, :state_posting_ref)
+                    """), {
+                        "product_catalog_id": product_id,
+                        "deal_type": ds.get("deal_type", "quantity_discount"),
+                        "quantity_threshold_cases": ds.get("quantity_threshold_cases"),
+                        "free_cases_awarded": ds.get("free_cases_awarded"),
+                        "discounted_price_case": ds.get("discounted_price_case"),
+                        "discount_pct": ds.get("discount_pct"),
+                        "condition_text": ds.get("condition_text"),
+                        "valid_from": ds.get("valid_from"),
+                        "valid_to": ds.get("valid_to"),
+                        "source": ds_source,
+                        "source_file_ref": ds.get("source_file_ref"),
+                        "state_posting_ref": ds.get("state_posting_ref"),
+                    })
+                    created_deals += 1
+            conn.commit()
+        return {"created_products": created_products, "created_deals": created_deals}
+
+    # ── Deal Intelligence — Deal Schedules ────────────────────────────────────
+
+    @api.get("/deals")
+    def list_deals(distributor_id: Optional[int] = None, active_only: bool = True):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT ds.*, p.product_name, p.brand, p.category, p.subcategory,
+                       p.frontline_price_case, p.sku, d.name AS distributor_name, d.id AS distributor_id
+                FROM deal_schedules ds
+                JOIN product_catalog p ON p.id = ds.product_catalog_id
+                JOIN distributors d ON d.id = p.distributor_id
+                WHERE (:active_only = FALSE OR ds.active = TRUE)
+                  AND (:distributor_id IS NULL OR d.id = :distributor_id)
+                ORDER BY d.name, p.category, p.product_name, ds.quantity_threshold_cases
+            """), {"active_only": active_only, "distributor_id": distributor_id}).mappings().fetchall()
+        return [dict(r) for r in rows]
+
+    @api.get("/deals/discrepancies")
+    def list_discrepancies():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT ds.*, p.product_name, p.brand, p.category, p.subcategory,
+                       p.frontline_price_case, p.sku, d.name AS distributor_name
+                FROM deal_schedules ds
+                JOIN product_catalog p ON p.id = ds.product_catalog_id
+                JOIN distributors d ON d.id = p.distributor_id
+                WHERE ds.discrepancy_flag = TRUE
+                ORDER BY d.name, p.product_name
+            """)).mappings().fetchall()
+        return [dict(r) for r in rows]
+
+    @api.post("/deals/verify")
+    def verify_deal(body: dict):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        deal_id = body.get("deal_id")
+        if not deal_id:
+            raise HTTPException(status_code=400, detail="deal_id required")
+        with engine.connect() as conn:
+            row = conn.execute(text("""
+                UPDATE deal_schedules
+                SET verified = TRUE,
+                    verified_date = CURRENT_DATE,
+                    verified_by = :verified_by,
+                    discrepancy_notes = COALESCE(:notes, discrepancy_notes),
+                    updated_at = NOW()
+                WHERE id = :id
+                RETURNING *
+            """), {
+                "id": deal_id,
+                "verified_by": body.get("verified_by"),
+                "notes": body.get("notes"),
+            }).mappings().fetchone()
+            conn.commit()
+        if not row:
+            raise HTTPException(status_code=404, detail="Deal not found")
+        return dict(row)
+
+    # ── Deal Intelligence — Purchase Recommendations ──────────────────────────
+
+    @api.get("/recommendations")
+    def list_recommendations(lookahead_days: int = 60, status: Optional[str] = None):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT pr.*, p.product_name, p.brand, p.category, p.subcategory,
+                       p.frontline_price_case, d.name AS distributor_name,
+                       ds.deal_type, ds.quantity_threshold_cases AS deal_qty_threshold,
+                       ds.discounted_price_case, ds.discount_pct
+                FROM purchase_recommendations pr
+                JOIN product_catalog p ON p.id = pr.product_catalog_id
+                JOIN distributors d ON d.id = p.distributor_id
+                LEFT JOIN deal_schedules ds ON ds.id = pr.deal_schedule_id
+                WHERE (:status IS NULL OR pr.status = :status)
+                ORDER BY pr.recommended_order_date ASC NULLS LAST, pr.estimated_saving_total DESC
+            """), {"status": status}).mappings().fetchall()
+        return [dict(r) for r in rows]
+
+    @api.post("/recommendations/generate")
+    async def generate_recommendations(request: Request):
+        """
+        Recommendation engine:
+        1. Pull confirmed events in next N days from events table
+        2. For each event look up tier1_category + expected_attendance
+        3. Multiply attendance × consumption_model rates → projected cases per subcategory
+        4. Sum projected cases by subcategory across the full window
+        5. Match subcategory totals against active deal_schedules
+        6. Where projected volume >= threshold: create recommendation record
+        7. Calculate estimated_saving vs frontline × case count
+        """
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        lookahead_days = body.get("lookahead_days", 60)
+
+        with engine.connect() as conn:
+            # Step 1-3: pull events and consumption rates
+            events_rows = conn.execute(text("""
+                SELECT e.id, e.event_name, e.event_date, e.tier1_category,
+                       e.expected_attendance
+                FROM events e
+                WHERE e.status = 'confirmed'
+                  AND e.event_date >= CURRENT_DATE
+                  AND e.event_date <= CURRENT_DATE + :lookahead_days
+                  AND e.expected_attendance IS NOT NULL
+                  AND e.expected_attendance > 0
+            """), {"lookahead_days": lookahead_days}).mappings().fetchall()
+
+            if not events_rows:
+                return {"message": "No confirmed events with attendance in lookahead window", "generated": 0}
+
+            # Step 4: aggregate projected cases by subcategory
+            subcategory_cases: dict = {}  # subcategory -> total projected cases
+            for ev in events_rows:
+                category = (ev["tier1_category"] or "").lower()
+                attendance = float(ev["expected_attendance"])
+                rates = conn.execute(text("""
+                    SELECT product_subcategory, cases_per_100_guests
+                    FROM event_consumption_model
+                    WHERE event_tier1_category = :category
+                """), {"category": category}).mappings().fetchall()
+                for rate in rates:
+                    sub = rate["product_subcategory"]
+                    projected = attendance / 100.0 * float(rate["cases_per_100_guests"])
+                    subcategory_cases[sub] = subcategory_cases.get(sub, 0.0) + projected
+
+            if not subcategory_cases:
+                return {"message": "No consumption model rates matched event categories", "generated": 0}
+
+            # Step 5-7: match against active deals
+            active_deals = conn.execute(text("""
+                SELECT ds.id AS deal_id, ds.product_catalog_id, ds.deal_type,
+                       ds.quantity_threshold_cases, ds.discounted_price_case,
+                       ds.discount_pct,
+                       p.subcategory, p.frontline_price_case
+                FROM deal_schedules ds
+                JOIN product_catalog p ON p.id = ds.product_catalog_id
+                WHERE ds.active = TRUE
+                  AND (ds.valid_to IS NULL OR ds.valid_to >= CURRENT_DATE)
+                  AND ds.quantity_threshold_cases IS NOT NULL
+            """)).mappings().fetchall()
+
+            generated = 0
+            order_date = datetime.now().date() + timedelta(days=7)
+
+            for deal in active_deals:
+                sub = deal["subcategory"]
+                projected = subcategory_cases.get(sub, 0.0)
+                threshold = deal["quantity_threshold_cases"]
+                if projected < threshold:
+                    continue
+
+                # Calculate savings
+                frontline = float(deal["frontline_price_case"] or 0)
+                disc_price = deal["discounted_price_case"]
+                disc_pct = deal["discount_pct"]
+                if disc_price:
+                    saving_per_case = frontline - float(disc_price)
+                elif disc_pct:
+                    saving_per_case = frontline * float(disc_pct) / 100.0
+                else:
+                    saving_per_case = 0.0
+
+                cases_to_order = max(threshold, int(projected + 0.5))
+                estimated_saving = saving_per_case * cases_to_order
+                confidence = min(1.0, round(projected / max(threshold, 1) * 0.8, 2))
+
+                conn.execute(text("""
+                    INSERT INTO purchase_recommendations
+                      (product_catalog_id, deal_schedule_id, lookahead_days,
+                       projected_cases_needed, deal_threshold_cases, cases_to_order,
+                       recommended_order_date, estimated_saving_total, saving_per_case,
+                       confidence_score, status)
+                    VALUES
+                      (:product_catalog_id, :deal_schedule_id, :lookahead_days,
+                       :projected_cases_needed, :deal_threshold_cases, :cases_to_order,
+                       :recommended_order_date, :estimated_saving_total, :saving_per_case,
+                       :confidence_score, 'pending')
+                """), {
+                    "product_catalog_id": deal["product_catalog_id"],
+                    "deal_schedule_id": deal["deal_id"],
+                    "lookahead_days": lookahead_days,
+                    "projected_cases_needed": round(projected, 2),
+                    "deal_threshold_cases": threshold,
+                    "cases_to_order": cases_to_order,
+                    "recommended_order_date": order_date,
+                    "estimated_saving_total": round(estimated_saving, 2),
+                    "saving_per_case": round(saving_per_case, 2),
+                    "confidence_score": confidence,
+                })
+                generated += 1
+
+            conn.commit()
+
+        return {
+            "generated": generated,
+            "lookahead_days": lookahead_days,
+            "subcategories_projected": {k: round(v, 2) for k, v in subcategory_cases.items()},
+        }
+
+    @api.patch("/recommendations/{rec_id}/status")
+    def update_recommendation_status(rec_id: int, body: dict):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        allowed = {"pending", "ordered", "missed", "dismissed"}
+        new_status = body.get("status")
+        if new_status not in allowed:
+            raise HTTPException(status_code=400, detail=f"status must be one of {allowed}")
+        with engine.connect() as conn:
+            row = conn.execute(text("""
+                UPDATE purchase_recommendations
+                SET status = :status,
+                    ordered_date = CASE WHEN :status = 'ordered' THEN CURRENT_DATE ELSE ordered_date END,
+                    ordered_cases = COALESCE(:ordered_cases, ordered_cases),
+                    notes = COALESCE(:notes, notes),
+                    updated_at = NOW()
+                WHERE id = :id
+                RETURNING *
+            """), {
+                "id": rec_id,
+                "status": new_status,
+                "ordered_cases": body.get("ordered_cases"),
+                "notes": body.get("notes"),
+            }).mappings().fetchone()
+            conn.commit()
+        if not row:
+            raise HTTPException(status_code=404, detail="Recommendation not found")
+        return dict(row)
+
+    # ── Deal Intelligence — Admin Cross-Reference UI ──────────────────────────
+
+    @api.get("/deals/admin")
+    def deals_admin_ui():
+        from fastapi.responses import HTMLResponse
+        html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deal Intelligence — Admin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --border: #e0e0e0;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+    --warning-bg: #fef3c7;
+    --warning-border: #f59e0b;
+    --success: #16a34a;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border);
+           padding: 16px 24px; display: flex; align-items: center; gap: 12px;
+           box-shadow: var(--shadow); }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .badge { background: var(--accent); color: #fff; font-size: 11px;
+                  padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+  .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .controls { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+              padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;
+              margin-bottom: 20px; box-shadow: var(--shadow); }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  select, input[type=text], input[type=file] {
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px;
+    font-size: 13px; background: var(--surface); color: var(--text); outline: none; min-width: 160px;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+  .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+         border: none; cursor: pointer; transition: background 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: var(--bg); }
+  .btn-danger { background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; }
+  .btn-danger:hover { background: #fecaca; }
+  .btn-success { background: #dcfce7; color: var(--success); border: 1px solid #86efac; }
+  .btn-success:hover { background: #bbf7d0; }
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+             margin-bottom: 20px; box-shadow: var(--shadow); }
+  .section-header { padding: 14px 20px; border-bottom: 1px solid var(--border);
+                    display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .count-badge { background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+                 font-size: 12px; padding: 2px 8px; color: var(--text-muted); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600;
+       text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+       background: var(--bg); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9fafb; }
+  .flag-disc { color: var(--danger); font-weight: 600; }
+  .flag-ok { color: var(--success); }
+  .verified-yes { color: var(--success); font-weight: 500; }
+  .verified-no { color: var(--text-muted); }
+  .discrepancy-row td { background: var(--warning-bg) !important; }
+  .discrepancy-row:hover td { background: #fde68a !important; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .pill-spirits { background: #ede9fe; color: #6d28d9; }
+  .pill-beer { background: #fef9c3; color: #854d0e; }
+  .pill-wine { background: #fce7f3; color: #9d174d; }
+  .pill-na { background: #e0f2fe; color: #0369a1; }
+  .pill-state_posting { background: #dcfce7; color: var(--success); }
+  .pill-deal_sheet { background: #dbeafe; color: var(--accent); }
+  .pill-provi { background: #ede9fe; color: #6d28d9; }
+  .pill-manual { background: #f1f5f9; color: #475569; }
+  .empty-state { padding: 40px; text-align: center; color: var(--text-muted); }
+  .import-panel { padding: 20px; }
+  .import-panel textarea { width: 100%; min-height: 120px; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px; font-family: monospace; font-size: 12px;
+    resize: vertical; background: #f8fafc; }
+  .import-actions { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+  .status-msg { font-size: 13px; padding: 6px 12px; border-radius: 6px; }
+  .status-ok { background: #dcfce7; color: var(--success); }
+  .status-err { background: #fee2e2; color: var(--danger); }
+  .loading { color: var(--text-muted); font-style: italic; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+                   z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius); padding: 24px;
+           min-width: 360px; max-width: 540px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .modal .field { margin-bottom: 12px; }
+  .modal label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted);
+                 margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal input, .modal textarea { width: 100%; border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; font-size: 13px; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  @media (max-width: 600px) { .main { padding: 12px; } .controls { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Deal Intelligence</h1>
+  <span class="badge">Admin</span>
+  <span style="margin-left:auto;color:var(--text-muted);font-size:12px;">VenueOS · Internal use only</span>
+</header>
+
+<div class="main">
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="control-group">
+      <label>Distributor</label>
+      <select id="filter-dist">
+        <option value="">All distributors</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Source</label>
+      <select id="filter-source">
+        <option value="">All sources</option>
+        <option value="state_posting">State posting</option>
+        <option value="deal_sheet">Deal sheet</option>
+        <option value="provi">Provi</option>
+        <option value="manual">Manual</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Category</label>
+      <select id="filter-cat">
+        <option value="">All categories</option>
+        <option value="spirits">Spirits</option>
+        <option value="beer">Beer</option>
+        <option value="wine">Wine</option>
+        <option value="na">N/A</option>
+      </select>
+    </div>
+    <div class="control-group" style="flex-direction:row;gap:8px;align-self:flex-end;">
+      <button class="btn btn-primary" onclick="applyFilters()">Apply</button>
+      <button class="btn btn-outline" onclick="resetFilters()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Discrepancy panel -->
+  <div class="section" id="disc-section">
+    <div class="section-header">
+      <span class="section-title" style="color:var(--danger)">⚠ Discrepancies</span>
+      <span class="count-badge" id="disc-count">—</span>
+    </div>
+    <div class="table-wrap" id="disc-table-wrap">
+      <div class="empty-state loading">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Product catalog table -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Product Catalog &amp; Deal Schedules</span>
+      <span class="count-badge" id="deals-count">—</span>
+    </div>
+    <div class="table-wrap" id="deals-table-wrap">
+      <div class="empty-state loading">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Import panel -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Import Deal Sheet</span>
+    </div>
+    <div class="import-panel">
+      <p style="margin-bottom:10px;color:var(--text-muted);font-size:13px;">
+        Paste a JSON array of product objects. Each record requires <code>distributor_id</code>,
+        <code>product_name</code>, <code>category</code>, and <code>source</code>.
+        Optional nested <code>deal_schedules</code> array.
+      </p>
+      <textarea id="import-json" placeholder='[{"distributor_id":1,"product_name":"Don Julio Blanco","category":"spirits","subcategory":"tequila","frontline_price_case":420.00,"source":"deal_sheet","deal_schedules":[{"deal_type":"quantity_discount","quantity_threshold_cases":3,"discounted_price_case":395.00,"source":"deal_sheet"}]}]'></textarea>
+      <div class="import-actions">
+        <button class="btn btn-primary" onclick="runImport()">Import</button>
+        <span id="import-status"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Verify modal -->
+<div class="modal-overlay" id="verify-modal">
+  <div class="modal">
+    <h3>Verify Deal Record</h3>
+    <input type="hidden" id="verify-deal-id">
+    <div class="field">
+      <label>Verified by</label>
+      <input type="text" id="verify-by" placeholder="Name">
+    </div>
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea id="verify-notes" style="min-height:70px;resize:vertical;" placeholder="Any discrepancy notes…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeVerifyModal()">Cancel</button>
+      <button class="btn btn-success" onclick="submitVerify()">Mark Verified</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = '';
+let allDeals = [];
+let allDiscs = [];
+
+async function loadDistributors() {
+  const r = await fetch(BASE + '/api/distributors');
+  const data = await r.json();
+  const sel = document.getElementById('filter-dist');
+  data.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.id;
+    o.textContent = d.name;
+    sel.appendChild(o);
+  });
+}
+
+async function loadDeals(distId, cat) {
+  const params = new URLSearchParams();
+  if (distId) params.set('distributor_id', distId);
+  if (cat) params.set('category', cat);
+  const r = await fetch(BASE + '/api/deals?' + params.toString());
+  allDeals = await r.json();
+  renderDeals();
+}
+
+async function loadDiscrepancies() {
+  const r = await fetch(BASE + '/api/deals/discrepancies');
+  allDiscs = await r.json();
+  renderDiscrepancies();
+}
+
+function sourcePill(src) {
+  const cls = 'pill pill-' + (src || 'manual');
+  return `<span class="${cls}">${src || 'manual'}</span>`;
+}
+
+function catPill(cat) {
+  const cls = 'pill pill-' + (cat || 'na');
+  return `<span class="${cls}">${cat || '—'}</span>`;
+}
+
+function fmt(v) { return v != null ? Number(v).toFixed(2) : '—'; }
+
+function renderDeals() {
+  const source = document.getElementById('filter-source').value;
+  let rows = allDeals;
+  if (source) rows = rows.filter(r => r.source === source);
+
+  document.getElementById('deals-count').textContent = rows.length + ' records';
+  const wrap = document.getElementById('deals-table-wrap');
+  if (!rows.length) { wrap.innerHTML = '<div class="empty-state">No records match filters.</div>'; return; }
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Distributor</th><th>SKU</th><th>Product</th><th>Category</th><th>Subcategory</th>
+      <th>Frontline/case</th><th>Deal type</th><th>Threshold</th><th>Disc. price/case</th>
+      <th>Disc. %</th><th>Source</th><th>Verified</th><th>Discrepancy</th><th>Action</th>
+    </tr></thead>
+    <tbody>${rows.map(r => `
+    <tr class="${r.discrepancy_flag ? 'discrepancy-row' : ''}">
+      <td>${r.distributor_name || '—'}</td>
+      <td>${r.sku || '—'}</td>
+      <td style="max-width:180px">${r.product_name}</td>
+      <td>${catPill(r.category)}</td>
+      <td>${r.subcategory || '—'}</td>
+      <td>$${fmt(r.frontline_price_case)}</td>
+      <td>${r.deal_type}</td>
+      <td>${r.quantity_threshold_cases != null ? r.quantity_threshold_cases + ' cs' : '—'}</td>
+      <td>${r.discounted_price_case != null ? '$'+fmt(r.discounted_price_case) : '—'}</td>
+      <td>${r.discount_pct != null ? r.discount_pct+'%' : '—'}</td>
+      <td>${sourcePill(r.source)}</td>
+      <td class="${r.verified ? 'verified-yes' : 'verified-no'}">${r.verified ? '✓ '+r.verified_by : 'Unverified'}</td>
+      <td class="${r.discrepancy_flag ? 'flag-disc' : 'flag-ok'}">${r.discrepancy_flag ? '⚠ Yes' : '—'}</td>
+      <td>${!r.verified ? `<button class="btn btn-success" style="font-size:12px;padding:4px 10px" onclick="openVerify(${r.id})">Verify</button>` : ''}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function renderDiscrepancies() {
+  document.getElementById('disc-count').textContent = allDiscs.length + ' records';
+  const wrap = document.getElementById('disc-table-wrap');
+  if (!allDiscs.length) {
+    wrap.innerHTML = '<div class="empty-state" style="color:var(--success)">✓ No discrepancies found.</div>';
+    return;
+  }
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Distributor</th><th>Product</th><th>Source</th>
+      <th>Frontline/case</th><th>Disc. price (deal sheet)</th><th>State posting ref</th>
+      <th>Notes</th><th>Action</th>
+    </tr></thead>
+    <tbody>${allDiscs.map(r => `
+    <tr class="discrepancy-row">
+      <td>${r.distributor_name}</td>
+      <td>${r.product_name}</td>
+      <td>${sourcePill(r.source)}</td>
+      <td>$${fmt(r.frontline_price_case)}</td>
+      <td>${r.discounted_price_case != null ? '$'+fmt(r.discounted_price_case) : '—'}</td>
+      <td>${r.state_posting_ref || '—'}</td>
+      <td style="max-width:220px;white-space:pre-wrap">${r.discrepancy_notes || '—'}</td>
+      <td><button class="btn btn-success" style="font-size:12px;padding:4px 10px" onclick="openVerify(${r.id})">Verify</button></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function applyFilters() {
+  const distId = document.getElementById('filter-dist').value;
+  const cat = document.getElementById('filter-cat').value;
+  loadDeals(distId, cat);
+}
+
+function resetFilters() {
+  document.getElementById('filter-dist').value = '';
+  document.getElementById('filter-source').value = '';
+  document.getElementById('filter-cat').value = '';
+  loadDeals('', '');
+}
+
+async function runImport() {
+  const raw = document.getElementById('import-json').value.trim();
+  const status = document.getElementById('import-status');
+  if (!raw) { status.innerHTML = '<span class="status-msg status-err">Paste JSON first.</span>'; return; }
+  let payload;
+  try { payload = JSON.parse(raw); } catch(e) { status.innerHTML = '<span class="status-msg status-err">Invalid JSON: ' + e.message + '</span>'; return; }
+  status.innerHTML = '<span class="status-msg loading">Importing…</span>';
+  try {
+    const r = await fetch(BASE + '/api/catalog/import', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || JSON.stringify(d));
+    status.innerHTML = `<span class="status-msg status-ok">✓ Imported ${d.created_products} products, ${d.created_deals} deals.</span>`;
+    loadDeals('','');
+  } catch(e) {
+    status.innerHTML = `<span class="status-msg status-err">Error: ${e.message}</span>`;
+  }
+}
+
+function openVerify(dealId) {
+  document.getElementById('verify-deal-id').value = dealId;
+  document.getElementById('verify-by').value = '';
+  document.getElementById('verify-notes').value = '';
+  document.getElementById('verify-modal').classList.add('open');
+}
+
+function closeVerifyModal() {
+  document.getElementById('verify-modal').classList.remove('open');
+}
+
+async function submitVerify() {
+  const dealId = document.getElementById('verify-deal-id').value;
+  const by = document.getElementById('verify-by').value.trim();
+  const notes = document.getElementById('verify-notes').value.trim();
+  const status = document.createElement('span');
+  try {
+    const r = await fetch(BASE + '/api/deals/verify', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({deal_id: parseInt(dealId), verified_by: by || null, notes: notes || null})
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.detail); }
+    closeVerifyModal();
+    loadDeals(document.getElementById('filter-dist').value, document.getElementById('filter-cat').value);
+    loadDiscrepancies();
+  } catch(e) {
+    alert('Verify failed: ' + e.message);
+  }
+}
+
+// Close modal on overlay click
+document.getElementById('verify-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeVerifyModal();
+});
+
+// Init
+loadDistributors();
+loadDeals('', '');
+loadDiscrepancies();
+</script>
+</body>
+</html>"""
+        return HTMLResponse(content=html)
 
     # ── App wiring ────────────────────────────────────────────────────────────
 
