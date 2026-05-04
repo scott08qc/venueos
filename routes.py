@@ -130,6 +130,7 @@ def init_db():
             ("artist_venue_pct", "NUMERIC"),
             ("artist_promoter_dollar", "NUMERIC"),
             ("status", "TEXT NOT NULL DEFAULT 'confirmed'"),
+            ("revel_bar_gross", "NUMERIC"),
         ]:
             conn.execute(text(f"ALTER TABLE events ADD COLUMN IF NOT EXISTS {col} {dtype}"))
 
@@ -552,6 +553,7 @@ def create_app(static_dir: str) -> FastAPI:
                 SELECT e.id, e.event_name, e.event_date, e.day_of_week,
                        e.tier1_category, e.promoter_name,
                        e.projected_door_revenue, e.projected_bar_revenue, e.projected_table_revenue,
+                       e.revel_bar_gross,
                        COALESCE(r.review_status, 'No Review') AS review_status
                 FROM events e
                 LEFT JOIN post_event_reviews r ON r.event_id = e.id
@@ -1623,23 +1625,29 @@ def create_app(static_dir: str) -> FastAPI:
                 SELECT
                     e.promoter_name,
                     e.tier1_category,
-                    COUNT(r.id) AS total_events,
+                    COUNT(e.id) AS total_events,
                     ROUND(AVG(r.actual_attendance)::numeric, 0) AS avg_attendance,
                     ROUND(AVG(e.expected_attendance)::numeric, 0) AS avg_expected,
-                    ROUND(AVG(r.actual_attendance::float / NULLIF(e.expected_attendance, 0) * 100)::numeric, 1) AS draw_accuracy,
+                    ROUND(AVG(
+                        CASE WHEN r.actual_attendance IS NOT NULL AND e.expected_attendance > 0
+                        THEN r.actual_attendance::float / NULLIF(e.expected_attendance, 0) * 100
+                        END
+                    )::numeric, 1) AS draw_accuracy,
                     ROUND(AVG(r.spend_per_head_actual)::numeric, 2) AS avg_sph,
                     ROUND(AVG(r.net_revenue_actual)::numeric, 0) AS avg_net,
                     ROUND(AVG(r.actual_effective_split)::numeric, 1) AS avg_split,
                     ROUND(AVG(r.artist_cost_actual)::numeric, 0) AS avg_artist_cost,
+                    ROUND(AVG(COALESCE(r.actual_bar_revenue, e.revel_bar_gross))::numeric, 0) AS avg_bar_revenue,
                     COUNT(CASE WHEN r.promoter_attendance_vs_projection = 'above' THEN 1 END) AS nights_above,
                     COUNT(CASE WHEN r.promoter_attendance_vs_projection = 'below' THEN 1 END) AS nights_below,
                     COUNT(CASE WHEN r.promoter_attendance_vs_projection = 'met'   THEN 1 END) AS nights_met
                 FROM events e
-                JOIN post_event_reviews r ON r.event_id = e.id
+                LEFT JOIN post_event_reviews r ON r.event_id = e.id
+                    AND LOWER(r.review_status) = 'complete'
                 WHERE e.promoter_name IS NOT NULL
-                  AND LOWER(r.review_status) = 'complete'
+                  AND (e.revel_bar_gross IS NOT NULL OR r.id IS NOT NULL)
                 GROUP BY e.promoter_name, e.tier1_category
-                ORDER BY total_events DESC, avg_net DESC
+                ORDER BY total_events DESC, avg_bar_revenue DESC NULLS LAST
             """)).mappings().fetchall()
         return [dict(r) for r in rows]
 
