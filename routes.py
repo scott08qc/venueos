@@ -1666,7 +1666,8 @@ def create_app(static_dir: str) -> FastAPI:
                   e.projected_door_revenue, e.projected_bar_revenue, e.projected_table_revenue,
                   e.artist_fee_landed, e.artist_fee_travel,
                   e.doors_open_time, e.event_close_time,
-                  e.status, e.notes
+                  e.status, e.notes,
+                  e.revel_bar_gross
                 FROM events e
                 WHERE e.event_date >= :start AND e.event_date <= :end
                 ORDER BY e.event_date ASC
