@@ -1791,7 +1791,26 @@ def create_app(static_dir: str) -> FastAPI:
                   COALESCE(e.artist_name, e.headliner) AS artist_name
                 FROM events e
                 WHERE e.event_date >= :start AND e.event_date <= :end
-                ORDER BY e.event_date ASC
+
+                UNION ALL
+
+                SELECT
+                  h.id, h.event_name, h.event_date, NULL AS day_of_week,
+                  h.tier1_category, h.tier2_subcategory,
+                  h.promoter_name, h.artist_name, NULL AS artist_genre,
+                  h.attendance AS expected_attendance, NULL AS venue_capacity,
+                  NULL AS deal_structure_type,
+                  NULL AS projected_door_revenue, NULL AS projected_bar_revenue, NULL AS projected_table_revenue,
+                  NULL AS artist_fee_landed, NULL AS artist_fee_travel,
+                  NULL AS doors_open_time, NULL AS event_close_time,
+                  'completed' AS status, NULL AS notes,
+                  h.gross_revenue AS revel_bar_gross,
+                  h.gross_revenue AS net_bar_revenue,
+                  h.artist_name
+                FROM historical_events h
+                WHERE h.event_date >= :start AND h.event_date <= :end
+
+                ORDER BY event_date ASC
             """), {"start": start, "end": end}).fetchall()
 
             result = []
