@@ -1050,12 +1050,13 @@ function renderCalendar() {
 }
 
 function prevMonth() {
-  if (currentMonth === 4) return; // Don't go before May
+  if (currentMonth === 0 && currentYear <= 2026) return; // Don't go before Jan 2026
+  if (currentMonth === 0) { currentMonth = 11; currentYear--; return; }
   currentMonth--;
   renderCalendar();
 }
 function nextMonth() {
-  if (currentMonth === 6) return; // Don't go past July
+  if (currentMonth === 11) { currentMonth = 0; currentYear++; return; }
   currentMonth++;
   renderCalendar();
 }
