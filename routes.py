@@ -1511,8 +1511,8 @@ def create_app(static_dir: str) -> FastAPI:
             cocktails = [i for i in item_list if i.get('item_category') == 'Cocktails']
             fees = [i for i in item_list if i.get('item_category') == 'Fees']
 
-            def cat_total(lst): return round(sum(i.get('total_revenue', 0) for i in lst), 2)
-            def cat_cogs(lst): return round(sum(i.get('total_cost', 0) for i in lst), 2)
+            def cat_total(lst): return round(sum(i.get('total_revenue') or 0 for i in lst), 2)
+            def cat_cogs(lst): return round(sum(i.get('total_cost') or 0 for i in lst), 2)
 
             return {
                 "event": d,
