@@ -1514,7 +1514,37 @@ def create_app(static_dir: str) -> FastAPI:
                 WHERE e.id = :eid
             """), {"eid": event_id}).fetchone()
             if not event:
-                raise HTTPException(status_code=404, detail="Event not found")
+                # Fall back to historical_events
+                event = conn.execute(text("""
+                    SELECT id, event_name, event_date, tier1_category, tier2_subcategory,
+                           promoter_name, artist_name, gross_revenue AS revel_bar_gross,
+                           gross_revenue AS net_bar_revenue, attendance AS expected_attendance,
+                           'completed' AS status,
+                           NULL AS notes, NULL AS day_of_week, NULL AS artist_genre,
+                           NULL AS venue_capacity, NULL AS deal_structure_type,
+                           NULL AS projected_door_revenue, NULL AS projected_bar_revenue,
+                           NULL AS projected_table_revenue, NULL AS artist_fee_landed,
+                           NULL AS artist_fee_travel, NULL AS doors_open_time,
+                           NULL AS event_close_time, NULL AS headliner,
+                           NULL AS actual_attendance, NULL AS actual_bar_revenue,
+                           NULL AS actual_door_revenue, NULL AS actual_table_revenue,
+                           NULL AS artist_cost_actual, NULL AS staffing_cost_actual,
+                           NULL AS spend_per_head_actual, NULL AS net_revenue_actual,
+                           NULL AS actual_effective_split, NULL AS crowd_demographic_observations,
+                           NULL AS promoter_performance_notes, NULL AS what_to_replicate,
+                           NULL AS what_to_change, NULL AS review_status,
+                           NULL AS total_bar_sales, NULL AS total_headcount,
+                           NULL AS door_revenue_cash, NULL AS door_revenue_card,
+                           NULL AS table_bottle_service, NULL AS tables_active,
+                           NULL AS comps_total, NULL AS voids, NULL AS tips,
+                           NULL AS tax_collected, NULL AS promoter_bar_payout,
+                           NULL AS promoter_door_payout, NULL AS promoter_table_payout,
+                           NULL AS artist_cost_paid_by_venue, NULL AS effective_split_percentage,
+                           NULL AS settlement_notes
+                    FROM historical_events WHERE id = :eid
+                """), {"eid": event_id}).fetchone()
+                if not event:
+                    raise HTTPException(status_code=404, detail="Event not found")
             d = dict(event._mapping)
             for f in ["event_date", "deposit_due_date", "balance_due_date", "created_at", "updated_at"]:
                 if d.get(f): d[f] = str(d[f])
