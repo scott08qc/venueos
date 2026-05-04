@@ -9,5 +9,9 @@
     "dist": "dist",
     "install": "bun install",
     "build": "bunx --bun vite build"
-  }
+  },
+  "routes": [
+    { "path": "/api", "target": "backend" },
+    { "path": "/", "target": "frontend" }
+  ]
 }
