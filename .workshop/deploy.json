@@ -8,6 +8,6 @@
     "root": ".",
     "dist": "dist",
     "install": "bun install",
-    "build": "bunx --bun vite build --mode production"
+    "build": "bunx --bun vite build"
   }
 }
