@@ -1652,6 +1652,20 @@ def create_app(static_dir: str) -> FastAPI:
             """)).mappings().fetchall()
         return [dict(r) for r in rows]
 
+    @api.get("/promoters/names")
+    def get_promoter_names():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT promoter_name, COUNT(*) as event_count
+                FROM events
+                WHERE promoter_name IS NOT NULL AND TRIM(promoter_name) != ''
+                GROUP BY promoter_name
+                ORDER BY event_count DESC, promoter_name ASC
+            """)).fetchall()
+        return [{"name": r[0], "event_count": r[1]} for r in rows]
+
     @api.get("/events-by-date")
     def get_events_by_date(start: str, end: str):
         if not engine:

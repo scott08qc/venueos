@@ -387,7 +387,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <div class="g2" style="margin-bottom:14px">
       <div class="field">
         <label class="fl">Promoter Name <span class="fh">triggers historical intelligence</span></label>
-        <input type="text" class="fi" id="promoter-name" placeholder="e.g. Collectiv" oninput="debounceFetch()">
+        <input type="text" class="fi" id="promoter-name" placeholder="e.g. Collectiv" list="promoter-list" oninput="debounceFetch(); checkPromoterSimilarity();" autocomplete="off">
+        <datalist id="promoter-list"></datalist>
+        <div id="promoter-similarity-warn" style="display:none;margin-top:6px;padding:8px 10px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.4);border-radius:6px;font-size:11px;color:#FBBF24;line-height:1.5"></div>
         <div class="delta-row"><span class="delta nodata" id="d-promoter">Enter promoter to load history</span></div>
       </div>
       <div class="field">
@@ -2271,6 +2273,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   }
 });
+
+// ── Promoter Dropdown ─────────────────────────────────────────────────────
+let knownPromoters = [];
+
+async function loadPromoterList() {
+  try {
+    const res = await fetch(`${WORKSHOP_URL}/api/promoters/names`);
+    const data = await res.json();
+    knownPromoters = data.map(p => p.name);
+    const dl = document.getElementById('promoter-list');
+    if (dl) {
+      dl.innerHTML = knownPromoters.map(n => `<option value="${n.replace(/"/g,'&quot;')}">`).join('');
+    }
+  } catch(e) { /* silent fail */ }
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, (_, i) => Array.from({length: n+1}, (_, j) => j === 0 ? i : 0));
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function checkPromoterSimilarity() {
+  const val = (document.getElementById('promoter-name')?.value || '').trim();
+  const warn = document.getElementById('promoter-similarity-warn');
+  if (!warn) return;
+  if (val.length < 2) { warn.style.display = 'none'; return; }
+  const valLow = val.toLowerCase();
+  // Exact match — no warning needed
+  if (knownPromoters.some(p => p.toLowerCase() === valLow)) { warn.style.display = 'none'; return; }
+  // Find close matches (distance ≤ 3 or starts-with overlap)
+  const close = knownPromoters.filter(p => {
+    const pLow = p.toLowerCase();
+    return levenshtein(valLow, pLow) <= 3 || pLow.startsWith(valLow) || valLow.startsWith(pLow);
+  });
+  if (close.length > 0) {
+    warn.style.display = 'block';
+    warn.innerHTML = `⚠ Similar name already exists: <strong>${close.join(', ')}</strong> — did you mean one of these?`;
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+// Load promoter list on page load and refresh after any save
+loadPromoterList();
 
 document.querySelector('[name="tier1_category"]').addEventListener('change', function() { const w = document.getElementById('college-warning'); if (w) w.style.display = this.value === 'college_university' ? 'flex' : 'none'; });
 
