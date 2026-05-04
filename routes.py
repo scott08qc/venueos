@@ -2644,6 +2644,17 @@ loadDiscrepancies();
 
     app.include_router(api, prefix="/api")
 
+    # Serve standalone HTML pages directly from the project root
+    _root = os.path.dirname(os.path.abspath(__file__))
+    for _page in ("calendar.html", "promoters.html", "calculator.html"):
+        _path = os.path.join(_root, _page)
+        if os.path.isfile(_path):
+            def _make_route(p=_path):
+                async def _serve():
+                    return FileResponse(p)
+                return _serve
+            app.get(f"/{_page}")(_make_route())
+
     if os.path.isdir(static_dir):
         assets_dir = os.path.join(static_dir, "assets")
         if os.path.isdir(assets_dir):
