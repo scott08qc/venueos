@@ -1520,14 +1520,14 @@ def create_app(static_dir: str) -> FastAPI:
                 "summary": {
                     "bottle_service_revenue": cat_total(bottles),
                     "bottle_service_cogs": cat_cogs(bottles),
-                    "bottle_count": sum(i.get('quantity_sold', 0) for i in bottles if 'Table Charge' not in i.get('item_name', '')),
+                    "bottle_count": sum((i.get('quantity_sold') or 0) for i in bottles if 'Table Charge' not in i.get('item_name', '')),
                     "spirits_revenue": cat_total(spirits),
                     "beer_revenue": cat_total(beer),
                     "cocktail_revenue": cat_total(cocktails),
                     "na_revenue": cat_total(na),
                     "fee_revenue": cat_total(fees),
-                    "total_item_revenue": round(sum(i.get('total_revenue', 0) for i in item_list), 2),
-                    "total_item_cogs": round(sum(i.get('total_cost', 0) for i in item_list), 2),
+                    "total_item_revenue": round(sum((i.get('total_revenue') or 0) for i in item_list), 2),
+                    "total_item_cogs": round(sum((i.get('total_cost') or 0) for i in item_list), 2),
                 },
                 "categories": {
                     "bottles": bottles,
