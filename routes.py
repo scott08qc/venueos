@@ -1828,6 +1828,73 @@ def create_app(static_dir: str) -> FastAPI:
                 result.append(d)
             return result
 
+    @api.get("/events-by-date")
+    def get_events_by_date(start: str, end: str):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT
+                  e.id, e.event_name, e.event_date, e.day_of_week,
+                  e.tier1_category, e.tier2_subcategory,
+                  e.promoter_name,
+                  COALESCE(e.artist_name, e.headliner) AS artist_name,
+                  e.artist_genre,
+                  e.expected_attendance, e.venue_capacity,
+                  e.deal_structure_type,
+                  e.projected_door_revenue, e.projected_bar_revenue, e.projected_table_revenue,
+                  e.artist_fee_landed, e.artist_fee_travel,
+                  e.doors_open_time, e.event_close_time,
+                  e.status, e.notes,
+                  e.revel_bar_gross,
+                  COALESCE((
+                      SELECT SUM(eis.total_revenue)
+                      FROM event_item_sales eis
+                      WHERE eis.event_id = e.id
+                      AND eis.item_category IN ('Bar', 'Bottle Service')
+                  ), e.revel_bar_gross, 0) AS net_bar_revenue,
+                  NULL AS actual_door_revenue
+                FROM events e
+                WHERE e.event_date >= :start AND e.event_date <= :end
+
+                UNION ALL
+
+                SELECT
+                  h.id, h.event_name, h.event_date, NULL AS day_of_week,
+                  h.tier1_category, h.tier2_subcategory,
+                  h.promoter_name,
+                  h.artist_name,
+                  NULL AS artist_genre,
+                  h.attendance AS expected_attendance, NULL AS venue_capacity,
+                  NULL AS deal_structure_type,
+                  NULL AS projected_door_revenue, NULL AS projected_bar_revenue, NULL AS projected_table_revenue,
+                  NULL AS artist_fee_landed, NULL AS artist_fee_travel,
+                  NULL AS doors_open_time, NULL AS event_close_time,
+                  'completed' AS status, NULL AS notes,
+                  h.gross_revenue AS revel_bar_gross,
+                  h.gross_revenue AS net_bar_revenue,
+                  NULL AS actual_door_revenue
+                FROM historical_events h
+                WHERE h.event_date >= :start AND h.event_date <= :end
+
+                ORDER BY event_date ASC
+            """), {"start": start, "end": end}).fetchall()
+
+            result = []
+            for r in rows:
+                d = dict(r._mapping)
+                if d.get("event_date"):
+                    d["event_date"] = str(d["event_date"])
+                if d.get("doors_open_time"):
+                    d["doors_open_time"] = str(d["doors_open_time"])
+                if d.get("event_close_time"):
+                    d["event_close_time"] = str(d["event_close_time"])
+                for k, v in d.items():
+                    if hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                        d[k] = float(v)
+                result.append(d)
+            return result
+
     # ── Deal Intelligence — Distributors ──────────────────────────────────────
 
     @api.get("/distributors")
