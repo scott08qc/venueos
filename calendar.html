@@ -770,6 +770,7 @@ async function loadInternalEvents() {
       projDoor: e.projected_door_revenue,
       revelBar: e.revel_bar_gross || null,
       netBar: e.net_bar_revenue || null,
+      artist: e.artist_name || null,
       notes: e.notes || null,
     })).filter(e => e.date);
   } catch (err) {
@@ -1136,12 +1137,12 @@ function renderDetailPanel(dk) {
       const statusColor = ev.status === 'completed' ? '#2D6A4F' : ev.status === 'confirmed' ? '#2C5F8A' : '#8B5E0A';
       const statusBg = ev.status === 'completed' ? '#E8F4EE' : ev.status === 'confirmed' ? '#E8F0F7' : '#FDF3E0';
       const statusLabel = ev.status === 'completed' ? '✓ COMPLETED' : ev.status === 'confirmed' ? '● CONFIRMED' : '◌ HOLD — Not finalized';
-      const hasActuals = ev.status === 'completed' && ev.barNet;
+      const hasActuals = ev.status === 'completed' && ev.netBar;
       const hasProjected = ev.status === 'confirmed' && ev.projBar;
       const clickFn = ev.id ? `openEventInCalc(${ev.id})` : `openNewEventOnDate('${dk}')`;
       const ctaLabel = ev.status === 'hold' ? 'Continue setup in Calculator →' : 'Open in Calculator →';
       const ctaColor = ev.status === 'hold' ? '#8B5E0A' : '#2C5F8A';
-      const revenueTotal = hasActuals ? (ev.barNet + ev.doorNet) : hasProjected ? (ev.projBar + ev.projDoor) : null;
+      const revenueTotal = hasActuals ? (ev.netBar + ev.doorNet) : hasProjected ? (ev.projBar + ev.projDoor) : null;
       html += `
         <div class="detail-event-card" onclick="${clickFn}">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
@@ -1153,7 +1154,7 @@ function renderDetailPanel(dk) {
           </div>
           <div class="detail-event-name">${ev.name}</div>
           <div class="detail-event-meta">${ev.originalType || ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''}</div>
-          ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.barNet.toLocaleString()} · Door: $${ev.doorNet.toLocaleString()}</div>` : ''}
+          ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.netBar.toLocaleString()} · Door: $${ev.doorNet.toLocaleString()}</div>` : ''}
           ${hasProjected ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
           ${(!hasActuals && !hasProjected && (ev.netBar || ev.revelBar)) ? `<div style="font-size:11px; color:#2C5F8A; margin-top:4px; font-weight:500;">Bar (net): $${parseFloat(ev.netBar || ev.revelBar).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>` : ''}
           ${ev.notes ? `<div style="font-size:11px; color:#5A5652; margin-top:6px; padding:6px 8px; background:#F4F2EF; border-radius:4px; border-left:2px solid #D4CFC9;">${ev.notes}</div>` : ''}
@@ -1196,7 +1197,7 @@ function renderDetailPanel(dk) {
 function openEventInCalc(id) {
   if (!id) { openCalc(); return; }
   const url = `${BASE_URL}/api/calculator?event_id=${id}`;
-  window.open(url, '_blank');
+  window.location.href = url;
 }
 
 async function deleteHold(id, date) {

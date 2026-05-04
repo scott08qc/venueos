@@ -1510,7 +1510,12 @@ async function openEventDetail(eventId, eventName) {
       `${e.event_date ? e.event_date.substring(0,10) : ''} · ${e.tier1_category || ''} · ${e.promoter_name || ''}`;
     modal.classList.add('open');
     body.innerHTML = '<div class="modal-loading">Loading event data...</div>';
-    renderPLTab(data);
+    try {
+      renderPLTab(data);
+    } catch(renderErr) {
+      body.innerHTML = `<div class="modal-loading">Render error: ${renderErr.message}</div>`;
+      console.error('renderPLTab crash:', renderErr);
+    }
 
     // Pre-populate cost inputs from saved event_costs record
     fetch(`${WORKSHOP_URL}/api/costs/${eventId}`)

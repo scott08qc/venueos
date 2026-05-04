@@ -807,7 +807,7 @@ def create_app(static_dir: str) -> FastAPI:
             e.table_split_promoter,
             e.artist_fee_landed,
             e.artist_fee_travel,
-            e.artist_name,
+            COALESCE(e.artist_name, e.headliner) AS artist_name,
             e.revel_bar_gross,
             COALESCE((
               SELECT SUM(eis.total_revenue)
