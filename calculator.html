@@ -1564,7 +1564,7 @@ function renderPLTab(data) {
     ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
   const drawCls = !drawPct ? '' : drawPct >= 95 ? 'green' : drawPct >= 80 ? 'amber' : 'red';
 
-  const totalActualRev = (parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.revel_bar_gross || 0)) +
+  const totalActualRev = (parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.net_bar_revenue || 0)) +
                          (parseFloat(e.actual_door_revenue || 0)) +
                          (parseFloat(e.actual_table_revenue || e.table_bottle_service || 0));
   const totalProjRev = (parseFloat(e.projected_bar_revenue || 0)) +
@@ -1623,8 +1623,8 @@ function renderPLTab(data) {
     <div class="pva-row">
       <div class="pva-label">Bar Revenue</div>
       <div class="pva-proj">${fmt2(e.projected_bar_revenue)}</div>
-      <div class="pva-actual ${varClass(e.actual_bar_revenue||e.total_bar_sales||e.revel_bar_gross, e.projected_bar_revenue)}">${fmt2(e.actual_bar_revenue||e.total_bar_sales||e.revel_bar_gross)}</div>
-      <div class="pva-var ${varClass(e.actual_bar_revenue||e.total_bar_sales||e.revel_bar_gross, e.projected_bar_revenue)}">${varStr(e.actual_bar_revenue||e.total_bar_sales||e.revel_bar_gross, e.projected_bar_revenue)}</div>
+      <div class="pva-actual ${varClass(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue, e.projected_bar_revenue)}">${fmt2(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue)}</div>
+      <div class="pva-var ${varClass(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue, e.projected_bar_revenue)}">${varStr(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue, e.projected_bar_revenue)}</div>
     </div>
     <div class="pva-row">
       <div class="pva-label">Door Revenue</div>
@@ -1783,7 +1783,7 @@ async function loadMarketNarrative(eventId, eventData, dateStr) {
 
 Event: ${e.event_name || '—'}, ${e.tier1_category || '—'}, Promoter: ${e.promoter_name || '—'}
 Attendance: ${e.actual_attendance || '—'} actual vs ${e.expected_attendance || '—'} projected${drawPct ? ' (' + drawPct + '% draw)' : ''}
-Revenue: $${parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.revel_bar_gross || 0).toLocaleString()} bar actual vs $${parseFloat(e.projected_bar_revenue || 0).toLocaleString()} projected
+Revenue: $${parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.net_bar_revenue || 0).toLocaleString()} bar actual vs $${parseFloat(e.projected_bar_revenue || 0).toLocaleString()} projected
 Net to Venue: $${parseFloat(e.net_revenue_actual || 0).toLocaleString()} actual vs projected $${Math.round(projNet).toLocaleString()}
 
 Market conditions that night:
@@ -1819,7 +1819,7 @@ function renderNightSummaryTab(data) {
     ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
   const drawCls = !drawPct ? '' : drawPct >= 95 ? 'green' : drawPct >= 80 ? 'amber' : 'red';
 
-  const barActual = parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.revel_bar_gross || 0);
+  const barActual = parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.net_bar_revenue || 0);
   const doorActual = parseFloat(e.actual_door_revenue || 0);
   const tableActual = parseFloat(e.actual_table_revenue || e.table_bottle_service || 0);
   const totalActual = barActual + doorActual + tableActual;
@@ -1989,7 +1989,7 @@ async function renderSettlementReportTab(data) {
   const doorActual  = na(e.actual_door_revenue);
   const doorCash    = n(e.door_revenue_cash);
   const doorCard    = n(e.door_revenue_card);
-  const barActual   = na(e.actual_bar_revenue ?? e.total_bar_sales ?? e.revel_bar_gross);
+  const barActual   = na(e.actual_bar_revenue ?? e.total_bar_sales ?? e.net_bar_revenue);
   const barCogsProj = barProj * 0.161; // default 16.1% if not stored
   const barCogsActual = barActual - n(e.actual_bar_revenue); // net calc if available; fallback below
   // COGS: no per-event projected COGS stored; use bar * cogs pct from events if present

@@ -1456,6 +1456,12 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             event = conn.execute(text("""
                 SELECT e.*,
+                  COALESCE((
+                      SELECT SUM(eis.total_revenue)
+                      FROM event_item_sales eis
+                      WHERE eis.event_id = e.id
+                      AND eis.item_category IN ('Bar', 'Bottle Service')
+                  ), e.revel_bar_gross, 0) AS net_bar_revenue,
                   r.actual_attendance, r.actual_bar_revenue, r.actual_door_revenue,
                   r.actual_table_revenue, r.artist_cost_actual, r.staffing_cost_actual,
                   r.spend_per_head_actual, r.net_revenue_actual, r.actual_effective_split,

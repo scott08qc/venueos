@@ -513,14 +513,17 @@ async function loadData() {
 
 function updateSummaryBar() {
   const total = allPromoters.length;
-  const avgDraw = (allPromoters.reduce((s, p) => s + p.draw_accuracy, 0) / total).toFixed(1);
-  const avgSph = (allPromoters.reduce((s, p) => s + p.avg_sph, 0) / total).toFixed(2);
-  const avgNet = Math.round(allPromoters.reduce((s, p) => s + p.avg_net, 0) / total);
+  const drawVals = allPromoters.map(p => p.draw_accuracy).filter(v => v != null);
+  const sphVals  = allPromoters.map(p => p.avg_sph).filter(v => v != null);
+  const netVals  = allPromoters.map(p => p.avg_net).filter(v => v != null);
+  const avgDraw = drawVals.length ? (drawVals.reduce((s,v) => s+v, 0) / drawVals.length).toFixed(1) : '—';
+  const avgSph  = sphVals.length  ? (sphVals.reduce((s,v) => s+v, 0)  / sphVals.length).toFixed(2)  : '—';
+  const avgNet  = netVals.length  ? Math.round(netVals.reduce((s,v) => s+v, 0) / netVals.length)     : null;
 
   document.getElementById('s-total').textContent = total;
-  document.getElementById('s-draw').textContent = avgDraw + '%';
-  document.getElementById('s-sph').textContent = '$' + avgSph;
-  document.getElementById('s-net').textContent = '$' + avgNet.toLocaleString();
+  document.getElementById('s-draw').textContent = avgDraw === '—' ? '—' : avgDraw + '%';
+  document.getElementById('s-sph').textContent = avgSph === '—' ? '—' : '$' + avgSph;
+  document.getElementById('s-net').textContent = avgNet != null ? '$' + avgNet.toLocaleString() : '—';
 }
 
 function applyFilters() {
@@ -553,9 +556,9 @@ function scoreColor(val, max) {
 }
 
 function renderRoster() {
-  const maxNet = Math.max(...filteredPromoters.map(p => p.avg_net));
-  const maxSph = Math.max(...filteredPromoters.map(p => p.avg_sph));
-  const maxDraw = Math.max(...filteredPromoters.map(p => p.draw_accuracy));
+  const maxNet = Math.max(...filteredPromoters.map(p => p.avg_net ?? 0));
+  const maxSph = Math.max(...filteredPromoters.map(p => p.avg_sph ?? 0));
+  const maxDraw = Math.max(...filteredPromoters.map(p => p.draw_accuracy ?? 0));
 
   // Update sort arrows
   ['total_events','draw_accuracy','avg_sph','avg_net','avg_split','avg_attendance'].forEach(k => {
@@ -565,9 +568,9 @@ function renderRoster() {
 
   const html = filteredPromoters.map((p, i) => {
     const isSelected = selectedForCompare.has(p.promoter_name);
-    const drawColor = scoreColor(p.draw_accuracy, maxDraw);
-    const sphColor = scoreColor(p.avg_sph, maxSph);
-    const netColor = scoreColor(p.avg_net, maxNet);
+    const drawColor = scoreColor(p.draw_accuracy ?? 0, maxDraw);
+    const sphColor = scoreColor(p.avg_sph ?? 0, maxSph);
+    const netColor = scoreColor(p.avg_net ?? 0, maxNet);
     const totalNights = p.nights_above + p.nights_below + p.nights_met;
 
     // Consistency dots
@@ -585,23 +588,23 @@ function renderRoster() {
         <div class="roster-cell secondary">${p.total_events} shows</div>
         <div class="roster-cell">
           <div class="score-bar">
-            <div class="score-track"><div class="score-fill" style="width:${Math.min(p.draw_accuracy,120)/120*100}%;background:${drawColor};"></div></div>
-            <span class="score-num" style="color:${drawColor};">${p.draw_accuracy}%</span>
+            <div class="score-track"><div class="score-fill" style="width:${Math.min(p.draw_accuracy??0,120)/120*100}%;background:${drawColor};"></div></div>
+            <span class="score-num" style="color:${drawColor};">${p.draw_accuracy != null ? p.draw_accuracy + '%' : '—'}</span>
           </div>
         </div>
         <div class="roster-cell">
           <div class="score-bar">
-            <div class="score-track"><div class="score-fill" style="width:${p.avg_sph/maxSph*100}%;background:${sphColor};"></div></div>
-            <span class="score-num" style="color:${sphColor};">$${p.avg_sph.toFixed(2)}</span>
+            <div class="score-track"><div class="score-fill" style="width:${maxSph > 0 ? (p.avg_sph??0)/maxSph*100 : 0}%;background:${sphColor};"></div></div>
+            <span class="score-num" style="color:${sphColor};">${p.avg_sph != null ? '$' + parseFloat(p.avg_sph).toFixed(2) : '—'}</span>
           </div>
         </div>
         <div class="roster-cell">
           <div class="score-bar">
-            <div class="score-track"><div class="score-fill" style="width:${p.avg_net/maxNet*100}%;background:${netColor};"></div></div>
-            <span class="score-num" style="color:${netColor};">$${p.avg_net.toLocaleString()}</span>
+            <div class="score-track"><div class="score-fill" style="width:${maxNet > 0 ? (p.avg_net??0)/maxNet*100 : 0}%;background:${netColor};"></div></div>
+            <span class="score-num" style="color:${netColor};">${p.avg_net != null ? '$' + Math.round(p.avg_net).toLocaleString() : '—'}</span>
           </div>
         </div>
-        <div class="roster-cell secondary">${p.avg_split}%</div>
+        <div class="roster-cell secondary">${p.avg_split != null ? p.avg_split + '%' : '—'}</div>
         <div class="roster-cell">
           ${totalNights > 0 ? `<div class="trend-dots">${dots}</div>` : '<span style="color:#9B9793;font-size:12px;">—</span>'}
         </div>
@@ -665,25 +668,25 @@ function renderCompareContent() {
   }
 
   const metrics = [
-    { key: 'draw_accuracy', label: 'Draw Accuracy', format: v => v.toFixed(1) + '%', higherBetter: true },
-    { key: 'avg_sph', label: 'Bar Spend / Head', format: v => '$' + v.toFixed(2), higherBetter: true },
-    { key: 'avg_net', label: 'Avg Net to Venue', format: v => '$' + v.toLocaleString(), higherBetter: true },
-    { key: 'avg_attendance', label: 'Avg Attendance', format: v => Math.round(v).toLocaleString(), higherBetter: true },
-    { key: 'avg_split', label: 'Avg Promoter Split %', format: v => v.toFixed(1) + '%', higherBetter: false },
-    { key: 'avg_artist_cost', label: 'Avg Artist Cost', format: v => '$' + Math.round(v).toLocaleString(), higherBetter: false },
+    { key: 'draw_accuracy', label: 'Draw Accuracy', format: v => v != null ? v.toFixed(1) + '%' : '—', higherBetter: true },
+    { key: 'avg_sph', label: 'Bar Spend / Head', format: v => v != null ? '$' + parseFloat(v).toFixed(2) : '—', higherBetter: true },
+    { key: 'avg_net', label: 'Avg Net to Venue', format: v => v != null ? '$' + Math.round(v).toLocaleString() : '—', higherBetter: true },
+    { key: 'avg_attendance', label: 'Avg Attendance', format: v => v != null ? Math.round(v).toLocaleString() : '—', higherBetter: true },
+    { key: 'avg_split', label: 'Avg Promoter Split %', format: v => v != null ? parseFloat(v).toFixed(1) + '%' : '—', higherBetter: false },
+    { key: 'avg_artist_cost', label: 'Avg Artist Cost', format: v => v != null ? '$' + Math.round(v).toLocaleString() : '—', higherBetter: false },
     { key: 'total_events', label: 'Events on Record', format: v => v + ' shows', higherBetter: true },
   ];
 
   const html = metrics.map(m => {
-    const values = selected.map(p => p[m.key]);
-    const maxVal = Math.max(...values);
-    const minVal = Math.min(...values);
+    const values = selected.map(p => p[m.key]).filter(v => v != null);
+    const maxVal = values.length ? Math.max(...values) : 0;
+    const minVal = values.length ? Math.min(...values) : 0;
     const winner = m.higherBetter
       ? selected.find(p => p[m.key] === maxVal)
       : selected.find(p => p[m.key] === minVal);
 
     const bars = selected.map((p, i) => {
-      const pct = maxVal > 0 ? (p[m.key] / maxVal * 100) : 0;
+      const pct = maxVal > 0 && p[m.key] != null ? (p[m.key] / maxVal * 100) : 0;
       const color = PROMOTER_COLORS[i % PROMOTER_COLORS.length];
       const isWinner = p.promoter_name === winner?.promoter_name;
       return `
