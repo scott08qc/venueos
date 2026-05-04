@@ -1138,6 +1138,7 @@ def create_app(static_dir: str) -> FastAPI:
             e.artist_fee_landed,
             e.artist_fee_travel,
             e.artist_name,
+            e.revel_bar_gross,
             r.actual_attendance,
             r.actual_bar_revenue,
             r.actual_door_revenue,
@@ -1151,10 +1152,10 @@ def create_app(static_dir: str) -> FastAPI:
             n.effective_split_percentage
           FROM events e
           LEFT JOIN post_event_reviews r ON r.event_id = e.id
+            AND LOWER(r.review_status) = 'complete'
           LEFT JOIN night_of_actuals n ON n.event_id = e.id
             AND n.time_of_entry = 'Close'
           WHERE LOWER(e.promoter_name) LIKE LOWER(:promoter)
-            AND LOWER(r.review_status) = 'complete'
           ORDER BY e.event_date DESC
           LIMIT 20
         """), {"promoter": f"%{promoter}%"}).fetchall()
@@ -1192,7 +1193,7 @@ def create_app(static_dir: str) -> FastAPI:
           (e.get("actual_bar_revenue") or e.get("total_bar_sales") or 0) / e["actual_attendance"]
           for e in ref_events
           if e.get("actual_attendance") and e["actual_attendance"] > 0
-          and (e.get("actual_bar_revenue") or e.get("total_bar_sales"))
+          and (e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("revel_bar_gross"))
         ]
         avg_sph = safe_avg(sph_actuals)
         sph_proj = [e["projected_bar_revenue"] / e["expected_attendance"]
@@ -1203,7 +1204,7 @@ def create_app(static_dir: str) -> FastAPI:
         bar_score = min(10, round((bar_yield_ratio or 0.5) * 9, 1)) if bar_yield_ratio else None
 
         def calc_net(e):
-          bar = float(e.get("actual_bar_revenue") or e.get("total_bar_sales") or 0)
+          bar = float(e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("revel_bar_gross") or 0)
           door = float(e.get("actual_door_revenue") or 0) + float(e.get("door_revenue_cash") or 0) + float(e.get("door_revenue_card") or 0)
           table = float(e.get("actual_table_revenue") or 0)
           total_rev = bar + door + table
@@ -1252,7 +1253,7 @@ def create_app(static_dir: str) -> FastAPI:
         history = []
         for e in ref_events[:8]:
           draw_pct = safe_pct(e.get("actual_attendance"), e.get("expected_attendance"))
-          bar_rev = e.get("actual_bar_revenue") or e.get("total_bar_sales")
+          bar_rev = e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("revel_bar_gross")
           sph = (float(bar_rev) / e["actual_attendance"]) if bar_rev and e.get("actual_attendance") and e["actual_attendance"] > 0 else None
           history.append({
             "event_id": e["id"],
@@ -1633,8 +1634,8 @@ def create_app(static_dir: str) -> FastAPI:
                         THEN r.actual_attendance::float / NULLIF(e.expected_attendance, 0) * 100
                         END
                     )::numeric, 1) AS draw_accuracy,
-                    ROUND(AVG(r.spend_per_head_actual)::numeric, 2) AS avg_sph,
-                    ROUND(AVG(r.net_revenue_actual)::numeric, 0) AS avg_net,
+                    ROUND(AVG(CASE WHEN r.actual_attendance > 0 THEN COALESCE(r.actual_bar_revenue, e.revel_bar_gross) / NULLIF(r.actual_attendance, 0) END)::numeric, 2) AS avg_sph,
+                    ROUND(AVG(COALESCE(r.actual_bar_revenue, e.revel_bar_gross))::numeric, 0) AS avg_net,
                     ROUND(AVG(r.actual_effective_split)::numeric, 1) AS avg_split,
                     ROUND(AVG(r.artist_cost_actual)::numeric, 0) AS avg_artist_cost,
                     ROUND(AVG(COALESCE(r.actual_bar_revenue, e.revel_bar_gross))::numeric, 0) AS avg_bar_revenue,
