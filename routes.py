@@ -1823,6 +1823,38 @@ loadDiscrepancies();
 </html>"""
         return HTMLResponse(content=html)
 
+    # ── HTML Page Routes ─────────────────────────────────────────────────────
+
+    @api.get("/calculator", response_class=FileResponse)
+    def serve_calculator():
+        calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
+        return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
+    @api.get("/hub/calculator", response_class=FileResponse)
+    def serve_calculator_hub():
+        calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
+        return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
+    @api.get("/calendar", response_class=FileResponse)
+    def serve_calendar():
+        cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
+        return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
+    @api.get("/hub/calendar", response_class=FileResponse)
+    def serve_calendar_hub():
+        cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
+        return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
+    @api.get("/promoters", response_class=FileResponse)
+    def serve_promoters():
+        promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
+        return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
+    @api.get("/hub/promoters", response_class=FileResponse)
+    def serve_promoters_hub():
+        promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
+        return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
     # ── App wiring ────────────────────────────────────────────────────────────
 
     from fastapi.middleware.cors import CORSMiddleware
