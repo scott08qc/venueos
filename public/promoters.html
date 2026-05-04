@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>VenueOS — Promoter Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F2;
+    --surface: #FFFFFF;
+    --surface2: #F4F2EF;
+    --border: #E8E4DF;
+    --border-strong: #D4CFC9;
+    --text1: #1A1714;
+    --text2: #5A5652;
+    --text3: #9B9793;
+    --blue: #2C5F8A;
+    --blue-light: #E8F0F7;
+    --blue-mid: #4A7FAA;
+    --green: #2D6A4F;
+    --green-light: #E8F4EE;
+    --amber: #8B5E0A;
+    --amber-light: #FDF3E0;
+    --red: #8B2D2D;
+    --red-light: #FDEAEA;
+    --purple: #5A3A8A;
+    --purple-light: #F0EAF8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text1); min-height: 100vh; }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+  .header-logo {
+    width: 28px; height: 28px;
+    background: #2C5F8A;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-logo svg { width: 16px; height: 16px; }
+  .header-title { font-size: 15px; font-weight: 500; color: var(--text1); letter-spacing: -0.2px; }
+  .header-sub { font-size: 12px; color: #9B9793; margin-left: 6px; }
+  .header-nav { display: flex; align-items: center; gap: 6px; }
+  .nav-link {
+    height: 32px; padding: 0 14px;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 500;
+    color: #fff;
+    text-decoration: none;
+    display: flex; align-items: center;
+    transition: opacity 0.15s;
+  }
+  .nav-link:hover { opacity: 0.85; }
+  .nav-link.cal { background: #2D6A4F; }
+  .nav-link.calc { background: #2C5F8A; }
+  .btn {
+    height: 32px; padding: 0 14px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 400;
+    cursor: pointer;
+    border: 1px solid #D4CFC9;
+    background: var(--surface);
+    color: #5A5652;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary { background: #2C5F8A; color: #fff; border-color: #2C5F8A; }
+  .btn-primary:hover { background: #4A7FAA; border-color: #4A7FAA; }
+  .btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
+
+  /* Page */
+  .page { max-width: 1200px; margin: 0 auto; padding: 32px 28px; }
+
+  /* Mode tabs */
+  .mode-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    width: fit-content;
+    margin-bottom: 28px;
+  }
+  .mode-tab {
+    height: 30px; padding: 0 16px;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 400;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #5A5652;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s;
+  }
+  .mode-tab.active { background: var(--surface); color: var(--text1); font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* Controls bar */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .control-group { display: flex; align-items: center; gap: 8px; }
+  .control-label { font-size: 12px; color: #9B9793; }
+  .select-input {
+    height: 32px; padding: 0 10px;
+    border: 1px solid #D4CFC9;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text1);
+    background: var(--surface);
+    cursor: pointer;
+  }
+  .select-input:focus { outline: none; border-color: #2C5F8A; }
+
+  /* Metrics summary bar */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .summary-label { font-size: 10px; color: #9B9793; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .summary-value { font-size: 22px; font-weight: 500; color: var(--text1); line-height: 1; }
+  .summary-sub { font-size: 11px; color: #9B9793; margin-top: 3px; }
+
+  /* Roster table */
+  .roster-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .roster-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 80px;
+    gap: 0;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .roster-header-cell {
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #9B9793;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+  }
+  .roster-header-cell:hover { color: var(--text1); }
+  .roster-header-cell.sorted { color: #2C5F8A; }
+  .sort-arrow { font-size: 10px; }
+  .roster-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 80px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+  .roster-row:last-child { border-bottom: none; }
+  .roster-row:hover { background: #FAFAF8; }
+  .roster-row.selected { background: #E8F0F7; }
+  .roster-cell {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text1);
+    display: flex;
+    align-items: center;
+  }
+  .roster-cell.secondary { color: #5A5652; }
+  .promoter-name { font-weight: 500; }
+  .promoter-genre {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+  .genre-electronic { background: #E8F0F7; color: #2C5F8A; }
+  .genre-latin { background: #F0EAF8; color: #5A3A8A; }
+  .genre-hiphop { background: #FDEAEA; color: #8B2D2D; }
+  .genre-openformat { background: #F4F2EF; color: #5A5652; border: 1px solid #E8E4DF; }
+
+  /* Score bar */
+  .score-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+  .score-track {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-fill { height: 100%; border-radius: 2px; }
+  .score-num { font-size: 12px; font-weight: 500; min-width: 28px; text-align: right; }
+
+  /* Trend dots */
+  .trend-dots { display: flex; gap: 3px; }
+  .trend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .dot-above { background: #2D6A4F; }
+  .dot-met { background: #9B9793; }
+  .dot-below { background: #8B2D2D; }
+
+  /* Compare view */
+  .compare-grid {
+    display: grid;
+    gap: 16px;
+  }
+  .compare-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .compare-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .compare-chip {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    font-size: 12px;
+    color: #5A5652;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .compare-chip.selected { background: #2C5F8A; color: #fff; border-color: #2C5F8A; }
+  .compare-chip .remove { font-size: 14px; opacity: 0.7; }
+
+  .compare-cards {
+    display: grid;
+    gap: 16px;
+  }
+  .compare-metric-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .compare-metric-label {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #9B9793;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-metric-values {
+    display: grid;
+    padding: 16px;
+    gap: 12px;
+  }
+  .compare-promoter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .compare-promoter-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text1);
+    min-width: 160px;
+  }
+  .compare-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .compare-bar-fill { height: 100%; border-radius: 4px; }
+  .compare-bar-value {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text1);
+    min-width: 80px;
+    text-align: right;
+  }
+  .winner-badge {
+    font-size: 9px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: #E8F4EE;
+    color: #2D6A4F;
+    margin-left: 4px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9B9793;
+  }
+  .empty-state-icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state-title { font-size: 15px; font-weight: 500; color: #5A5652; margin-bottom: 6px; }
+  .empty-state-sub { font-size: 13px; }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--text1);
+    margin-bottom: 4px;
+  }
+  .section-sub { font-size: 13px; color: #9B9793; margin-bottom: 20px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D4CFC9; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="2" width="5" height="5" rx="1" fill="white"/>
+        <rect x="9" y="2" width="5" height="5" rx="1" fill="rgba(255,255,255,0.5)"/>
+        <rect x="2" y="9" width="5" height="5" rx="1" fill="rgba(255,255,255,0.5)"/>
+        <rect x="9" y="9" width="5" height="5" rx="1" fill="white"/>
+      </svg>
+    </div>
+    <span class="header-title">VenueOS</span>
+    <span class="header-sub">/ Promoter Intelligence</span>
+  </div>
+  <div class="header-nav">
+    <a href="/api/hub/calendar" class="nav-link cal">📅 Calendar</a>
+    <a href="/api/hub/calculator" class="nav-link calc">🧮 Calculator</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('roster')">Roster</button>
+    <button class="mode-tab" onclick="setMode('compare')">Compare</button>
+  </div>
+
+  <!-- Summary bar -->
+  <div class="summary-bar" id="summary-bar">
+    <div class="summary-card">
+      <div class="summary-label">Total Promoters</div>
+      <div class="summary-value" id="s-total">—</div>
+      <div class="summary-sub">with completed events</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Avg Draw Accuracy</div>
+      <div class="summary-value" id="s-draw">—</div>
+      <div class="summary-sub">across all promoters</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Avg Bar Spend / Head</div>
+      <div class="summary-value" id="s-sph">—</div>
+      <div class="summary-sub">across all events</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Avg Net to Venue</div>
+      <div class="summary-value" id="s-net">—</div>
+      <div class="summary-sub">per event</div>
+    </div>
+  </div>
+
+  <!-- Roster view -->
+  <div id="roster-view">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:16px;">
+      <div>
+        <div class="section-title">Promoter Roster</div>
+        <div class="section-sub">All promoters ranked by performance. Click any column to sort.</div>
+      </div>
+      <div class="controls">
+        <div class="control-group">
+          <span class="control-label">Genre</span>
+          <select class="select-input" id="genre-filter" onchange="applyFilters()">
+            <option value="">All Genres</option>
+            <option value="Electronic">Electronic</option>
+            <option value="Latin">Latin</option>
+            <option value="Hip Hop">Hip Hop</option>
+            <option value="Open Format">Open Format</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Sort by</span>
+          <select class="select-input" id="sort-select" onchange="applyFilters()">
+            <option value="avg_net">Avg Net to Venue</option>
+            <option value="draw_accuracy">Draw Accuracy</option>
+            <option value="avg_sph">Bar Spend / Head</option>
+            <option value="total_events">Total Events</option>
+            <option value="avg_attendance">Avg Attendance</option>
+            <option value="avg_split">Avg Split %</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="roster-table">
+      <div class="roster-header">
+        <div class="roster-header-cell">Promoter</div>
+        <div class="roster-header-cell" onclick="sortBy('total_events')">Events <span class="sort-arrow" id="arrow-total_events"></span></div>
+        <div class="roster-header-cell" onclick="sortBy('draw_accuracy')">Draw Acc. <span class="sort-arrow" id="arrow-draw_accuracy"></span></div>
+        <div class="roster-header-cell" onclick="sortBy('avg_sph')">Bar $/Head <span class="sort-arrow" id="arrow-avg_sph"></span></div>
+        <div class="roster-header-cell" onclick="sortBy('avg_net')">Avg Net <span class="sort-arrow" id="arrow-avg_net"></span></div>
+        <div class="roster-header-cell" onclick="sortBy('avg_split')">Avg Split <span class="sort-arrow" id="arrow-avg_split"></span></div>
+        <div class="roster-header-cell">Consistency</div>
+        <div class="roster-header-cell">Action</div>
+      </div>
+      <div id="roster-rows"></div>
+    </div>
+  </div>
+
+  <!-- Compare view -->
+  <div id="compare-view" style="display:none;">
+    <div class="section-title">Promoter Comparison</div>
+    <div class="section-sub">Select 2–4 promoters to compare side by side.</div>
+
+    <div class="compare-selector" id="compare-chips"></div>
+
+    <div id="compare-content">
+      <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-title">Select promoters to compare</div>
+        <div class="empty-state-sub">Choose at least 2 promoters from the list above</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BASE_URL = window.location.origin;
+const CALC_URL = `${BASE_URL}/api/calculator`;
+
+let allPromoters = [];
+let filteredPromoters = [];
+let currentSort = 'avg_net';
+let currentMode = 'roster';
+let selectedForCompare = new Set();
+
+const GENRE_COLORS = {
+  'Electronic': 'genre-electronic',
+  'Latin': 'genre-latin',
+  'Hip Hop': 'genre-hiphop',
+  'Open Format': 'genre-openformat',
+};
+
+const PROMOTER_COLORS = ['#2C5F8A', '#2D6A4F', '#5A3A8A', '#8B5E0A'];
+
+async function loadData() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/promoters/summary`);
+    allPromoters = await res.json();
+    filteredPromoters = [...allPromoters];
+    updateSummaryBar();
+    renderRoster();
+    renderCompareChips();
+  } catch (err) {
+    console.error('Failed to load promoters:', err);
+  }
+}
+
+function updateSummaryBar() {
+  const total = allPromoters.length;
+  const drawVals = allPromoters.map(p => p.draw_accuracy).filter(v => v != null);
+  const sphVals  = allPromoters.map(p => p.avg_sph).filter(v => v != null);
+  const netVals  = allPromoters.map(p => p.avg_net).filter(v => v != null);
+  const avgDraw = drawVals.length ? (drawVals.reduce((s,v) => s+v, 0) / drawVals.length).toFixed(1) : '—';
+  const avgSph  = sphVals.length  ? (sphVals.reduce((s,v) => s+v, 0)  / sphVals.length).toFixed(2)  : '—';
+  const avgNet  = netVals.length  ? Math.round(netVals.reduce((s,v) => s+v, 0) / netVals.length)     : null;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-draw').textContent = avgDraw === '—' ? '—' : avgDraw + '%';
+  document.getElementById('s-sph').textContent = avgSph === '—' ? '—' : '$' + avgSph;
+  document.getElementById('s-net').textContent = avgNet != null ? '$' + avgNet.toLocaleString() : '—';
+}
+
+function applyFilters() {
+  const genre = document.getElementById('genre-filter').value;
+  currentSort = document.getElementById('sort-select').value;
+  filteredPromoters = allPromoters
+    .filter(p => !genre || p.tier1_category === genre)
+    .sort((a, b) => b[currentSort] - a[currentSort]);
+  renderRoster();
+}
+
+function sortBy(key) {
+  currentSort = key;
+  document.getElementById('sort-select').value = key;
+  filteredPromoters.sort((a, b) => b[key] - a[key]);
+  renderRoster();
+}
+
+function genreClass(cat) {
+  if (!cat) return 'genre-openformat';
+  const map = { 'Electronic': 'genre-electronic', 'Latin': 'genre-latin', 'Hip Hop': 'genre-hiphop', 'Open Format': 'genre-openformat' };
+  return map[cat] || 'genre-openformat';
+}
+
+function scoreColor(val, max) {
+  const pct = val / max;
+  if (pct >= 0.75) return '#2D6A4F';
+  if (pct >= 0.45) return '#8B5E0A';
+  return '#9B9793';
+}
+
+function renderRoster() {
+  const maxNet = Math.max(...filteredPromoters.map(p => p.avg_bar_revenue ?? p.avg_net ?? 0));
+  const maxSph = Math.max(...filteredPromoters.map(p => p.avg_sph ?? 0));
+  const maxDraw = Math.max(...filteredPromoters.map(p => p.draw_accuracy ?? 0));
+
+  // Update sort arrows
+  ['total_events','draw_accuracy','avg_sph','avg_net','avg_split','avg_attendance'].forEach(k => {
+    const el = document.getElementById('arrow-' + k);
+    if (el) el.textContent = k === currentSort ? '↓' : '';
+  });
+
+  const html = filteredPromoters.map((p, i) => {
+    const isSelected = selectedForCompare.has(p.promoter_name);
+    const draw = p.draw_accuracy ?? 0;
+    const sph = p.avg_sph ?? 0;
+    const net = p.avg_net ?? 0;
+    const split = p.avg_split ?? 0;
+    const avgBar = p.avg_bar_revenue ?? 0;
+    const drawColor = scoreColor(draw, maxDraw || 1);
+    const sphColor = scoreColor(sph, maxSph || 1);
+    const netColor = scoreColor(net, maxNet || 1);
+    const totalNights = (p.nights_above||0) + (p.nights_below||0) + (p.nights_met||0);
+
+    // Consistency dots
+    let dots = '';
+    for (let j = 0; j < p.nights_above; j++) dots += `<div class="trend-dot dot-above" title="Above projection"></div>`;
+    for (let j = 0; j < p.nights_met; j++) dots += `<div class="trend-dot dot-met" title="Met projection"></div>`;
+    for (let j = 0; j < p.nights_below; j++) dots += `<div class="trend-dot dot-below" title="Below projection"></div>`;
+
+    return `
+      <div class="roster-row ${isSelected ? 'selected' : ''}" onclick="openInCalc('${p.promoter_name}')">
+        <div class="roster-cell">
+          <span class="promoter-name">${p.promoter_name}</span>
+          <span class="promoter-genre ${genreClass(p.tier1_category)}">${p.tier1_category || '—'}</span>
+        </div>
+        <div class="roster-cell secondary">${p.total_events} shows</div>
+        <div class="roster-cell">
+          <div class="score-bar">
+            <div class="score-track"><div class="score-fill" style="width:${Math.min(draw,120)/120*100}%;background:${drawColor};"></div></div>
+            <span class="score-num" style="color:${drawColor};">${draw > 0 ? draw + '%' : '—'}</span>
+          </div>
+        </div>
+        <div class="roster-cell">
+          <div class="score-bar">
+            <div class="score-track"><div class="score-fill" style="width:${maxSph>0?sph/maxSph*100:0}%;background:${sphColor};"></div></div>
+            <span class="score-num" style="color:${sphColor};">${sph > 0 ? '$'+sph.toFixed(2) : '—'}</span>
+          </div>
+        </div>
+        <div class="roster-cell">
+          <div class="score-bar">
+            <div class="score-track"><div class="score-fill" style="width:${maxNet>0?net/maxNet*100:0}%;background:${netColor};"></div></div>
+            <span class="score-num" style="color:${netColor};">${avgBar > 0 ? '$'+Math.round(avgBar).toLocaleString()+' bar' : net > 0 ? '$'+net.toLocaleString() : '—'}</span>
+          </div>
+        </div>
+        <div class="roster-cell secondary">${split > 0 ? split + '%' : '—'}</div>
+        <div class="roster-cell">
+          ${totalNights > 0 ? `<div class="trend-dots">${dots}</div>` : '<span style="color:#9B9793;font-size:12px;">—</span>'}
+        </div>
+        <div class="roster-cell" onclick="event.stopPropagation();">
+          <button class="btn btn-sm ${isSelected ? 'btn-primary' : ''}" onclick="toggleCompare('${p.promoter_name}')">
+            ${isSelected ? '✓ Added' : '+ Compare'}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('roster-rows').innerHTML = html || `
+    <div class="empty-state" style="padding:40px;">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-title">No promoters match this filter</div>
+    </div>
+  `;
+}
+
+function toggleCompare(name) {
+  if (selectedForCompare.has(name)) {
+    selectedForCompare.delete(name);
+  } else if (selectedForCompare.size < 4) {
+    selectedForCompare.add(name);
+  } else {
+    alert('Maximum 4 promoters can be compared at once.');
+    return;
+  }
+  renderRoster();
+  renderCompareChips();
+  if (currentMode === 'compare') renderCompareContent();
+}
+
+function renderCompareChips() {
+  const all = allPromoters.map(p => {
+    const selected = selectedForCompare.has(p.promoter_name);
+    return `
+      <button class="compare-chip ${selected ? 'selected' : ''}" onclick="toggleCompare('${p.promoter_name}')">
+        ${selected ? `<span class="remove">✓</span>` : '+'}
+        ${p.promoter_name}
+        <span style="font-size:10px; opacity:0.7;">${p.tier1_category}</span>
+      </button>
+    `;
+  }).join('');
+  document.getElementById('compare-chips').innerHTML = all;
+}
+
+function renderCompareContent() {
+  const selected = allPromoters.filter(p => selectedForCompare.has(p.promoter_name));
+
+  if (selected.length < 2) {
+    document.getElementById('compare-content').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-title">Select at least 2 promoters</div>
+        <div class="empty-state-sub">Use the chips above to add promoters to compare</div>
+      </div>
+    `;
+    return;
+  }
+
+  const metrics = [
+    { key: 'draw_accuracy', label: 'Draw Accuracy', format: v => v != null ? v.toFixed(1) + '%' : '—', higherBetter: true },
+    { key: 'avg_sph', label: 'Bar Spend / Head', format: v => v != null ? '$' + parseFloat(v).toFixed(2) : '—', higherBetter: true },
+    { key: 'avg_net', label: 'Avg Net to Venue', format: v => v != null ? '$' + Math.round(v).toLocaleString() : '—', higherBetter: true },
+    { key: 'avg_attendance', label: 'Avg Attendance', format: v => v != null ? Math.round(v).toLocaleString() : '—', higherBetter: true },
+    { key: 'avg_split', label: 'Avg Promoter Split %', format: v => v != null ? parseFloat(v).toFixed(1) + '%' : '—', higherBetter: false },
+    { key: 'avg_artist_cost', label: 'Avg Artist Cost', format: v => v != null ? '$' + Math.round(v).toLocaleString() : '—', higherBetter: false },
+    { key: 'total_events', label: 'Events on Record', format: v => v + ' shows', higherBetter: true },
+  ];
+
+  const html = metrics.map(m => {
+    const values = selected.map(p => p[m.key]).filter(v => v != null);
+    const maxVal = values.length ? Math.max(...values) : 0;
+    const minVal = values.length ? Math.min(...values) : 0;
+    const winner = m.higherBetter
+      ? selected.find(p => p[m.key] === maxVal)
+      : selected.find(p => p[m.key] === minVal);
+
+    const bars = selected.map((p, i) => {
+      const pct = maxVal > 0 && p[m.key] != null ? (p[m.key] / maxVal * 100) : 0;
+      const color = PROMOTER_COLORS[i % PROMOTER_COLORS.length];
+      const isWinner = p.promoter_name === winner?.promoter_name;
+      return `
+        <div class="compare-promoter-bar">
+          <div class="compare-promoter-name">${p.promoter_name}</div>
+          <div class="compare-bar-track">
+            <div class="compare-bar-fill" style="width:${pct}%;background:${color};"></div>
+          </div>
+          <div class="compare-bar-value">
+            ${m.format(p[m.key])}
+            ${isWinner && selected.length > 1 ? '<span class="winner-badge">Best</span>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="compare-metric-row">
+        <div class="compare-metric-label">${m.label}</div>
+        <div class="compare-metric-values">${bars}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Consistency section
+  const consistencyHtml = selected.map((p, i) => {
+    const color = PROMOTER_COLORS[i % PROMOTER_COLORS.length];
+    const total = p.nights_above + p.nights_met + p.nights_below;
+    if (total === 0) return `
+      <div class="compare-promoter-bar">
+        <div class="compare-promoter-name">${p.promoter_name}</div>
+        <div style="font-size:12px;color:#9B9793;">No projection data</div>
+      </div>
+    `;
+    return `
+      <div class="compare-promoter-bar">
+        <div class="compare-promoter-name">${p.promoter_name}</div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          ${Array(p.nights_above).fill('<div class="trend-dot dot-above" title="Above"></div>').join('')}
+          ${Array(p.nights_met).fill('<div class="trend-dot dot-met" title="Met"></div>').join('')}
+          ${Array(p.nights_below).fill('<div class="trend-dot dot-below" title="Below"></div>').join('')}
+          <span style="font-size:11px;color:#9B9793;margin-left:6px;">${p.nights_above}↑ ${p.nights_met}= ${p.nights_below}↓</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('compare-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      ${selected.map((p, i) => `
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:${PROMOTER_COLORS[i]};"></div>
+          <span style="font-size:13px;font-weight:500;">${p.promoter_name}</span>
+          <span style="font-size:11px;color:#9B9793;">${p.tier1_category}</span>
+        </div>
+      `).join('<span style="color:#E8E4DF;">|</span>')}
+    </div>
+    <div class="compare-cards">
+      ${html}
+      <div class="compare-metric-row">
+        <div class="compare-metric-label">Projection Consistency</div>
+        <div class="compare-metric-values">${consistencyHtml}</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:12px 16px;background:#F4F2EF;border-radius:8px;font-size:12px;color:#5A5652;">
+      <strong>Legend:</strong> 
+      <span style="color:#2D6A4F;">● Above projection</span> &nbsp;
+      <span style="color:#9B9793;">● Met projection</span> &nbsp;
+      <span style="color:#8B2D2D;">● Below projection</span> &nbsp;&nbsp;
+      <span style="color:#9B9793;">Best badge highlights the winner on each metric.</span>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      ${selected.map(p => `
+        <button class="btn" onclick="openInCalc('${p.promoter_name}')">Open ${p.promoter_name} in Calculator</button>
+      `).join('')}
+    </div>
+  `;
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['roster','compare'][i] === mode);
+  });
+  document.getElementById('roster-view').style.display = mode === 'roster' ? 'block' : 'none';
+  document.getElementById('compare-view').style.display = mode === 'compare' ? 'block' : 'none';
+  if (mode === 'compare') {
+    renderCompareChips();
+    renderCompareContent();
+  }
+}
+
+function openInCalc(promoterName) {
+  const url = `${CALC_URL}?promoter=${encodeURIComponent(promoterName)}`;
+  window.open(url, '_blank');
+}
+
+// Init
+loadData();
+</script>
+</body>
+</html>
