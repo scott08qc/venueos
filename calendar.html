@@ -770,6 +770,7 @@ async function loadInternalEvents() {
       projDoor: e.projected_door_revenue,
       revelBar: e.revel_bar_gross || null,
       netBar: e.net_bar_revenue || null,
+      doorNet: e.actual_door_revenue || null,
       artist: e.artist_name || null,
       notes: e.notes || null,
     })).filter(e => e.date);
@@ -1154,7 +1155,7 @@ function renderDetailPanel(dk) {
           </div>
           <div class="detail-event-name">${ev.name}</div>
           <div class="detail-event-meta">${ev.originalType || ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''}</div>
-          ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.netBar.toLocaleString()} · Door: $${ev.doorNet.toLocaleString()}</div>` : ''}
+          ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.netBar.toLocaleString()}${ev.doorNet != null ? ' · Door: $' + ev.doorNet.toLocaleString() : ''}</div>` : ''}
           ${hasProjected ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
           ${(!hasActuals && !hasProjected && (ev.netBar || ev.revelBar)) ? `<div style="font-size:11px; color:#2C5F8A; margin-top:4px; font-weight:500;">Bar (net): $${parseFloat(ev.netBar || ev.revelBar).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>` : ''}
           ${ev.notes ? `<div style="font-size:11px; color:#5A5652; margin-top:6px; padding:6px 8px; background:#F4F2EF; border-radius:4px; border-left:2px solid #D4CFC9;">${ev.notes}</div>` : ''}
