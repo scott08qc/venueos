@@ -2,16 +2,7 @@
   "backend": {
     "root": ".",
     "entry": "app:asgi",
-    "runner": "uvicorn"
-  },
-  "frontend": {
-    "root": ".",
-    "dist": "dist",
-    "install": "bun install",
-    "build": "bunx --bun vite build"
-  },
-  "routes": [
-    { "path": "/api", "target": "backend" },
-    { "path": "/", "target": "frontend" }
-  ]
+    "runner": "uvicorn",
+    "build": "bun install && bunx --bun vite build"
+  }
 }
