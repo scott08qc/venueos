@@ -513,9 +513,10 @@ async function loadData() {
 
 function updateSummaryBar() {
   const total = allPromoters.length;
-  const avgDraw = (allPromoters.reduce((s, p) => s + p.draw_accuracy, 0) / total).toFixed(1);
-  const avgSph = (allPromoters.reduce((s, p) => s + p.avg_sph, 0) / total).toFixed(2);
-  const avgNet = Math.round(allPromoters.reduce((s, p) => s + p.avg_net, 0) / total);
+  const safeAvg = (arr, key) => { const vals = arr.map(p => p[key]).filter(v => v != null && !isNaN(v)); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0; };
+  const avgDraw = safeAvg(allPromoters,'draw_accuracy').toFixed(1);
+  const avgSph = safeAvg(allPromoters,'avg_sph').toFixed(2);
+  const avgNet = Math.round(safeAvg(allPromoters,'avg_net'));
 
   document.getElementById('s-total').textContent = total;
   document.getElementById('s-draw').textContent = avgDraw + '%';
@@ -553,9 +554,9 @@ function scoreColor(val, max) {
 }
 
 function renderRoster() {
-  const maxNet = Math.max(...filteredPromoters.map(p => p.avg_net));
-  const maxSph = Math.max(...filteredPromoters.map(p => p.avg_sph));
-  const maxDraw = Math.max(...filteredPromoters.map(p => p.draw_accuracy));
+  const maxNet = Math.max(...filteredPromoters.map(p => p.avg_bar_revenue ?? p.avg_net ?? 0));
+  const maxSph = Math.max(...filteredPromoters.map(p => p.avg_sph ?? 0));
+  const maxDraw = Math.max(...filteredPromoters.map(p => p.draw_accuracy ?? 0));
 
   // Update sort arrows
   ['total_events','draw_accuracy','avg_sph','avg_net','avg_split','avg_attendance'].forEach(k => {
@@ -565,10 +566,15 @@ function renderRoster() {
 
   const html = filteredPromoters.map((p, i) => {
     const isSelected = selectedForCompare.has(p.promoter_name);
-    const drawColor = scoreColor(p.draw_accuracy, maxDraw);
-    const sphColor = scoreColor(p.avg_sph, maxSph);
-    const netColor = scoreColor(p.avg_net, maxNet);
-    const totalNights = p.nights_above + p.nights_below + p.nights_met;
+    const draw = p.draw_accuracy ?? 0;
+    const sph = p.avg_sph ?? 0;
+    const net = p.avg_net ?? 0;
+    const split = p.avg_split ?? 0;
+    const avgBar = p.avg_bar_revenue ?? 0;
+    const drawColor = scoreColor(draw, maxDraw || 1);
+    const sphColor = scoreColor(sph, maxSph || 1);
+    const netColor = scoreColor(net, maxNet || 1);
+    const totalNights = (p.nights_above||0) + (p.nights_below||0) + (p.nights_met||0);
 
     // Consistency dots
     let dots = '';
@@ -585,23 +591,23 @@ function renderRoster() {
         <div class="roster-cell secondary">${p.total_events} shows</div>
         <div class="roster-cell">
           <div class="score-bar">
-            <div class="score-track"><div class="score-fill" style="width:${Math.min(p.draw_accuracy,120)/120*100}%;background:${drawColor};"></div></div>
-            <span class="score-num" style="color:${drawColor};">${p.draw_accuracy}%</span>
+            <div class="score-track"><div class="score-fill" style="width:${Math.min(draw,120)/120*100}%;background:${drawColor};"></div></div>
+            <span class="score-num" style="color:${drawColor};">${draw > 0 ? draw + '%' : '—'}</span>
           </div>
         </div>
         <div class="roster-cell">
           <div class="score-bar">
-            <div class="score-track"><div class="score-fill" style="width:${p.avg_sph/maxSph*100}%;background:${sphColor};"></div></div>
-            <span class="score-num" style="color:${sphColor};">$${p.avg_sph.toFixed(2)}</span>
+            <div class="score-track"><div class="score-fill" style="width:${maxSph>0?sph/maxSph*100:0}%;background:${sphColor};"></div></div>
+            <span class="score-num" style="color:${sphColor};">${sph > 0 ? '$'+sph.toFixed(2) : '—'}</span>
           </div>
         </div>
         <div class="roster-cell">
           <div class="score-bar">
-            <div class="score-track"><div class="score-fill" style="width:${p.avg_net/maxNet*100}%;background:${netColor};"></div></div>
-            <span class="score-num" style="color:${netColor};">$${p.avg_net.toLocaleString()}</span>
+            <div class="score-track"><div class="score-fill" style="width:${maxNet>0?net/maxNet*100:0}%;background:${netColor};"></div></div>
+            <span class="score-num" style="color:${netColor};">${avgBar > 0 ? '$'+Math.round(avgBar).toLocaleString()+' bar' : net > 0 ? '$'+net.toLocaleString() : '—'}</span>
           </div>
         </div>
-        <div class="roster-cell secondary">${p.avg_split}%</div>
+        <div class="roster-cell secondary">${split > 0 ? split + '%' : '—'}</div>
         <div class="roster-cell">
           ${totalNights > 0 ? `<div class="trend-dots">${dots}</div>` : '<span style="color:#9B9793;font-size:12px;">—</span>'}
         </div>

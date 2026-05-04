@@ -131,6 +131,7 @@ def init_db():
             ("artist_promoter_dollar", "NUMERIC"),
             ("status", "TEXT NOT NULL DEFAULT 'confirmed'"),
             ("revel_bar_gross", "NUMERIC"),
+            ("headliner", "TEXT"),
         ]:
             conn.execute(text(f"ALTER TABLE events ADD COLUMN IF NOT EXISTS {col} {dtype}"))
 
@@ -552,6 +553,7 @@ def create_app(static_dir: str) -> FastAPI:
             rows = conn.execute(text("""
                 SELECT e.id, e.event_name, e.event_date, e.day_of_week,
                        e.tier1_category, e.promoter_name,
+                       COALESCE(e.artist_name, e.headliner) AS artist_name,
                        e.projected_door_revenue, e.projected_bar_revenue, e.projected_table_revenue,
                        e.revel_bar_gross,
                        COALESCE(r.review_status, 'No Review') AS review_status
@@ -1682,7 +1684,8 @@ def create_app(static_dir: str) -> FastAPI:
                   e.artist_fee_landed, e.artist_fee_travel,
                   e.doors_open_time, e.event_close_time,
                   e.status, e.notes,
-                  e.revel_bar_gross
+                  e.revel_bar_gross,
+                  COALESCE(e.artist_name, e.headliner) AS artist_name
                 FROM events e
                 WHERE e.event_date >= :start AND e.event_date <= :end
                 ORDER BY e.event_date ASC
