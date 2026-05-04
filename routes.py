@@ -724,7 +724,7 @@ def create_app(static_dir: str) -> FastAPI:
             for col in ["nights_above", "nights_below", "nights_met"]:
               ex[col] = (ex[col] or 0) + (r[col] or 0)
 
-      return list(merged.values())
+        return list(merged.values())
 
     @api.get("/promoters/names")
     def get_promoter_names():
