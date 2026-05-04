@@ -651,7 +651,7 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             return {"id": row.fetchone()[0], "day_of_week": day_of_week}
 
-@api.get("/promoters/summary")
+    @api.get("/promoters/summary")
     def get_promoters_summary():
       if not engine:
         raise HTTPException(status_code=503, detail="DB not configured")
@@ -726,7 +726,6 @@ def create_app(static_dir: str) -> FastAPI:
 
       return list(merged.values())
 
-    @api.get("/promoters/names")
     @api.get("/promoters/names")
     def get_promoter_names():
       if not engine:
