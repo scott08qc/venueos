@@ -23,7 +23,7 @@ engine = create_engine(
     connect_args={"sslmode": "require"},
 ) if DATABASE_URL else None
 
-# ── Tier 1 category constants ─────────────────────────────────────────────────
+# ââ Tier 1 category constants âââââââââââââââââââââââââââââââââââââââââââââââââ
 
 TIER1_CATEGORIES = [
     "electronic",
@@ -246,7 +246,7 @@ def init_db():
             ON CONFLICT (key) DO NOTHING
         """))
 
-        # ── Deal Intelligence tables ──────────────────────────────────────────
+        # ââ Deal Intelligence tables ââââââââââââââââââââââââââââââââââââââââââ
 
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS distributors (
@@ -371,7 +371,7 @@ def init_db():
             INSERT INTO event_consumption_model
             (event_tier1_category, product_subcategory, cases_per_100_guests, confidence_level, notes)
             VALUES
-            ('latin',             'tequila', 0.80, 'estimated', 'High tequila index — Don Julio, Patron dominant'),
+            ('latin',             'tequila', 0.80, 'estimated', 'High tequila index â Don Julio, Patron dominant'),
             ('latin',             'vodka',   0.30, 'estimated', 'Secondary spirit'),
             ('latin',             'rum',     0.25, 'estimated', 'Bacardi, Malibu'),
             ('latin',             'beer',    0.60, 'estimated', 'Corona, Modelo heavy'),
@@ -388,12 +388,12 @@ def init_db():
             ('open_format',       'tequila', 0.40, 'estimated', NULL),
             ('open_format',       'whiskey', 0.30, 'estimated', NULL),
             ('open_format',       'beer',    0.55, 'estimated', NULL),
-            ('corporate_private', 'vodka',   0.45, 'estimated', 'Premium spirits — client-dependent'),
+            ('corporate_private', 'vodka',   0.45, 'estimated', 'Premium spirits â client-dependent'),
             ('corporate_private', 'wine',    0.40, 'estimated', 'Higher wine index than nightlife'),
             ('corporate_private', 'whiskey', 0.30, 'estimated', NULL),
             ('corporate_private', 'beer',    0.35, 'estimated', 'Lower beer index'),
             ('corporate_private', 'tequila', 0.25, 'estimated', NULL),
-            ('sports_viewing',    'beer',    1.10, 'estimated', 'Dominant category — domestic heavy'),
+            ('sports_viewing',    'beer',    1.10, 'estimated', 'Dominant category â domestic heavy'),
             ('sports_viewing',    'vodka',   0.30, 'estimated', 'Shots and simple drinks'),
             ('sports_viewing',    'whiskey', 0.25, 'estimated', 'Bourbon shots common'),
             ('sports_viewing',    'tequila', 0.15, 'estimated', 'Minimal'),
@@ -407,7 +407,7 @@ def init_db():
         conn.commit()
 
 
-# ── Pydantic models ───────────────────────────────────────────────────────────
+# ââ Pydantic models âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 class EventCreate(BaseModel):
     event_name: str
@@ -534,7 +534,7 @@ class HistoricalEventCreate(BaseModel):
     classification_status: Optional[str] = "Complete"
 
 
-# ── App factory ───────────────────────────────────────────────────────────────
+# ââ App factory âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def create_app(static_dir: str) -> FastAPI:
     api = APIRouter()
@@ -546,7 +546,7 @@ def create_app(static_dir: str) -> FastAPI:
         db_preview = db_url[:40] + "..." if len(db_url) > 40 else db_url
         return {"ok": True, "db_configured": bool(engine), "db_url_preview": db_preview}
 
-    # ── Events ────────────────────────────────────────────────────────────────
+    # ââ Events ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/events")
     def list_events():
@@ -718,7 +718,7 @@ def create_app(static_dir: str) -> FastAPI:
                 raise HTTPException(status_code=404, detail="Event not found")
             return {"ok": True}
 
-    # ── Night of Actuals ──────────────────────────────────────────────────────
+    # ââ Night of Actuals ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/actuals/{event_id}")
     def get_actuals(event_id: int):
@@ -814,7 +814,7 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             return {"ok": True}
 
-    # ── Post-Event Reviews ────────────────────────────────────────────────────
+    # ââ Post-Event Reviews ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/reviews/{event_id}")
     def get_review(event_id: int):
@@ -903,7 +903,7 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             return {"ok": True}
 
-    # ── Historical Events ─────────────────────────────────────────────────────
+    # ââ Historical Events âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/historical")
     def list_historical():
@@ -937,7 +937,7 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             return {"id": row.fetchone()[0]}
 
-    # ── Square Sync ───────────────────────────────────────────────────────────
+    # ââ Square Sync âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/square/sync")
     def square_sync(date: Optional[str] = None):
@@ -1013,7 +1013,7 @@ def create_app(static_dir: str) -> FastAPI:
         total_sales = sum(r.get("summary", {}).get("gross_sales", 0) or 0 for r in results)
         return {"ok": True, "nights_synced": len(results), "total_payments": total_payments, "total_gross_sales": round(total_sales, 2), "results": results}
 
-    # ── Event Costs ───────────────────────────────────────────────────────────
+    # ââ Event Costs âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/costs/{event_id}")
     def get_event_costs(event_id: int):
@@ -1109,8 +1109,8 @@ def create_app(static_dir: str) -> FastAPI:
             {"label": "Production staff", "amount": float(costs.production_staff_total or 0), "category": "variable"},
             {"label": "Production equipment + tech rider", "amount": float(costs.production_equipment_total or 0), "category": "variable"},
             {"label": "Hospitality rider", "amount": float(costs.hospitality_rider_actual or 0), "category": "variable", "estimate": float(costs.hospitality_rider_estimate or 0), "variance": float(costs.hospitality_rider_actual or 0) - float(costs.hospitality_rider_estimate or 0)},
-            {"label": "Marketing — internal", "amount": float(costs.marketing_internal or 0), "category": "marketing"},
-            {"label": "Marketing — promoter", "amount": float(costs.marketing_promoter_contribution or 0), "category": "marketing"},
+            {"label": "Marketing â internal", "amount": float(costs.marketing_internal or 0), "category": "marketing"},
+            {"label": "Marketing â promoter", "amount": float(costs.marketing_promoter_contribution or 0), "category": "marketing"},
             {"label": "Artist fee", "amount": float(costs.artist_fee_total or 0) or (float(event.artist_fee_landed or 0) + float(event.artist_fee_travel or 0)), "category": "talent"},
           ]
         else:
@@ -1120,7 +1120,7 @@ def create_app(static_dir: str) -> FastAPI:
         net = total_revenue - total_costs
         return {"event_id": event_id, "event_name": event.event_name, "revenue": {"bar": bar_revenue, "door": door_revenue, "total": total_revenue, "projected_bar": float(event.projected_bar_revenue or 0), "projected_door": float(event.projected_door_revenue or 0)}, "cost_lines": cost_lines, "promoter_payouts": promoter_payouts, "total_costs": total_costs, "net": net, "net_margin_pct": round((net / total_revenue * 100), 1) if total_revenue > 0 else 0}
 
-    # ── Promoter Intelligence ─────────────────────────────────────────────────
+    # ââ Promoter Intelligence âââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/promoter-intelligence")
     def get_promoter_intelligence(promoter: str, event_type: str = None):
@@ -1380,7 +1380,7 @@ def create_app(static_dir: str) -> FastAPI:
           "history": history
         }
 
-    # ── Artist Intelligence ───────────────────────────────────────────────────
+    # ââ Artist Intelligence âââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/artist-intelligence")
     def get_artist_intelligence(artist: str, event_type: str = None):
@@ -1472,7 +1472,7 @@ def create_app(static_dir: str) -> FastAPI:
                 "history": history
             }
 
-    # ── Event Detail ─────────────────────────────────────────────────────────
+    # ââ Event Detail âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/event-detail/{event_id}")
     def get_event_detail(event_id: int):
@@ -1615,7 +1615,7 @@ def create_app(static_dir: str) -> FastAPI:
                 }
             }
 
-    # ── AI Talking Points ─────────────────────────────────────────────────────
+    # ââ AI Talking Points âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.post("/talking-points")
     async def get_talking_points(data: dict):
@@ -1636,7 +1636,7 @@ def create_app(static_dir: str) -> FastAPI:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-    # ── Venue Settings ────────────────────────────────────────────────────────
+    # ââ Venue Settings ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/settings")
     def get_settings():
@@ -1669,7 +1669,7 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
         return {"ok": True}
 
-    # ── Calculator ────────────────────────────────────────────────────────────
+    # ââ Calculator ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/calculator", response_class=FileResponse)
     def serve_calculator():
@@ -1681,7 +1681,7 @@ def create_app(static_dir: str) -> FastAPI:
         calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
         return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
-    # ── Calendar ──────────────────────────────────────────────────────────────
+    # ââ Calendar ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/calendar", response_class=FileResponse)
     def serve_calendar():
@@ -1693,7 +1693,7 @@ def create_app(static_dir: str) -> FastAPI:
         cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
         return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
-    # ── Promoter Hub ──────────────────────────────────────────────────────────
+    # ââ Promoter Hub ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/promoters", response_class=FileResponse)
     def serve_promoters():
@@ -1940,7 +1940,7 @@ def create_app(static_dir: str) -> FastAPI:
                 result.append(d)
             return result
 
-    # ── Deal Intelligence — Distributors ──────────────────────────────────────
+    # ââ Deal Intelligence â Distributors ââââââââââââââââââââââââââââââââââââââ
 
     @api.get("/distributors")
     def list_distributors():
@@ -2008,7 +2008,7 @@ def create_app(static_dir: str) -> FastAPI:
             raise HTTPException(status_code=404, detail="Distributor not found")
         return dict(row)
 
-    # ── Deal Intelligence — Product Catalog ───────────────────────────────────
+    # ââ Deal Intelligence â Product Catalog âââââââââââââââââââââââââââââââââââ
 
     @api.get("/catalog")
     def list_catalog(distributor_id: Optional[int] = None, category: Optional[str] = None):
@@ -2103,7 +2103,7 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
         return {"created_products": created_products, "created_deals": created_deals}
 
-    # ── Deal Intelligence — Deal Schedules ────────────────────────────────────
+    # ââ Deal Intelligence â Deal Schedules ââââââââââââââââââââââââââââââââââââ
 
     @api.get("/deals")
     def list_deals(distributor_id: Optional[int] = None, active_only: bool = True):
@@ -2165,7 +2165,7 @@ def create_app(static_dir: str) -> FastAPI:
             raise HTTPException(status_code=404, detail="Deal not found")
         return dict(row)
 
-    # ── Deal Intelligence — Purchase Recommendations ──────────────────────────
+    # ââ Deal Intelligence â Purchase Recommendations ââââââââââââââââââââââââââ
 
     @api.get("/recommendations")
     def list_recommendations(lookahead_days: int = 60, status: Optional[str] = None):
@@ -2192,11 +2192,11 @@ def create_app(static_dir: str) -> FastAPI:
         Recommendation engine:
         1. Pull confirmed events in next N days from events table
         2. For each event look up tier1_category + expected_attendance
-        3. Multiply attendance × consumption_model rates → projected cases per subcategory
+        3. Multiply attendance Ã consumption_model rates â projected cases per subcategory
         4. Sum projected cases by subcategory across the full window
         5. Match subcategory totals against active deal_schedules
         6. Where projected volume >= threshold: create recommendation record
-        7. Calculate estimated_saving vs frontline × case count
+        7. Calculate estimated_saving vs frontline Ã case count
         """
         if not engine:
             raise HTTPException(status_code=503, detail="DB not configured")
@@ -2342,7 +2342,7 @@ def create_app(static_dir: str) -> FastAPI:
             raise HTTPException(status_code=404, detail="Recommendation not found")
         return dict(row)
 
-    # ── Deal Intelligence — Admin Cross-Reference UI ──────────────────────────
+    # ââ Deal Intelligence â Admin Cross-Reference UI ââââââââââââââââââââââââââ
 
     @api.get("/deals/admin")
     def deals_admin_ui():
@@ -2352,7 +2352,7 @@ def create_app(static_dir: str) -> FastAPI:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Deal Intelligence — Admin</title>
+<title>Deal Intelligence â Admin</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -2458,7 +2458,7 @@ def create_app(static_dir: str) -> FastAPI:
 <header>
   <h1>Deal Intelligence</h1>
   <span class="badge">Admin</span>
-  <span style="margin-left:auto;color:var(--text-muted);font-size:12px;">VenueOS · Internal use only</span>
+  <span style="margin-left:auto;color:var(--text-muted);font-size:12px;">VenueOS Â· Internal use only</span>
 </header>
 
 <div class="main">
@@ -2500,11 +2500,11 @@ def create_app(static_dir: str) -> FastAPI:
   <!-- Discrepancy panel -->
   <div class="section" id="disc-section">
     <div class="section-header">
-      <span class="section-title" style="color:var(--danger)">⚠ Discrepancies</span>
-      <span class="count-badge" id="disc-count">—</span>
+      <span class="section-title" style="color:var(--danger)">â  Discrepancies</span>
+      <span class="count-badge" id="disc-count">â</span>
     </div>
     <div class="table-wrap" id="disc-table-wrap">
-      <div class="empty-state loading">Loading…</div>
+      <div class="empty-state loading">Loadingâ¦</div>
     </div>
   </div>
 
@@ -2512,10 +2512,10 @@ def create_app(static_dir: str) -> FastAPI:
   <div class="section">
     <div class="section-header">
       <span class="section-title">Product Catalog &amp; Deal Schedules</span>
-      <span class="count-badge" id="deals-count">—</span>
+      <span class="count-badge" id="deals-count">â</span>
     </div>
     <div class="table-wrap" id="deals-table-wrap">
-      <div class="empty-state loading">Loading…</div>
+      <div class="empty-state loading">Loadingâ¦</div>
     </div>
   </div>
 
@@ -2551,7 +2551,7 @@ def create_app(static_dir: str) -> FastAPI:
     </div>
     <div class="field">
       <label>Notes (optional)</label>
-      <textarea id="verify-notes" style="min-height:70px;resize:vertical;" placeholder="Any discrepancy notes…"></textarea>
+      <textarea id="verify-notes" style="min-height:70px;resize:vertical;" placeholder="Any discrepancy notesâ¦"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeVerifyModal()">Cancel</button>
@@ -2599,10 +2599,10 @@ function sourcePill(src) {
 
 function catPill(cat) {
   const cls = 'pill pill-' + (cat || 'na');
-  return `<span class="${cls}">${cat || '—'}</span>`;
+  return `<span class="${cls}">${cat || 'â'}</span>`;
 }
 
-function fmt(v) { return v != null ? Number(v).toFixed(2) : '—'; }
+function fmt(v) { return v != null ? Number(v).toFixed(2) : 'â'; }
 
 function renderDeals() {
   const source = document.getElementById('filter-source').value;
@@ -2621,19 +2621,19 @@ function renderDeals() {
     </tr></thead>
     <tbody>${rows.map(r => `
     <tr class="${r.discrepancy_flag ? 'discrepancy-row' : ''}">
-      <td>${r.distributor_name || '—'}</td>
-      <td>${r.sku || '—'}</td>
+      <td>${r.distributor_name || 'â'}</td>
+      <td>${r.sku || 'â'}</td>
       <td style="max-width:180px">${r.product_name}</td>
       <td>${catPill(r.category)}</td>
-      <td>${r.subcategory || '—'}</td>
+      <td>${r.subcategory || 'â'}</td>
       <td>$${fmt(r.frontline_price_case)}</td>
       <td>${r.deal_type}</td>
-      <td>${r.quantity_threshold_cases != null ? r.quantity_threshold_cases + ' cs' : '—'}</td>
-      <td>${r.discounted_price_case != null ? '$'+fmt(r.discounted_price_case) : '—'}</td>
-      <td>${r.discount_pct != null ? r.discount_pct+'%' : '—'}</td>
+      <td>${r.quantity_threshold_cases != null ? r.quantity_threshold_cases + ' cs' : 'â'}</td>
+      <td>${r.discounted_price_case != null ? '$'+fmt(r.discounted_price_case) : 'â'}</td>
+      <td>${r.discount_pct != null ? r.discount_pct+'%' : 'â'}</td>
       <td>${sourcePill(r.source)}</td>
-      <td class="${r.verified ? 'verified-yes' : 'verified-no'}">${r.verified ? '✓ '+r.verified_by : 'Unverified'}</td>
-      <td class="${r.discrepancy_flag ? 'flag-disc' : 'flag-ok'}">${r.discrepancy_flag ? '⚠ Yes' : '—'}</td>
+      <td class="${r.verified ? 'verified-yes' : 'verified-no'}">${r.verified ? 'â '+r.verified_by : 'Unverified'}</td>
+      <td class="${r.discrepancy_flag ? 'flag-disc' : 'flag-ok'}">${r.discrepancy_flag ? 'â  Yes' : 'â'}</td>
       <td>${!r.verified ? `<button class="btn btn-success" style="font-size:12px;padding:4px 10px" onclick="openVerify(${r.id})">Verify</button>` : ''}</td>
     </tr>`).join('')}
     </tbody></table>`;
@@ -2643,7 +2643,7 @@ function renderDiscrepancies() {
   document.getElementById('disc-count').textContent = allDiscs.length + ' records';
   const wrap = document.getElementById('disc-table-wrap');
   if (!allDiscs.length) {
-    wrap.innerHTML = '<div class="empty-state" style="color:var(--success)">✓ No discrepancies found.</div>';
+    wrap.innerHTML = '<div class="empty-state" style="color:var(--success)">â No discrepancies found.</div>';
     return;
   }
   wrap.innerHTML = `<table>
@@ -2658,9 +2658,9 @@ function renderDiscrepancies() {
       <td>${r.product_name}</td>
       <td>${sourcePill(r.source)}</td>
       <td>$${fmt(r.frontline_price_case)}</td>
-      <td>${r.discounted_price_case != null ? '$'+fmt(r.discounted_price_case) : '—'}</td>
-      <td>${r.state_posting_ref || '—'}</td>
-      <td style="max-width:220px;white-space:pre-wrap">${r.discrepancy_notes || '—'}</td>
+      <td>${r.discounted_price_case != null ? '$'+fmt(r.discounted_price_case) : 'â'}</td>
+      <td>${r.state_posting_ref || 'â'}</td>
+      <td style="max-width:220px;white-space:pre-wrap">${r.discrepancy_notes || 'â'}</td>
       <td><button class="btn btn-success" style="font-size:12px;padding:4px 10px" onclick="openVerify(${r.id})">Verify</button></td>
     </tr>`).join('')}
     </tbody></table>`;
@@ -2685,14 +2685,14 @@ async function runImport() {
   if (!raw) { status.innerHTML = '<span class="status-msg status-err">Paste JSON first.</span>'; return; }
   let payload;
   try { payload = JSON.parse(raw); } catch(e) { status.innerHTML = '<span class="status-msg status-err">Invalid JSON: ' + e.message + '</span>'; return; }
-  status.innerHTML = '<span class="status-msg loading">Importing…</span>';
+  status.innerHTML = '<span class="status-msg loading">Importingâ¦</span>';
   try {
     const r = await fetch(BASE + '/api/catalog/import', {
       method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || JSON.stringify(d));
-    status.innerHTML = `<span class="status-msg status-ok">✓ Imported ${d.created_products} products, ${d.created_deals} deals.</span>`;
+    status.innerHTML = `<span class="status-msg status-ok">â Imported ${d.created_products} products, ${d.created_deals} deals.</span>`;
     loadDeals('','');
   } catch(e) {
     status.innerHTML = `<span class="status-msg status-err">Error: ${e.message}</span>`;
@@ -2743,7 +2743,7 @@ loadDiscrepancies();
 </html>"""
         return HTMLResponse(content=html)
 
-    # ── App wiring ────────────────────────────────────────────────────────────
+    # ââ App wiring ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     from fastapi.middleware.cors import CORSMiddleware
 
@@ -2785,5 +2785,20 @@ loadDiscrepancies();
                     "Expires": "0",
                 },
             )
+
+
+    @api.post("/admin/run-sql")
+    async def run_sql_admin(request: Request):
+        """Temp admin: execute raw SQL against Neon (remove after use)"""
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        try:
+            sql_text = (await request.body()).decode("utf-8")
+            with engine.connect() as conn:
+                conn.execute(text(sql_text))
+                conn.commit()
+            return {"ok": True}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     return app
