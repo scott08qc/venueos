@@ -2786,19 +2786,4 @@ loadDiscrepancies();
                 },
             )
 
-
-    @api.post("/admin/run-sql")
-    async def run_sql_admin(request: Request):
-        """Temp admin: execute raw SQL against Neon (remove after use)"""
-        if not engine:
-            raise HTTPException(status_code=503, detail="DB not configured")
-        try:
-            sql_text = (await request.body()).decode("utf-8")
-            with engine.connect() as conn:
-                conn.execute(text(sql_text))
-                conn.commit()
-            return {"ok": True}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
     return app
