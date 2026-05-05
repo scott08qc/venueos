@@ -541,7 +541,10 @@ def create_app(static_dir: str) -> FastAPI:
 
     @api.get("/health")
     def health():
-        return {"ok": True}
+        import os
+        db_url = os.environ.get("DATABASE_URL", "NOT SET")
+        db_preview = db_url[:40] + "..." if len(db_url) > 40 else db_url
+        return {"ok": True, "db_configured": bool(engine), "db_url_preview": db_preview}
 
     # ── Events ────────────────────────────────────────────────────────────────
 
