@@ -1182,7 +1182,7 @@ def create_app(static_dir: str) -> FastAPI:
               (SELECT SUM(eis.total_revenue)
                FROM event_item_sales eis
                WHERE eis.event_id = e.id
-               AND eis.item_category IN ('Bar', 'Bottle Service')),
+               AND eis.item_category IN ('Bar', 'Bottle Service', 'Spirits', 'Beer', 'Cocktails')),
               e.revel_bar_gross,
               0
             ) AS net_bar_revenue,
@@ -1503,7 +1503,7 @@ def create_app(static_dir: str) -> FastAPI:
                       (SELECT SUM(eis.total_revenue)
                        FROM event_item_sales eis
                        WHERE eis.event_id = e.id
-                       AND eis.item_category IN ('Bar', 'Bottle Service')),
+                       AND eis.item_category IN ('Bar', 'Bottle Service', 'Spirits', 'Beer', 'Cocktails')),
                       e.revel_bar_gross,
                       0
                   ) AS net_bar_revenue,
@@ -1706,7 +1706,6 @@ def create_app(static_dir: str) -> FastAPI:
         return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
     @api.get("/promoters/summary")
-    @api.get("/promoters/summary")
     def get_promoters_summary():
       if not engine:
         raise HTTPException(status_code=503, detail="DB not configured")
@@ -1738,8 +1737,26 @@ def create_app(static_dir: str) -> FastAPI:
             e.promoter_name,
             e.tier1_category,
             COUNT(e.id) AS total_events,
-            ROUND(AVG(COALESCE(r.actual_bar_revenue, e.revel_bar_gross))::numeric, 0) AS avg_bar_revenue,
-            ROUND(AVG(COALESCE(r.actual_bar_revenue, e.revel_bar_gross))::numeric, 0) AS avg_net,
+            ROUND(AVG(COALESCE(
+              (SELECT n2.total_bar_sales FROM night_of_actuals n2
+                 WHERE n2.event_id = e.id AND n2.time_of_entry ILIKE 'close%'
+                 ORDER BY n2.created_at DESC LIMIT 1),
+              (SELECT SUM(eis.total_revenue) FROM event_item_sales eis
+                 WHERE eis.event_id = e.id
+                 AND eis.item_category IN ('Bar','Bottle Service','Spirits','Beer','Cocktails')),
+              e.revel_bar_gross,
+              0
+            ))::numeric, 0) AS avg_bar_revenue,
+            ROUND(AVG(COALESCE(
+              (SELECT n2.total_bar_sales FROM night_of_actuals n2
+                 WHERE n2.event_id = e.id AND n2.time_of_entry ILIKE 'close%'
+                 ORDER BY n2.created_at DESC LIMIT 1),
+              (SELECT SUM(eis.total_revenue) FROM event_item_sales eis
+                 WHERE eis.event_id = e.id
+                 AND eis.item_category IN ('Bar','Bottle Service','Spirits','Beer','Cocktails')),
+              e.revel_bar_gross,
+              0
+            ))::numeric, 0) AS avg_net,
             ROUND(AVG(
               CASE WHEN r.actual_attendance IS NOT NULL AND e.expected_attendance > 0
               THEN r.actual_attendance::float / NULLIF(e.expected_attendance, 0) * 100
@@ -1759,7 +1776,13 @@ def create_app(static_dir: str) -> FastAPI:
           LEFT JOIN post_event_reviews r ON r.event_id = e.id
             AND LOWER(r.review_status) = 'complete'
           WHERE e.promoter_name IS NOT NULL
-            AND (e.revel_bar_gross IS NOT NULL OR r.id IS NOT NULL)
+            AND TRIM(e.promoter_name) != ''
+            AND (
+              e.revel_bar_gross IS NOT NULL
+              OR r.id IS NOT NULL
+              OR EXISTS (SELECT 1 FROM night_of_actuals n3 WHERE n3.event_id = e.id)
+              OR EXISTS (SELECT 1 FROM event_item_sales eis2 WHERE eis2.event_id = e.id)
+            )
           GROUP BY e.promoter_name, e.tier1_category
         """)).mappings().fetchall()
 
@@ -1828,7 +1851,7 @@ def create_app(static_dir: str) -> FastAPI:
                       (SELECT SUM(eis.total_revenue)
                        FROM event_item_sales eis
                        WHERE eis.event_id = e.id
-                       AND eis.item_category IN ('Bar', 'Bottle Service')),
+                       AND eis.item_category IN ('Bar', 'Bottle Service', 'Spirits', 'Beer', 'Cocktails')),
                       e.revel_bar_gross,
                       0
                   ) AS net_bar_revenue,
@@ -1896,7 +1919,7 @@ def create_app(static_dir: str) -> FastAPI:
                       (SELECT SUM(eis.total_revenue)
                       FROM event_item_sales eis
                       WHERE eis.event_id = e.id
-                      AND eis.item_category IN ('Bar', 'Bottle Service')),
+                      AND eis.item_category IN ('Bar', 'Bottle Service', 'Spirits', 'Beer', 'Cocktails')),
                       e.revel_bar_gross, 0) AS net_bar_revenue,
                   NULL AS actual_door_revenue
                 FROM events e
