@@ -1507,6 +1507,7 @@ def create_app(static_dir: str) -> FastAPI:
                       e.revel_bar_gross,
                       0
                   ) AS net_bar_revenue,
+                  CASE WHEN e.event_date < CURRENT_DATE THEN 'completed' ELSE e.status END AS status,
                   r.actual_attendance, r.actual_bar_revenue, r.actual_door_revenue,
                   r.actual_table_revenue, r.artist_cost_actual, r.staffing_cost_actual,
                   r.spend_per_head_actual, r.net_revenue_actual, r.actual_effective_split,
