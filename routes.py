@@ -1177,12 +1177,15 @@ def create_app(static_dir: str) -> FastAPI:
             e.artist_fee_travel,
             e.artist_name,
             e.revel_bar_gross,
-            COALESCE((
-              SELECT SUM(eis.total_revenue)
-              FROM event_item_sales eis
-              WHERE eis.event_id = e.id
-              AND eis.item_category IN ('Bar', 'Bottle Service')
-            ), e.revel_bar_gross, 0) AS net_bar_revenue,
+            COALESCE(
+              n.total_bar_sales,
+              (SELECT SUM(eis.total_revenue)
+               FROM event_item_sales eis
+               WHERE eis.event_id = e.id
+               AND eis.item_category IN ('Bar', 'Bottle Service')),
+              e.revel_bar_gross,
+              0
+            ) AS net_bar_revenue,
             r.actual_attendance,
             r.actual_bar_revenue,
             r.actual_door_revenue,
@@ -1198,7 +1201,7 @@ def create_app(static_dir: str) -> FastAPI:
           LEFT JOIN post_event_reviews r ON r.event_id = e.id
             AND LOWER(r.review_status) = 'complete'
           LEFT JOIN night_of_actuals n ON n.event_id = e.id
-            AND n.time_of_entry = 'Close'
+            AND n.time_of_entry ILIKE 'close%'
           WHERE LOWER(e.promoter_name) LIKE LOWER(:promoter)
 
           ORDER BY event_date DESC
@@ -1399,7 +1402,7 @@ def create_app(static_dir: str) -> FastAPI:
                   n.effective_split_percentage
                 FROM events e
                 LEFT JOIN post_event_reviews r ON r.event_id = e.id
-                LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry = 'Close'
+                LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry ILIKE 'close%'
                 WHERE LOWER(e.artist_name) LIKE LOWER(:artist)
                   AND r.review_status = 'Complete'
                 ORDER BY e.event_date DESC
@@ -1495,12 +1498,15 @@ def create_app(static_dir: str) -> FastAPI:
             conn.commit()
             event = conn.execute(text("""
                 SELECT e.*,
-                  COALESCE((
-                      SELECT SUM(eis.total_revenue)
-                      FROM event_item_sales eis
-                      WHERE eis.event_id = e.id
-                      AND eis.item_category IN ('Bar', 'Bottle Service')
-                  ), e.revel_bar_gross, 0) AS net_bar_revenue,
+                  COALESCE(
+                      n.total_bar_sales,
+                      (SELECT SUM(eis.total_revenue)
+                       FROM event_item_sales eis
+                       WHERE eis.event_id = e.id
+                       AND eis.item_category IN ('Bar', 'Bottle Service')),
+                      e.revel_bar_gross,
+                      0
+                  ) AS net_bar_revenue,
                   r.actual_attendance, r.actual_bar_revenue, r.actual_door_revenue,
                   r.actual_table_revenue, r.artist_cost_actual, r.staffing_cost_actual,
                   r.spend_per_head_actual, r.net_revenue_actual, r.actual_effective_split,
@@ -1513,7 +1519,7 @@ def create_app(static_dir: str) -> FastAPI:
                   n.artist_cost_paid_by_venue, n.effective_split_percentage, n.settlement_notes
                 FROM events e
                 LEFT JOIN post_event_reviews r ON r.event_id = e.id
-                LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry = 'Close'
+                LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry ILIKE 'close%'
                 WHERE e.id = :eid
             """), {"eid": event_id}).fetchone()
             if not event:
@@ -1815,12 +1821,16 @@ def create_app(static_dir: str) -> FastAPI:
                   e.doors_open_time, e.event_close_time,
                   e.status, e.notes,
                   e.revel_bar_gross,
-                  COALESCE((
-                      SELECT SUM(eis.total_revenue)
-                      FROM event_item_sales eis
-                      WHERE eis.event_id = e.id
-                      AND eis.item_category IN ('Bar', 'Bottle Service')
-                  ), e.revel_bar_gross, 0) AS net_bar_revenue,
+                  COALESCE(
+                      (SELECT n2.total_bar_sales FROM night_of_actuals n2
+                       WHERE n2.event_id = e.id ORDER BY n2.created_at DESC LIMIT 1),
+                      (SELECT SUM(eis.total_revenue)
+                       FROM event_item_sales eis
+                       WHERE eis.event_id = e.id
+                       AND eis.item_category IN ('Bar', 'Bottle Service')),
+                      e.revel_bar_gross,
+                      0
+                  ) AS net_bar_revenue,
                   COALESCE(e.artist_name, e.headliner) AS artist_name
                 FROM events e
                 WHERE e.event_date >= :start AND e.event_date <= :end
