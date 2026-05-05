@@ -1889,14 +1889,15 @@ def create_app(static_dir: str) -> FastAPI:
                   e.projected_door_revenue, e.projected_bar_revenue, e.projected_table_revenue,
                   e.artist_fee_landed, e.artist_fee_travel,
                   e.doors_open_time, e.event_close_time,
-                  e.status, e.notes,
+                  CASE WHEN e.event_date < CURRENT_DATE THEN 'completed' ELSE e.status END AS status, e.notes,
                   e.revel_bar_gross,
-                  COALESCE((
-                      SELECT SUM(eis.total_revenue)
+                  COALESCE(
+                      (SELECT n2.total_bar_sales FROM night_of_actuals n2 WHERE n2.event_id = e.id ORDER BY n2.created_at DESC LIMIT 1),
+                      (SELECT SUM(eis.total_revenue)
                       FROM event_item_sales eis
                       WHERE eis.event_id = e.id
-                      AND eis.item_category IN ('Bar', 'Bottle Service')
-                  ), e.revel_bar_gross, 0) AS net_bar_revenue,
+                      AND eis.item_category IN ('Bar', 'Bottle Service')),
+                      e.revel_bar_gross, 0) AS net_bar_revenue,
                   NULL AS actual_door_revenue
                 FROM events e
                 WHERE e.event_date >= :start AND e.event_date <= :end
