@@ -1,8 +1,11 @@
 [phases.setup]
-nixPkgs = ["python312", "bun"]
+nixPkgs = ["python312"]
+
+[phases.install]
+cmds = ["uv sync --frozen"]
 
 [phases.build]
-cmds = ["pip install -r requirements.txt --break-system-packages || pip install fastapi uvicorn psycopg2-binary openpyxl pandas sqlalchemy python-dotenv httpx --break-system-packages"]
+cmds = []
 
 [start]
 cmd = "uvicorn app:asgi --host 0.0.0.0 --port $PORT"
