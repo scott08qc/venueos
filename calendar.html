@@ -790,45 +790,27 @@ async function loadInternalEvents() {
 const marketEvents = [
 
   // ── JAN 2026 ──
-  { date: '2026-01-02', name: 'Therapy Sessions @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
-  { date: '2026-01-09', name: 'Steve Aoki @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-01-09', name: 'Innelia @ Believe Music Hall', type: 'edm', venue: 'Believe Music Hall', cap: 1500, demo: 'House/EDM 21-35', competitor: true },
-  { date: '2026-01-16', name: 'Therapy Sessions (Innelia) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-01-18', name: 'Chris Tomlin — Neon Night Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Christian/Gospel 25-50' },
   { date: '2026-01-21', name: 'Fortune Feimster @ Buckhead Theatre', type: 'liveration', venue: 'Buckhead Theatre', cap: 1000, demo: 'Comedy 25-45' },
   { date: '2026-01-21', name: 'Zubah @ Believe Music Hall', type: 'edm', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-32', competitor: true },
-  { date: '2026-01-23', name: 'Therapy Sessions (Riordan) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
-  { date: '2026-01-30', name: 'Therapy Sessions (YDG) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
-  { date: '2026-01-31', name: 'Therapy Sessions (Lavern) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
 
   // ── FEB 2026 ──
-  { date: '2026-02-06', name: 'Timmy Trumpet @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
-  { date: '2026-02-13', name: 'Sidepiece @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'House 21-35' },
   { date: '2026-02-14', name: 'Valentine\'s Weekend — multiple venues', type: 'holiday', venue: 'Citywide' },
   { date: '2026-02-19', name: 'Lunar New Year Events — multiple venues', type: 'convention', venue: 'Citywide', att_est: 5000 },
-  { date: '2026-02-20', name: 'Bolo @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
-  { date: '2026-02-21', name: 'Kream @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'House 21-35' },
-  { date: '2026-02-27', name: 'What So Not @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Bass/Electronic 21-35' },
   { date: '2026-02-27', name: 'TWICE — This Is For You Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'K-Pop 18-28' },
 
   // ── MAR 2026 ──
   { date: '2026-03-04', name: 'Lady Gaga — Mayhem Ball @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 20-40' },
   { date: '2026-03-05', name: 'Lady Gaga — Mayhem Ball @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 20-40' },
   { date: '2026-03-05', name: 'Sabrina Claudio @ Buckhead Theatre', type: 'liveration', venue: 'Buckhead Theatre', cap: 1000, demo: 'R&B 20-35' },
-  { date: '2026-03-06', name: 'First We Dance @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-03-06', name: 'Conan Gray — Wishbone Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop/Alt 16-28' },
   { date: '2026-03-07', name: 'Atlanta United Home Opener vs Real Salt Lake', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
-  { date: '2026-03-07', name: 'First We Dance @ District (2nd night)', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-03-08', name: 'Atlanta United vs Philadelphia Union', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
-  { date: '2026-03-13', name: 'Oppidan @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-03-14', name: 'Atlanta United — Home', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
   { date: '2026-03-17', name: 'St. Patrick\'s Day — citywide bar surge', type: 'holiday', venue: 'Citywide' },
   { date: '2026-03-20', name: 'Eric Church — Free the Machine @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Country 30-50' },
-  { date: '2026-03-20', name: 'Odd Mob @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Techno/House 21-35' },
-  { date: '2026-03-21', name: 'Deorro @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
-  { date: '2026-03-26', name: 'Kybba @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-03-26', name: 'Braves Home Opener vs Kansas City Royals', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-03-27', name: 'Sultan & Sheppard @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-03-27', name: 'Hayley Williams @ Tabernacle', type: 'liveration', venue: 'Tabernacle', cap: 2500, demo: 'Alt/Rock 22-38' },
   { date: '2026-03-29', name: 'New Edition & Boyz II Men ft. Toni Braxton @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'R&B 30-50' },
 
@@ -838,28 +820,23 @@ const marketEvents = [
   { date: '2026-04-03', name: 'MANÁ — VIVIR SIN AIRE Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Latin Rock 28-50' },
   { date: '2026-04-04', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
   { date: '2026-04-06', name: 'Atlanta Hawks vs NY Knicks @ State Farm Arena', type: 'sports', venue: 'State Farm Arena', cap: 21000 },
-  { date: '2026-04-10', name: 'Tobiahs @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-04-10', name: 'Atlanta Hawks vs Cleveland Cavaliers @ State Farm Arena', type: 'sports', venue: 'State Farm Arena', cap: 21000 },
   { date: '2026-04-10', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
   { date: '2026-04-10', name: 'Atlanta Dogwood Festival — Day 1', type: 'festival', venue: 'Piedmont Park', multi: true },
   { date: '2026-04-11', name: 'Ricardo Arjona @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Latin 30-55' },
-  { date: '2026-04-11', name: 'Candela (DJ EU) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Latin/EDM 21-35' },
   { date: '2026-04-11', name: 'Atlanta Dogwood Festival — Day 2', type: 'festival', venue: 'Piedmont Park', multi: true },
   { date: '2026-04-12', name: 'Demi Lovato @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 18-32' },
   { date: '2026-04-12', name: 'BLESSD @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Latin/Urban 20-35' },
   { date: '2026-04-12', name: 'Atlanta Dogwood Festival — Day 3', type: 'festival', venue: 'Piedmont Park', multi: true },
   { date: '2026-04-17', name: 'SweetWater 420 Fest — Day 1', type: 'festival', venue: 'Westside Park', multi: true, att_est: 25000 },
-  { date: '2026-04-17', name: 'BEAUZ @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-04-18', name: 'SweetWater 420 Fest — Day 2', type: 'festival', venue: 'Westside Park', multi: true, att_est: 25000 },
   { date: '2026-04-19', name: 'Baby Keem @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Hip Hop 18-28' },
   { date: '2026-04-20', name: 'Baby Keem @ Coca-Cola Roxy (2nd night)', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Hip Hop 18-28' },
   { date: '2026-04-22', name: 'Atlanta United vs New England Revolution', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
-  { date: '2026-04-24', name: 'Patrick Topping @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Tech House 21-35' },
   { date: '2026-04-30', name: 'PinkPantheress @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Alt/Pop/R&B 18-28' },
 
   // ── MAY 2026 (forward) ──
   { date: '2026-05-01', name: 'PinkPantheress @ Coca-Cola Roxy (2nd night)', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Alt/Pop 18-28' },
-  { date: '2026-05-08', name: 'Vintage Culture @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'House 22-35' },
   { date: '2026-05-09', name: 'Iris Presents: Deathpact @ Believe Music Hall', type: 'edm', venue: 'Believe Music Hall', cap: 1500, demo: 'Techno 21-35', competitor: true },
   { date: '2026-05-09', name: 'Atlanta United vs LA Galaxy', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
   { date: '2026-05-12', name: 'Braves vs Chicago Cubs', type: 'sports', venue: 'Truist Park', cap: 41000 },
@@ -871,7 +848,6 @@ const marketEvents = [
   { date: '2026-05-16', name: 'Porchfest Virginia-Highland', type: 'festival', venue: 'Virginia-Highland', att_est: 10000 },
   { date: '2026-05-17', name: 'Braves vs Boston Red Sox', type: 'sports', venue: 'Truist Park', cap: 41000 },
   { date: '2026-05-19', name: 'Don Toliver — Octane Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-30' },
-  { date: '2026-05-22', name: 'Josh Baker @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-05-22', name: 'Diljit Dosanjh — Aura World Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'South Asian Pop 22-40' },
   { date: '2026-05-22', name: 'Braves vs Washington Nationals', type: 'sports', venue: 'Truist Park', cap: 41000 },
   { date: '2026-05-23', name: 'Atlanta Jazz Festival — Day 1', type: 'festival', venue: 'Piedmont Park', multi: true, att_est: 30000 },
@@ -881,7 +857,6 @@ const marketEvents = [
   { date: '2026-05-24', name: 'Fisher @ Tabernacle', type: 'liveration', venue: 'Tabernacle', cap: 2500, demo: 'House 25-38', competitor: true },
   { date: '2026-05-25', name: 'Memorial Day', type: 'holiday' },
   { date: '2026-05-25', name: 'Atlanta Jazz Festival — Day 3', type: 'festival', venue: 'Piedmont Park', multi: true, att_est: 30000 },
-  { date: '2026-05-29', name: 'RØZ @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
   { date: '2026-05-30', name: 'Braves vs Tampa Bay Rays', type: 'sports', venue: 'Truist Park', cap: 41000 },
 
   // ── JUN 2026 ──
@@ -1369,7 +1344,7 @@ function renderDetailPanel(dk) {
             </div>
           </div>
           <div class="detail-event-name">${ev.name}</div>
-          <div class="detail-event-meta">${ev.originalType || ev.type}${ev.promoter ? ' · ' + ev.promoter : ''}${ev.artist ? ' · ' + ev.artist : ''}${ev.att ? ' · ' + ev.att + ' est.' : ''}</div>
+          <div class="detail-event-meta">${ev.originalType || ev.type}${ev.promoter ? ' · ' + ev.promoter : ''}${ev.artist ? ' · ' + ev.artist : ''}</div>
           ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.netBar.toLocaleString()}${ev.doorNet != null ? ' · Door: $' + ev.doorNet.toLocaleString() : ''}</div>` : ''}
           ${hasProjected ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
           ${(!hasActuals && !hasProjected && (ev.netBar || ev.revelBar)) ? `<div style="font-size:11px; color:#2C5F8A; margin-top:4px; font-weight:500;">Bar (net): $${parseFloat(ev.netBar || ev.revelBar).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>` : ''}
