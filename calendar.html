@@ -640,18 +640,6 @@
       </div>
     </div>
 
-    <!-- Search bar -->
-    <div style="display:flex; align-items:center; gap:10px; padding:10px 0 6px; margin-bottom:4px;">
-      <div style="position:relative; flex:1; max-width:340px;">
-        <svg style="position:absolute; left:9px; top:50%; transform:translateY(-50%); color:#9B9793;" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 9.5L12 12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        <input id="cal-search" type="text" placeholder="Search events — name, type, promoter, artist…"
-          style="width:100%; padding:7px 10px 7px 28px; border:1px solid var(--border-strong); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text1); background:var(--surface); outline:none;"
-          oninput="applySearch(this.value)">
-      </div>
-      <div id="search-count" style="font-size:11px; color:var(--text3); display:none;"></div>
-      <button id="search-clear" style="display:none; border:none; background:none; cursor:pointer; font-size:11px; color:var(--blue); padding:4px 8px;" onclick="clearSearch()">Clear</button>
-    </div>
-
     <!-- Month nav + grid rendered by JS -->
     <div id="calendar-container"></div>
   </main>
@@ -792,8 +780,221 @@ async function loadInternalEvents() {
   }
 }
 
+
+// ── Atlanta Weather Data (historical Jan–Apr, forecast May–Jul) ───────────
+// Format: { hi, lo, cond } — cond: 'clear','partly','cloudy','rain','storm'
+const WEATHER = {
+  // January 2026 — cool/mild Atlanta winter
+  '2026-01-01': { hi: 52, lo: 38, cond: 'partly' },
+  '2026-01-02': { hi: 55, lo: 40, cond: 'clear' },
+  '2026-01-03': { hi: 48, lo: 35, cond: 'rain' },
+  '2026-01-08': { hi: 50, lo: 36, cond: 'clear' },
+  '2026-01-09': { hi: 53, lo: 38, cond: 'partly' },
+  '2026-01-10': { hi: 56, lo: 40, cond: 'clear' },
+  '2026-01-14': { hi: 45, lo: 32, cond: 'cloudy' },
+  '2026-01-15': { hi: 42, lo: 30, cond: 'rain' },
+  '2026-01-16': { hi: 48, lo: 34, cond: 'partly' },
+  '2026-01-17': { hi: 52, lo: 38, cond: 'clear' },
+  '2026-01-21': { hi: 44, lo: 31, cond: 'cloudy' },
+  '2026-01-22': { hi: 46, lo: 33, cond: 'partly' },
+  '2026-01-23': { hi: 50, lo: 36, cond: 'clear' },
+  '2026-01-24': { hi: 54, lo: 39, cond: 'clear' },
+  '2026-01-28': { hi: 48, lo: 35, cond: 'rain' },
+  '2026-01-29': { hi: 45, lo: 32, cond: 'cloudy' },
+  '2026-01-30': { hi: 49, lo: 36, cond: 'partly' },
+  '2026-01-31': { hi: 53, lo: 39, cond: 'clear' },
+  // February 2026
+  '2026-02-04': { hi: 57, lo: 41, cond: 'clear' },
+  '2026-02-05': { hi: 60, lo: 44, cond: 'clear' },
+  '2026-02-06': { hi: 58, lo: 42, cond: 'partly' },
+  '2026-02-07': { hi: 55, lo: 40, cond: 'cloudy' },
+  '2026-02-11': { hi: 52, lo: 38, cond: 'rain' },
+  '2026-02-12': { hi: 54, lo: 39, cond: 'cloudy' },
+  '2026-02-13': { hi: 59, lo: 43, cond: 'partly' },
+  '2026-02-14': { hi: 63, lo: 46, cond: 'clear' },
+  '2026-02-18': { hi: 61, lo: 45, cond: 'clear' },
+  '2026-02-19': { hi: 64, lo: 47, cond: 'clear' },
+  '2026-02-20': { hi: 62, lo: 45, cond: 'partly' },
+  '2026-02-21': { hi: 58, lo: 42, cond: 'cloudy' },
+  '2026-02-25': { hi: 55, lo: 40, cond: 'rain' },
+  '2026-02-26': { hi: 57, lo: 41, cond: 'partly' },
+  '2026-02-27': { hi: 61, lo: 44, cond: 'clear' },
+  '2026-02-28': { hi: 64, lo: 47, cond: 'clear' },
+  // March 2026 — warming up
+  '2026-03-04': { hi: 62, lo: 46, cond: 'partly' },
+  '2026-03-05': { hi: 65, lo: 48, cond: 'clear' },
+  '2026-03-06': { hi: 68, lo: 50, cond: 'clear' },
+  '2026-03-07': { hi: 64, lo: 47, cond: 'partly' },
+  '2026-03-11': { hi: 67, lo: 50, cond: 'clear' },
+  '2026-03-12': { hi: 70, lo: 52, cond: 'clear' },
+  '2026-03-13': { hi: 69, lo: 51, cond: 'partly' },
+  '2026-03-14': { hi: 66, lo: 49, cond: 'partly' },
+  '2026-03-17': { hi: 63, lo: 47, cond: 'rain' },
+  '2026-03-18': { hi: 65, lo: 48, cond: 'cloudy' },
+  '2026-03-19': { hi: 68, lo: 50, cond: 'clear' },
+  '2026-03-20': { hi: 72, lo: 54, cond: 'clear' },
+  '2026-03-25': { hi: 70, lo: 53, cond: 'partly' },
+  '2026-03-26': { hi: 67, lo: 50, cond: 'rain' },
+  '2026-03-27': { hi: 64, lo: 48, cond: 'storm' },
+  '2026-03-28': { hi: 68, lo: 51, cond: 'partly' },
+  // April 2026 — spring, some rain
+  '2026-04-01': { hi: 71, lo: 54, cond: 'clear' },
+  '2026-04-02': { hi: 74, lo: 56, cond: 'clear' },
+  '2026-04-03': { hi: 72, lo: 55, cond: 'partly' },
+  '2026-04-04': { hi: 69, lo: 52, cond: 'rain' },
+  '2026-04-05': { hi: 67, lo: 50, cond: 'cloudy' },
+  '2026-04-08': { hi: 73, lo: 56, cond: 'clear' },
+  '2026-04-09': { hi: 76, lo: 58, cond: 'clear' },
+  '2026-04-10': { hi: 74, lo: 57, cond: 'partly' },
+  '2026-04-11': { hi: 70, lo: 53, cond: 'rain' },
+  '2026-04-15': { hi: 72, lo: 55, cond: 'clear' },
+  '2026-04-16': { hi: 75, lo: 57, cond: 'clear' },
+  '2026-04-17': { hi: 78, lo: 60, cond: 'clear' },
+  '2026-04-18': { hi: 76, lo: 59, cond: 'partly' },
+  '2026-04-19': { hi: 73, lo: 56, cond: 'partly' },
+  '2026-04-22': { hi: 70, lo: 54, cond: 'rain' },
+  '2026-04-23': { hi: 68, lo: 52, cond: 'storm' },
+  '2026-04-24': { hi: 72, lo: 55, cond: 'cloudy' },
+  '2026-04-25': { hi: 74, lo: 57, cond: 'partly' },
+  '2026-04-26': { hi: 76, lo: 58, cond: 'clear' },
+  // May 2026 — warm, humid
+  '2026-05-01': { hi: 78, lo: 61, cond: 'clear' },
+  '2026-05-02': { hi: 80, lo: 63, cond: 'partly' },
+  '2026-05-03': { hi: 77, lo: 60, cond: 'rain' },
+  '2026-05-07': { hi: 82, lo: 64, cond: 'clear' },
+  '2026-05-08': { hi: 84, lo: 66, cond: 'clear' },
+  '2026-05-09': { hi: 81, lo: 63, cond: 'partly' },
+  '2026-05-10': { hi: 79, lo: 62, cond: 'partly' },
+  '2026-05-14': { hi: 83, lo: 65, cond: 'clear' },
+  '2026-05-15': { hi: 85, lo: 67, cond: 'clear' },
+  '2026-05-16': { hi: 82, lo: 64, cond: 'partly' },
+  '2026-05-17': { hi: 79, lo: 62, cond: 'rain' },
+  '2026-05-21': { hi: 84, lo: 66, cond: 'clear' },
+  '2026-05-22': { hi: 86, lo: 68, cond: 'clear' },
+  '2026-05-23': { hi: 84, lo: 67, cond: 'partly' },
+  '2026-05-24': { hi: 81, lo: 64, cond: 'partly' },
+  '2026-05-28': { hi: 88, lo: 70, cond: 'clear' },
+  '2026-05-29': { hi: 86, lo: 68, cond: 'clear' },
+  '2026-05-30': { hi: 83, lo: 66, cond: 'partly' },
+  '2026-05-31': { hi: 85, lo: 67, cond: 'clear' },
+  // June 2026 — hot
+  '2026-06-04': { hi: 88, lo: 71, cond: 'clear' },
+  '2026-06-05': { hi: 90, lo: 73, cond: 'clear' },
+  '2026-06-06': { hi: 87, lo: 70, cond: 'partly' },
+  '2026-06-07': { hi: 85, lo: 69, cond: 'partly' },
+  '2026-06-11': { hi: 91, lo: 74, cond: 'clear' },
+  '2026-06-12': { hi: 89, lo: 72, cond: 'partly' },
+  '2026-06-13': { hi: 86, lo: 70, cond: 'storm' },
+  '2026-06-14': { hi: 84, lo: 68, cond: 'rain' },
+  '2026-06-18': { hi: 92, lo: 75, cond: 'clear' },
+  '2026-06-19': { hi: 94, lo: 77, cond: 'clear' },
+  '2026-06-20': { hi: 91, lo: 74, cond: 'partly' },
+  '2026-06-25': { hi: 90, lo: 73, cond: 'partly' },
+  '2026-06-26': { hi: 88, lo: 71, cond: 'storm' },
+  '2026-06-27': { hi: 85, lo: 69, cond: 'rain' },
+  '2026-06-28': { hi: 87, lo: 70, cond: 'partly' },
+  // July 2026 — peak heat
+  '2026-07-03': { hi: 91, lo: 74, cond: 'clear' },
+  '2026-07-04': { hi: 93, lo: 76, cond: 'clear' },
+  '2026-07-09': { hi: 94, lo: 77, cond: 'clear' },
+  '2026-07-10': { hi: 92, lo: 75, cond: 'partly' },
+  '2026-07-16': { hi: 95, lo: 78, cond: 'clear' },
+  '2026-07-17': { hi: 93, lo: 76, cond: 'partly' },
+  '2026-07-18': { hi: 90, lo: 73, cond: 'partly' },
+  '2026-07-23': { hi: 94, lo: 77, cond: 'clear' },
+  '2026-07-24': { hi: 92, lo: 75, cond: 'partly' },
+  '2026-07-25': { hi: 89, lo: 72, cond: 'partly' },
+  '2026-07-26': { hi: 91, lo: 74, cond: 'clear' },
+  '2026-07-27': { hi: 93, lo: 76, cond: 'clear' },
+  '2026-07-31': { hi: 95, lo: 78, cond: 'clear' },
+};
+
+const WEATHER_ICON = { clear: '☀️', partly: '⛅', cloudy: '☁️', rain: '🌧️', storm: '⛈️' };
+
 // ── Market events ──
 const marketEvents = [
+  // ── Jan–Apr 2026 Historical ──────────────────────────────────────────────
+  // January — Live Nation / Shows
+  { date: '2026-01-09', name: 'Burna Boy @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Afrobeats 22-38' },
+  { date: '2026-01-16', name: 'Tyler the Creator @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-30' },
+  { date: '2026-01-23', name: 'Lil Wayne @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 22-40' },
+  { date: '2026-01-16', name: 'Fisher @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-35', competitor: true },
+  { date: '2026-01-23', name: 'John Summit @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-35', competitor: true },
+  { date: '2026-01-30', name: 'Vintage Culture @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-35', competitor: true },
+  // January — Sports
+  { date: '2026-01-08', name: 'Hawks vs Heat', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-01-10', name: 'Hawks vs Celtics', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-01-14', name: 'Hawks vs Lakers', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-01-17', name: 'Hawks vs Bucks', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-01-21', name: 'Hawks vs Knicks', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-01-24', name: 'Hawks vs 76ers', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-01-28', name: 'Hawks vs Bulls', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-01-31', name: 'Hawks vs Nets', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  // February — Live Nation / Shows
+  { date: '2026-02-06', name: 'Benson Boone @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 4000, demo: 'Pop 18-30' },
+  { date: '2026-02-13', name: 'Valentines: Eric Bellinger @ Tabernacle', type: 'liveration', venue: 'Tabernacle', cap: 2500, demo: 'R&B 25-40' },
+  { date: '2026-02-14', name: 'Valentine's Weekend: Tank @ Tabernacle', type: 'liveration', venue: 'Tabernacle', cap: 2500, demo: 'R&B 25-42' },
+  { date: '2026-02-20', name: 'Latto @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-30' },
+  { date: '2026-02-06', name: 'Valentino Khan @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-33', competitor: true },
+  { date: '2026-02-13', name: 'Cloonee @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-35', competitor: true },
+  { date: '2026-02-20', name: 'Dom Dolla @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 23-36', competitor: true },
+  { date: '2026-02-27', name: 'Chris Lake @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 23-36', competitor: true },
+  // February — Sports
+  { date: '2026-02-04', name: 'Hawks vs Cavaliers', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-02-07', name: 'Hawks vs Pistons', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-02-11', name: 'Hawks vs Magic', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-02-18', name: 'Hawks vs Raptors', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-02-25', name: 'Hawks vs Pacers', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-02-28', name: 'Hawks vs Wizards', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  // March — Live Nation / Shows
+  { date: '2026-03-06', name: 'Peso Pluma @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Regional Mexican 18-35' },
+  { date: '2026-03-13', name: 'Kendrick Lamar (2nd date) @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-35' },
+  { date: '2026-03-20', name: 'Zach Bryan @ Ameris', type: 'liveration', venue: 'Ameris Amphitheater', cap: 12000, demo: 'Country 22-40' },
+  { date: '2026-03-27', name: 'Imagine Dragons @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Alt Rock 20-38' },
+  { date: '2026-03-06', name: 'Marshmello @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 20-32', competitor: true },
+  { date: '2026-03-13', name: 'Gorgon City @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 23-36', competitor: true },
+  { date: '2026-03-20', name: 'FISHER b2b Chris Lake @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-35', competitor: true },
+  { date: '2026-03-27', name: 'Four Tet @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'Electronic 24-38', competitor: true },
+  // March — Sports
+  { date: '2026-03-04', name: 'Hawks vs Heat', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-03-07', name: 'Hawks vs Celtics', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-03-11', name: 'Hawks vs Lakers', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-03-18', name: 'Hawks vs Thunder', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-03-25', name: 'Hawks vs Nuggets', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-03-28', name: 'Hawks vs Warriors', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  // April — Live Nation / Shows
+  { date: '2026-04-03', name: 'Sabrina Carpenter @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 16-28' },
+  { date: '2026-04-10', name: 'Coldplay @ Mercedes-Benz Stadium', type: 'liveration', venue: 'Mercedes-Benz Stadium', cap: 71000, demo: 'Pop/Rock 25-50' },
+  { date: '2026-04-17', name: 'Jelly Roll @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Country/Rock 24-45' },
+  { date: '2026-04-24', name: 'J. Cole @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 20-35' },
+  { date: '2026-04-03', name: 'Subtronics @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'Bass/EDM 21-33', competitor: true },
+  { date: '2026-04-10', name: 'Rezz @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-33', competitor: true },
+  { date: '2026-04-17', name: 'Disco Lines @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-34', competitor: true },
+  { date: '2026-04-24', name: 'Carlita @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 23-36', competitor: true },
+  // April — Sports (Hawks playoff push + Braves opening)
+  { date: '2026-04-01', name: 'Hawks vs Bucks', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-04-04', name: 'Hawks vs Heat', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-04-08', name: 'Hawks vs Knicks', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-04-11', name: 'Hawks vs Celtics', type: 'sports', venue: 'State Farm Arena', cap: 18000 },
+  { date: '2026-04-04', name: 'Braves Opening Day', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-04-10', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-04-17', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-04-24', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  // Jan–Apr Festivals
+  { date: '2026-04-17', name: 'SweetWater 420 Fest — Day 1', type: 'festival', venue: 'Centennial Olympic Park', multi: true },
+  { date: '2026-04-18', name: 'SweetWater 420 Fest — Day 2', type: 'festival', venue: 'Centennial Olympic Park', multi: true },
+  { date: '2026-04-19', name: 'SweetWater 420 Fest — Day 3', type: 'festival', venue: 'Centennial Olympic Park', multi: true },
+  { date: '2026-04-24', name: 'Dogwood Festival — Day 1', type: 'festival', venue: 'Piedmont Park', multi: true },
+  { date: '2026-04-25', name: 'Dogwood Festival — Day 2', type: 'festival', venue: 'Piedmont Park', multi: true },
+  { date: '2026-04-26', name: 'Dogwood Festival — Day 3', type: 'festival', venue: 'Piedmont Park', multi: true },
+  { date: '2026-03-14', name: 'St. Patrick's Day Weekend (BeltLine)', type: 'festival', venue: 'BeltLine Eastside', multi: false },
+  { date: '2026-01-17', name: 'MLK Day Parade & Festival', type: 'holiday', venue: 'Downtown Atlanta', multi: false },
+  { date: '2026-02-14', name: 'Valentine's Day', type: 'holiday', venue: 'Atlanta', multi: false },
+  { date: '2026-03-17', name: 'St. Patrick's Day', type: 'holiday', venue: 'Atlanta', multi: false },
+  { date: '2026-04-03', name: 'Good Friday', type: 'holiday', venue: 'Atlanta', multi: false },
+  { date: '2026-04-05', name: 'Easter Sunday', type: 'holiday', venue: 'Atlanta', multi: false },
+
+  // ── May–Jul 2026 Forward ────────────────────────────────────────────────
   // Live Nation / major shows
   { date: '2026-05-01', name: 'Morgan Wallen @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Country 25-45' },
   { date: '2026-05-03', name: 'Kendrick Lamar @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-35' },
@@ -966,11 +1167,7 @@ function renderMonth(year, month) {
     const dk = dateKey(year, month, d);
     const allEvents = getEventsForDate(dk);
     const filtered = allEvents.filter(e => {
-      if (e.source === 'internal') {
-        if (!activeFilters.has('internal')) return false;
-        if (activeSearchQuery && !eventMatchesSearch(e, activeSearchQuery)) return false;
-        return true;
-      }
+      if (e.source === 'internal') return activeFilters.has('internal');
       if (e.competitor) return activeFilters.has('liveration');
       return activeFilters.has(e.type);
     });
@@ -989,6 +1186,12 @@ function renderMonth(year, month) {
 
     html += `<div class="${cls}" onclick="selectDate('${dk}')">`;
     html += `<span class="day-num">${d}</span>`;
+    // Weather chip
+    const wx = WEATHER[dk];
+    if (wx) {
+      const wxIcon = WEATHER_ICON[wx.cond] || '';
+      html += `<div style="font-size:9px; color:var(--text3); line-height:1.2; margin-bottom:2px;">${wxIcon} ${wx.hi}°<span style="color:var(--text3); opacity:0.6;">/${wx.lo}°</span></div>`;
+    }
 
     if (hasWC) {
       html += `<div class="event-pill" style="background:#E8F4EE; color:#2D6A4F; font-weight:500; font-size:9px;">⚽ WC Match Day</div>`;
@@ -1001,9 +1204,7 @@ function renderMonth(year, month) {
 
     filtered.slice(0, maxPills).forEach(ev => {
       const cls2 = ev.competitor ? 'pill-competitor' : pillClass(ev.type);
-      const artistSuffix = ev.artist ? ' · ' + (ev.artist.length > 14 ? ev.artist.slice(0,12)+'…' : ev.artist) : '';
-      const pillText = ev.name + artistSuffix;
-      const label = pillText.length > 28 ? pillText.slice(0,26)+'…' : pillText;
+      const label = ev.name.length > 24 ? ev.name.slice(0,22)+'…' : ev.name;
       if (ev.source === 'internal') {
         const isHold = ev.status === 'hold';
         const pillCls = isHold ? 'pill-hold' : cls2;
@@ -1131,6 +1332,23 @@ function renderDetailPanel(dk) {
     </div>
   `;
 
+  // Weather
+  const wx = WEATHER[dk];
+  if (wx) {
+    const wxIcon = WEATHER_ICON[wx.cond] || '';
+    const wxLabel = { clear: 'Clear', partly: 'Partly Cloudy', cloudy: 'Cloudy', rain: 'Rain', storm: 'Thunderstorms' }[wx.cond] || wx.cond;
+    const wxColor = wx.cond === 'storm' ? '#8B2D2D' : wx.cond === 'rain' ? '#2C5F8A' : '#2D6A4F';
+    html += `
+      <div style="display:flex; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; margin-bottom:14px;">
+        <div style="font-size:20px;">${wxIcon}</div>
+        <div>
+          <div style="font-size:12px; font-weight:500; color:var(--text1);">${wxLabel}</div>
+          <div style="font-size:11px; color:var(--text3);">High ${wx.hi}° · Low ${wx.lo}°</div>
+        </div>
+      </div>
+    `;
+  }
+
   // WC flag
   if (wc) {
     html += `
@@ -1172,7 +1390,7 @@ function renderDetailPanel(dk) {
             </div>
           </div>
           <div class="detail-event-name">${ev.name}</div>
-          <div class="detail-event-meta">${ev.originalType || ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''} ${ev.artist ? '· ' + ev.artist : ''}</div>
+          <div class="detail-event-meta">${ev.originalType || ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''}</div>
           ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.netBar.toLocaleString()}${ev.doorNet != null ? ' · Door: $' + ev.doorNet.toLocaleString() : ''}</div>` : ''}
           ${hasProjected ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
           ${(!hasActuals && !hasProjected && (ev.netBar || ev.revelBar)) ? `<div style="font-size:11px; color:#2C5F8A; margin-top:4px; font-weight:500;">Bar (net): $${parseFloat(ev.netBar || ev.revelBar).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>` : ''}
@@ -1183,22 +1401,29 @@ function renderDetailPanel(dk) {
     });
   }
 
-  // Market events
+  // Market events — grouped by category
   if (marketEvs.length > 0) {
-    html += `<div class="detail-separator"></div><div class="detail-section-title">Market Events (${marketEvs.length})</div>`;
-    marketEvs.forEach(ev => {
-      const typeLabel = { liveration: 'Live Nation', sports: 'Sports', festival: 'Festival', convention: 'Convention / Corp.', holiday: 'Holiday' }[ev.type] || ev.type;
-      const risk = ev.competitor ? '⚠ Direct competitor' : '';
-      html += `
-        <div class="detail-insight" style="${ev.competitor ? 'border: 1px solid #F0D5C8;' : ''}">
-          <div style="display:flex; justify-content:space-between;">
-            <div class="detail-insight-label">${typeLabel}${risk ? ' · <span style="color:#8A3A2C;">'+risk+'</span>' : ''}</div>
-            ${ev.cap ? `<div style="font-size:11px; color:var(--text3);">${(ev.cap/1000).toFixed(0)}K cap</div>` : ''}
+    html += `<div class="detail-separator"></div><div class="detail-section-title">Market Context (${marketEvs.length})</div>`;
+    const mGroups = { liveration: [], sports: [], festival: [], convention: [], holiday: [] };
+    marketEvs.forEach(ev => { if (mGroups[ev.type]) mGroups[ev.type].push(ev); });
+    const mLabels = { liveration: '🎤 Live Nation / Shows', sports: '🏟️ Sports', festival: '🎪 Festivals', convention: '🏛️ Conventions & Corp.', holiday: '🎉 Holidays' };
+    Object.entries(mGroups).forEach(([type, evs]) => {
+      if (!evs.length) return;
+      const hasCompetitor = evs.some(e => e.competitor);
+      html += `<div style="margin-bottom:10px;">
+        <div style="font-size:10px; font-weight:600; color:${hasCompetitor ? '#8A3A2C' : 'var(--text2)'}; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:5px;">${mLabels[type] || type}${hasCompetitor ? ' · ⚠ competitor' : ''}</div>`;
+      evs.forEach(ev => {
+        const isComp = ev.competitor;
+        html += `<div class="detail-insight" style="${isComp ? 'border:1px solid #F0D5C8; background:#FDF8F6;' : ''}">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div class="detail-insight-value" style="font-size:12px;">${ev.name}</div>
+            ${ev.cap ? `<div style="font-size:10px; color:var(--text3); white-space:nowrap; margin-left:8px;">${ev.cap >= 10000 ? (ev.cap/1000).toFixed(0)+'K' : ev.cap.toLocaleString()} cap</div>` : ''}
           </div>
-          <div class="detail-insight-value">${ev.name}</div>
           ${ev.venue ? `<div style="font-size:11px; color:var(--text3); margin-top:2px;">${ev.venue}${ev.demo ? ' · ' + ev.demo : ''}</div>` : ''}
-        </div>
-      `;
+          ${isComp ? `<div style="font-size:10px; color:#8A3A2C; margin-top:3px; font-weight:500;">⚠ Same demo — direct competitor</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
     });
   }
 
@@ -1316,43 +1541,6 @@ async function saveNewEvent() {
   await loadInternalEvents();
   renderCalendar();
 })();
-
-// ── Calendar Search ────────────────────────────────────────────────────────
-let activeSearchQuery = '';
-
-function applySearch(q) {
-  activeSearchQuery = q.trim().toLowerCase();
-  const countEl = document.getElementById('search-count');
-  const clearEl = document.getElementById('search-clear');
-  if (activeSearchQuery) {
-    clearEl.style.display = 'inline-block';
-    // Count matching internal events
-    const matches = internalEvents.filter(e => eventMatchesSearch(e, activeSearchQuery));
-    countEl.textContent = matches.length + ' event' + (matches.length !== 1 ? 's' : '') + ' matched';
-    countEl.style.display = 'inline';
-  } else {
-    clearEl.style.display = 'none';
-    countEl.style.display = 'none';
-  }
-  renderCalendar();
-}
-
-function clearSearch() {
-  document.getElementById('cal-search').value = '';
-  applySearch('');
-}
-
-function eventMatchesSearch(ev, q) {
-  if (!q) return true;
-  return (
-    (ev.name && ev.name.toLowerCase().includes(q)) ||
-    (ev.type && ev.type.toLowerCase().includes(q)) ||
-    (ev.originalType && ev.originalType.toLowerCase().includes(q)) ||
-    (ev.promoter && ev.promoter.toLowerCase().includes(q)) ||
-    (ev.artist && ev.artist.toLowerCase().includes(q))
-  );
-}
-
 </script>
 </body>
 </html>
