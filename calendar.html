@@ -640,6 +640,18 @@
       </div>
     </div>
 
+    <!-- Search bar -->
+    <div style="display:flex; align-items:center; gap:10px; padding:10px 0 6px; margin-bottom:4px;">
+      <div style="position:relative; flex:1; max-width:340px;">
+        <svg style="position:absolute; left:9px; top:50%; transform:translateY(-50%); color:#9B9793;" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 9.5L12 12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <input id="cal-search" type="text" placeholder="Search events — name, type, promoter, artist…"
+          style="width:100%; padding:7px 10px 7px 28px; border:1px solid var(--border-strong); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text1); background:var(--surface); outline:none;"
+          oninput="applySearch(this.value)">
+      </div>
+      <div id="search-count" style="font-size:11px; color:var(--text3); display:none;"></div>
+      <button id="search-clear" style="display:none; border:none; background:none; cursor:pointer; font-size:11px; color:var(--blue); padding:4px 8px;" onclick="clearSearch()">Clear</button>
+    </div>
+
     <!-- Month nav + grid rendered by JS -->
     <div id="calendar-container"></div>
   </main>
@@ -954,7 +966,11 @@ function renderMonth(year, month) {
     const dk = dateKey(year, month, d);
     const allEvents = getEventsForDate(dk);
     const filtered = allEvents.filter(e => {
-      if (e.source === 'internal') return activeFilters.has('internal');
+      if (e.source === 'internal') {
+        if (!activeFilters.has('internal')) return false;
+        if (activeSearchQuery && !eventMatchesSearch(e, activeSearchQuery)) return false;
+        return true;
+      }
       if (e.competitor) return activeFilters.has('liveration');
       return activeFilters.has(e.type);
     });
@@ -985,7 +1001,9 @@ function renderMonth(year, month) {
 
     filtered.slice(0, maxPills).forEach(ev => {
       const cls2 = ev.competitor ? 'pill-competitor' : pillClass(ev.type);
-      const label = ev.name.length > 24 ? ev.name.slice(0,22)+'…' : ev.name;
+      const artistSuffix = ev.artist ? ' · ' + (ev.artist.length > 14 ? ev.artist.slice(0,12)+'…' : ev.artist) : '';
+      const pillText = ev.name + artistSuffix;
+      const label = pillText.length > 28 ? pillText.slice(0,26)+'…' : pillText;
       if (ev.source === 'internal') {
         const isHold = ev.status === 'hold';
         const pillCls = isHold ? 'pill-hold' : cls2;
@@ -1154,7 +1172,7 @@ function renderDetailPanel(dk) {
             </div>
           </div>
           <div class="detail-event-name">${ev.name}</div>
-          <div class="detail-event-meta">${ev.originalType || ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''}</div>
+          <div class="detail-event-meta">${ev.originalType || ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''} ${ev.artist ? '· ' + ev.artist : ''}</div>
           ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.netBar.toLocaleString()}${ev.doorNet != null ? ' · Door: $' + ev.doorNet.toLocaleString() : ''}</div>` : ''}
           ${hasProjected ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
           ${(!hasActuals && !hasProjected && (ev.netBar || ev.revelBar)) ? `<div style="font-size:11px; color:#2C5F8A; margin-top:4px; font-weight:500;">Bar (net): $${parseFloat(ev.netBar || ev.revelBar).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>` : ''}
@@ -1298,6 +1316,43 @@ async function saveNewEvent() {
   await loadInternalEvents();
   renderCalendar();
 })();
+
+// ── Calendar Search ────────────────────────────────────────────────────────
+let activeSearchQuery = '';
+
+function applySearch(q) {
+  activeSearchQuery = q.trim().toLowerCase();
+  const countEl = document.getElementById('search-count');
+  const clearEl = document.getElementById('search-clear');
+  if (activeSearchQuery) {
+    clearEl.style.display = 'inline-block';
+    // Count matching internal events
+    const matches = internalEvents.filter(e => eventMatchesSearch(e, activeSearchQuery));
+    countEl.textContent = matches.length + ' event' + (matches.length !== 1 ? 's' : '') + ' matched';
+    countEl.style.display = 'inline';
+  } else {
+    clearEl.style.display = 'none';
+    countEl.style.display = 'none';
+  }
+  renderCalendar();
+}
+
+function clearSearch() {
+  document.getElementById('cal-search').value = '';
+  applySearch('');
+}
+
+function eventMatchesSearch(ev, q) {
+  if (!q) return true;
+  return (
+    (ev.name && ev.name.toLowerCase().includes(q)) ||
+    (ev.type && ev.type.toLowerCase().includes(q)) ||
+    (ev.originalType && ev.originalType.toLowerCase().includes(q)) ||
+    (ev.promoter && ev.promoter.toLowerCase().includes(q)) ||
+    (ev.artist && ev.artist.toLowerCase().includes(q))
+  );
+}
+
 </script>
 </body>
 </html>
