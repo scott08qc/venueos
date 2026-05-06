@@ -1914,53 +1914,224 @@ def create_app(static_dir: str) -> FastAPI:
     @api.get("/category-benchmarks")
     def get_category_benchmarks(category: str):
         """
-        Returns per-category bar mix averages across all completed events of the
-        given tier1_category. Used by the Event Recap dashboard's bar-mix tiles
-        to render '+/- X% vs N-event Latin avg'-style benchmark deltas.
+        Returns per-category averages across all completed events of a given tier1_category.
+        TWO TIERS of data:
+          - revenue-level (always available): bar revenue, door, attendance, SPH
+          - item-level (only for events loaded via load_product_mix.py): mix breakdown
+        The dashboard's bar mix tiles fall back gracefully when item-level is sparse.
         """
         if not engine:
             raise HTTPException(status_code=503, detail="DB not configured")
         with engine.connect() as conn:
-            event_ids = conn.execute(text("""
-                SELECT DISTINCT e.id
-                FROM events e
-                JOIN event_item_sales eis ON eis.event_id = e.id
-                WHERE e.tier1_category = :cat
-                  AND eis.quantity_sold > 0
-            """), {"cat": category}).fetchall()
-            event_count = len(event_ids)
-            if event_count < 2:
-                return {"found": False, "event_count": event_count, "category": category}
-
-            agg = conn.execute(text("""
+            # Revenue-level — uses the same COALESCE priority as event-detail for bar revenue
+            rev_q = text("""
                 SELECT
-                    AVG(CASE WHEN item_category = 'Spirits'         THEN cat_total END) AS spirits_avg,
-                    AVG(CASE WHEN item_category = 'Bottle Service'  THEN cat_total END) AS bottle_avg,
-                    AVG(CASE WHEN item_category = 'Cocktails'       THEN cat_total END) AS cocktail_avg,
-                    AVG(CASE WHEN item_category = 'Beer'            THEN cat_total END) AS beer_avg,
-                    AVG(CASE WHEN item_category = 'Non-Alcoholic'   THEN cat_total END) AS na_avg
+                    COUNT(*) AS event_count,
+                    AVG(COALESCE(
+                        n.total_bar_sales,
+                        (SELECT SUM(eis.total_revenue) FROM event_item_sales eis
+                          WHERE eis.event_id = e.id),
+                        e.revel_bar_gross,
+                        0
+                    )) AS bar_avg,
+                    AVG(COALESCE(r.actual_door_revenue, n.door_revenue_cash + n.door_revenue_card, 0)) AS door_avg,
+                    AVG(r.actual_attendance) AS attendance_avg,
+                    AVG(r.spend_per_head_actual) AS sph_avg,
+                    AVG(r.net_revenue_actual) AS net_avg
+                FROM events e
+                LEFT JOIN post_event_reviews r ON r.event_id = e.id
+                LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry ILIKE 'close%'
+                WHERE e.tier1_category = :cat
+            """)
+            rev = conn.execute(rev_q, {"cat": category}).fetchone()
+
+            # Item-level — only events that have actual item rows with qty>0
+            item_q = text("""
+                SELECT
+                    COUNT(DISTINCT event_id) AS items_count,
+                    AVG(CASE WHEN item_category = 'Spirits'        THEN cat_total END) AS spirits_avg,
+                    AVG(CASE WHEN item_category = 'Bottle Service' THEN cat_total END) AS bottle_avg,
+                    AVG(CASE WHEN item_category = 'Cocktails'      THEN cat_total END) AS cocktail_avg,
+                    AVG(CASE WHEN item_category = 'Beer'           THEN cat_total END) AS beer_avg,
+                    AVG(CASE WHEN item_category = 'Non-Alcoholic'  THEN cat_total END) AS na_avg,
+                    AVG(cogs_pct) AS pour_pct_avg
                 FROM (
                     SELECT eis.event_id, eis.item_category,
-                           SUM(eis.total_revenue) AS cat_total
+                           SUM(eis.total_revenue) AS cat_total,
+                           CASE WHEN SUM(eis.total_revenue) > 0
+                                THEN SUM(eis.total_cost) / SUM(eis.total_revenue) * 100 END AS cogs_pct
                     FROM event_item_sales eis
                     JOIN events e ON e.id = eis.event_id
                     WHERE e.tier1_category = :cat
                       AND eis.quantity_sold > 0
                     GROUP BY eis.event_id, eis.item_category
                 ) per_event
-            """), {"cat": category}).fetchone()
+            """)
+            item = conn.execute(item_q, {"cat": category}).fetchone()
 
-            d = dict(agg._mapping) if agg else {}
-            for k, v in list(d.items()):
-                if v is None: d[k] = 0
-                elif hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
-                    d[k] = float(v)
+            def to_f(v):
+                if v is None: return 0
+                if hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                    return float(v)
+                return v
+
+            event_count = rev.event_count if rev else 0
+            items_count = item.items_count if item else 0
+
             return {
-                "found": True,
+                "found": event_count > 0,
                 "category": category,
                 "event_count": event_count,
-                **d,
+                "items_event_count": items_count,
+                "bar_avg":         to_f(rev.bar_avg)        if rev else 0,
+                "door_avg":        to_f(rev.door_avg)       if rev else 0,
+                "attendance_avg":  to_f(rev.attendance_avg) if rev else 0,
+                "sph_avg":         to_f(rev.sph_avg)        if rev else 0,
+                "net_avg":         to_f(rev.net_avg)        if rev else 0,
+                "spirits_avg":     to_f(item.spirits_avg)   if item and items_count > 0 else 0,
+                "bottle_avg":      to_f(item.bottle_avg)    if item and items_count > 0 else 0,
+                "cocktail_avg":    to_f(item.cocktail_avg)  if item and items_count > 0 else 0,
+                "beer_avg":        to_f(item.beer_avg)      if item and items_count > 0 else 0,
+                "na_avg":          to_f(item.na_avg)        if item and items_count > 0 else 0,
+                "pour_pct_avg":    to_f(item.pour_pct_avg)  if item and items_count > 0 else 0,
             }
+
+    @api.get("/event-comparisons")
+    def get_event_comparisons(event_id: int):
+        """
+        For a given event, returns benchmark averages from three peer groups:
+          - this event's promoter (across all their other events)
+          - this event's tier1_category (across all events of same type)
+          - district baseline (140 nights/yr, $3,873 variable carry from Ryan's 2025 model)
+        Used by the dashboard's P&L cascade rows to show '+/- vs avg' context.
+        """
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            ev = conn.execute(text("SELECT promoter_name, tier1_category FROM events WHERE id=:eid"),
+                              {"eid": event_id}).fetchone()
+            if not ev:
+                raise HTTPException(status_code=404, detail="Event not found")
+            promoter = ev[0]; cat = ev[1]
+
+            def avg_block(filter_clause, params):
+                q = text(f"""
+                    SELECT
+                      COUNT(DISTINCT e.id) AS n,
+                      AVG(COALESCE(
+                          n.total_bar_sales,
+                          (SELECT SUM(eis.total_revenue) FROM event_item_sales eis WHERE eis.event_id = e.id),
+                          e.revel_bar_gross, 0)) AS bar_avg,
+                      AVG(COALESCE(r.actual_door_revenue, 0)) AS door_avg,
+                      AVG(COALESCE(r.actual_table_revenue, n.table_bottle_service, 0)) AS table_avg,
+                      AVG(r.actual_attendance) AS attendance_avg,
+                      AVG(r.spend_per_head_actual) AS sph_avg,
+                      AVG(r.net_revenue_actual) AS net_avg,
+                      AVG(n.promoter_bar_payout) AS bar_payout_avg,
+                      AVG(n.promoter_door_payout) AS door_payout_avg,
+                      AVG(e.artist_fee_landed + COALESCE(e.artist_fee_travel,0)) AS artist_fee_avg,
+                      AVG(c.security_total) AS security_avg,
+                      AVG(c.door_girls_total) AS door_girls_avg,
+                      AVG(c.police_total) AS police_avg,
+                      AVG(c.production_staff_total) AS prod_staff_avg,
+                      AVG(c.production_equipment_total) AS prod_equip_avg,
+                      AVG(c.marketing_internal) AS marketing_avg,
+                      AVG(c.hospitality_rider_actual) AS rider_avg
+                    FROM events e
+                    LEFT JOIN post_event_reviews r ON r.event_id = e.id
+                    LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry ILIKE 'close%'
+                    LEFT JOIN event_costs c ON c.event_id = e.id
+                    WHERE e.id != :eid AND {filter_clause}
+                """)
+                params["eid"] = event_id
+                row = conn.execute(q, params).fetchone()
+                if not row or row.n == 0:
+                    return None
+                d = dict(row._mapping)
+                for k, v in list(d.items()):
+                    if v is None: d[k] = 0
+                    elif hasattr(v,'__class__') and v.__class__.__name__=='Decimal':
+                        d[k] = float(v)
+                return d
+
+            promoter_avg = avg_block("e.promoter_name = :p", {"p": promoter}) if promoter else None
+            type_avg     = avg_block("e.tier1_category = :c", {"c": cat}) if cat else None
+
+            # District baseline — Ryan's M2 2025 op cost model, $1,746,362 / 140 nights
+            district = {
+                "n": 140,
+                "static_per_night": 8601,
+                "variable_per_night": 3873,
+                "total_per_night": 12474,
+                "pour_cost_pct_total": 13.6,
+                "pour_cost_pct_liquor": 10.99,
+                "dry_goods_pct": 5.0,
+                "charged_cogs_default": 25.0,
+                "sph_avg": 35.0,
+            }
+
+            return {
+                "event_id": event_id,
+                "promoter": promoter,
+                "category": cat,
+                "promoter_avg": promoter_avg,
+                "type_avg": type_avg,
+                "district": district,
+            }
+
+    @api.get("/weather")
+    async def get_weather(date: str, lat: float = 33.7490, lon: float = -84.3880):
+        """
+        Returns daily weather summary for the given date (YYYY-MM-DD) at the given lat/lon
+        (default Atlanta). Uses open-meteo's free historical archive — no API key required.
+        Returns temp high/low (°F), precipitation, weather code label, and a one-line summary.
+        """
+        import urllib.request, json as _json
+        try:
+            url = (
+                f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}"
+                f"&start_date={date}&end_date={date}"
+                f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code"
+                f"&temperature_unit=fahrenheit&timezone=America%2FNew_York"
+            )
+            with urllib.request.urlopen(url, timeout=8) as resp:
+                data = _json.loads(resp.read().decode())
+            d = data.get("daily", {})
+            if not d.get("time"):
+                # fall back to forecast endpoint for future dates
+                url2 = (
+                    f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+                    f"&start_date={date}&end_date={date}"
+                    f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code"
+                    f"&temperature_unit=fahrenheit&timezone=America%2FNew_York"
+                )
+                with urllib.request.urlopen(url2, timeout=8) as resp:
+                    data = _json.loads(resp.read().decode())
+                d = data.get("daily", {})
+            if not d.get("time"):
+                return {"found": False, "date": date}
+
+            wcode = (d.get("weather_code") or [None])[0]
+            wmap = {
+                0: "Clear", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+                45: "Fog", 48: "Fog", 51: "Light drizzle", 53: "Drizzle", 55: "Drizzle",
+                61: "Light rain", 63: "Rain", 65: "Heavy rain",
+                66: "Freezing rain", 67: "Freezing rain",
+                71: "Light snow", 73: "Snow", 75: "Heavy snow",
+                80: "Showers", 81: "Showers", 82: "Heavy showers",
+                95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Thunderstorm with hail",
+            }
+            return {
+                "found": True,
+                "date": date,
+                "temp_max_f": (d.get("temperature_2m_max") or [None])[0],
+                "temp_min_f": (d.get("temperature_2m_min") or [None])[0],
+                "precip_in": (d.get("precipitation_sum") or [None])[0],
+                "weather_code": wcode,
+                "conditions": wmap.get(wcode, f"Code {wcode}") if wcode is not None else None,
+            }
+        except Exception as ex:
+            return {"found": False, "date": date, "error": str(ex)}
 
     @api.get("/events-by-date")
     def get_events_by_date(start: str, end: str):
