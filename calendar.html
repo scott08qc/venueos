@@ -1190,17 +1190,20 @@ function renderMonth(year, month) {
 
     filtered.slice(0, maxPills).forEach(ev => {
       const cls2 = ev.competitor ? 'pill-competitor' : pillClass(ev.type);
-      const label = ev.name.length > 24 ? ev.name.slice(0,22)+'…' : ev.name;
       if (ev.source === 'internal') {
         const isHold = ev.status === 'hold';
-        const pillCls = isHold ? 'pill-hold' : cls2;
+        const pillCls = isHold ? 'pill-hold' : 'pill-internal';
         const statusTag = ev.status === 'completed' ? '✓' : ev.status === 'confirmed' ? '●' : '◌';
         const statusTitle = ev.status === 'completed' ? 'Completed' : ev.status === 'confirmed' ? 'Confirmed' : 'Hold';
         const tagColor = ev.status === 'completed' ? '#2D6A4F' : ev.status === 'confirmed' ? '#2C5F8A' : '#8B5E0A';
+        const pillName = ev.name.length > 18 ? ev.name.slice(0,16)+'…' : ev.name;
+        const pillArtist = ev.artist ? (ev.artist.length > 14 ? ev.artist.slice(0,12)+'…' : ev.artist) : null;
+        const pillLabel = pillArtist ? `${pillName} · ${pillArtist}` : pillName;
         html += `<div class="event-pill ${pillCls}" onclick="event.stopPropagation(); selectDate('${dk}')" title="${statusTitle}">
-          <span style="color:${tagColor}; margin-right:3px; font-size:9px;">${statusTag}</span>${label}
+          <span style="color:${tagColor}; margin-right:3px; font-size:9px;">${statusTag}</span>${pillLabel}
         </div>`;
       } else {
+        const label = ev.name.length > 24 ? ev.name.slice(0,22)+'…' : ev.name;
         html += `<div class="event-pill ${cls2}" onclick="event.stopPropagation(); selectDate('${dk}')">${label}</div>`;
       }
     });
@@ -1366,7 +1369,7 @@ function renderDetailPanel(dk) {
             </div>
           </div>
           <div class="detail-event-name">${ev.name}</div>
-          <div class="detail-event-meta">${ev.originalType || ev.type} · ${ev.att ? ev.att + ' att.' : ''} ${ev.promoter ? '· ' + ev.promoter : ''}</div>
+          <div class="detail-event-meta">${ev.originalType || ev.type}${ev.promoter ? ' · ' + ev.promoter : ''}${ev.artist ? ' · ' + ev.artist : ''}${ev.att ? ' · ' + ev.att + ' est.' : ''}</div>
           ${hasActuals ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Bar: $${ev.netBar.toLocaleString()}${ev.doorNet != null ? ' · Door: $' + ev.doorNet.toLocaleString() : ''}</div>` : ''}
           ${hasProjected ? `<div style="font-size:11px; color:#9B9793; margin-top:4px;">Projected — Bar: $${ev.projBar.toLocaleString()} · Door: $${ev.projDoor.toLocaleString()}</div>` : ''}
           ${(!hasActuals && !hasProjected && (ev.netBar || ev.revelBar)) ? `<div style="font-size:11px; color:#2C5F8A; margin-top:4px; font-weight:500;">Bar (net): $${parseFloat(ev.netBar || ev.revelBar).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>` : ''}
