@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import FastAPI, APIRouter, Request, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
@@ -1671,39 +1671,45 @@ def create_app(static_dir: str) -> FastAPI:
 
     # ââ Calculator ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-    @api.get("/calculator", response_class=FileResponse)
+    @api.get("/calculator", response_class=HTMLResponse)
     def serve_calculator():
         calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
-        return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+        with open(calc_path, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
-    @api.get("/hub/calculator", response_class=FileResponse)
+    @api.get("/hub/calculator", response_class=HTMLResponse)
     def serve_calculator_hub():
         calc_path = os.path.join(os.path.dirname(__file__), "calculator.html")
-        return FileResponse(calc_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+        with open(calc_path, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
     # ââ Calendar ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-    @api.get("/calendar", response_class=FileResponse)
+    @api.get("/calendar", response_class=HTMLResponse)
     def serve_calendar():
         cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
-        return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+        with open(cal_path, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
-    @api.get("/hub/calendar", response_class=FileResponse)
+    @api.get("/hub/calendar", response_class=HTMLResponse)
     def serve_calendar_hub():
         cal_path = os.path.join(os.path.dirname(__file__), "calendar.html")
-        return FileResponse(cal_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+        with open(cal_path, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
     # ââ Promoter Hub ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-    @api.get("/promoters", response_class=FileResponse)
+    @api.get("/promoters", response_class=HTMLResponse)
     def serve_promoters():
         promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
-        return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+        with open(promo_path, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
-    @api.get("/hub/promoters", response_class=FileResponse)
+    @api.get("/hub/promoters", response_class=HTMLResponse)
     def serve_promoters_hub():
         promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
-        return FileResponse(promo_path, media_type="text/html", headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+        with open(promo_path, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
     @api.get("/promoters/summary")
     def get_promoters_summary():
