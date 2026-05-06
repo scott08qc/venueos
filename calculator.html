@@ -359,7 +359,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 <div class="hdr">
   <div style="display:flex;align-items:center">
     <div class="logo">Venue<span>OS</span></div>
-    <div class="hdr-badge">Deal Calculator</div>
+    <div class="hdr-badge">Deal Creation</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="/api/calendar" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;transition:all .15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">← Calendar</a>
   </div>
   <div class="net-row">
     <div class="ni"><div class="nl">Total Revenue</div><div class="nv neu" id="h-rev">$0</div></div>
@@ -372,6 +375,43 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 
 <div class="layout">
 <div class="main">
+
+  <!-- EVENT SEARCH BAR -->
+  <div class="sec" id="event-search-sec" style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:12px;padding:16px 18px">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--blue);margin-bottom:12px">Load Historical Event — pre-fill deal from actuals</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:flex-end">
+      <div>
+        <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px">Artist</div>
+        <input type="text" class="fi" id="search-artist" placeholder="e.g. Steve Aoki" oninput="runEventSearch()" autocomplete="off">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px">Promoter</div>
+        <input type="text" class="fi" id="search-promoter" placeholder="e.g. Collectiv" oninput="runEventSearch()" autocomplete="off">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px">Event Name</div>
+        <input type="text" class="fi" id="search-event-name" placeholder="e.g. Latin Saturday" oninput="runEventSearch()" autocomplete="off">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px">Event Type</div>
+        <select class="fi" id="search-type" onchange="runEventSearch()">
+          <option value="">All types</option>
+          <option value="Latin">Latin Night</option>
+          <option value="Electronic">Electronic</option>
+          <option value="Hip Hop and R&B">Hip Hop / R&B</option>
+          <option value="hip_hop_rnb">Hip Hop / R&B (alt)</option>
+          <option value="Open Format">Open Format</option>
+          <option value="Live Performance">Live Performance</option>
+          <option value="Corporate and Private">Corporate Event</option>
+          <option value="Cover Band">Cover Band</option>
+          <option value="Sports and Viewing">Sports Activation</option>
+          <option value="college_university">College &amp; University</option>
+        </select>
+      </div>
+      <button onclick="clearEventSearch()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap">Clear</button>
+    </div>
+    <div id="search-results" style="margin-top:10px;display:none"></div>
+  </div>
 
   <!-- PANEL 1: EVENT SETUP -->
   <div class="sec">
@@ -1504,28 +1544,34 @@ async function openEventDetail(eventId, eventName) {
       return; // Do NOT open modal
     }
 
-    // ── Confirmed / completed events: open modal as normal ────────────────
+    // ── Completed events: redirect to Event Recap page ──────────────────
+    if (e.status === 'completed') {
+      window.location.href = `/api/event-recap?event_id=${eventId}`;
+      return;
+    }
+
+    // ── Confirmed events: populate form, stay on calculator ──────────────
     document.getElementById('modal-title').textContent = e.event_name || eventName || 'Event Detail';
     document.getElementById('modal-sub').textContent =
       `${e.event_date ? e.event_date.substring(0,10) : ''} · ${e.tier1_category || ''} · ${e.promoter_name || ''}`;
-    modal.classList.add('open');
-    body.innerHTML = '<div class="modal-loading">Loading event data...</div>';
-    try {
-      renderPLTab(data);
-    } catch(renderErr) {
-      body.innerHTML = `<div class="modal-loading">Render error: ${renderErr.message}</div>`;
-      console.error('renderPLTab crash:', renderErr);
-    }
 
-    // Pre-populate cost inputs from saved event_costs record
+    // Populate form fields for confirmed event
+    const setVal2 = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+    setVal2('ev-name',       e.event_name);
+    setVal2('promoter-name', e.promoter_name);
+    if (e.artist_name) setVal2('artist-name', e.artist_name);
+    setVal2('attend',        e.expected_attendance);
+    const typeEl2 = document.getElementById('ev-type');
+    if (typeEl2 && e.tier1_category) {
+      const opt2 = Array.from(typeEl2.options).find(o => o.value === e.tier1_category);
+      if (opt2) { typeEl2.value = e.tier1_category; onTypeChange(); }
+    }
+    // Load cost inputs from saved record
     fetch(`${WORKSHOP_URL}/api/costs/${eventId}`)
       .then(r => r.ok ? r.json() : null)
       .then(costs => {
         if (!costs || !costs.event_id) return;
-        const set = (id, val) => {
-          const el = document.getElementById(id);
-          if (el && val !== null && val !== undefined && val !== 0) el.value = val;
-        };
+        const set = (id, val) => { const el = document.getElementById(id); if (el && val !== null && val !== undefined && val !== 0) el.value = val; };
         set('c-noc',   costs.nightly_operating_cost);
         set('c-sec',   costs.security_total);
         set('c-dg',    costs.door_girls_total);
@@ -1537,6 +1583,9 @@ async function openEventDetail(eventId, eventName) {
         if (currentEventData) calc();
       })
       .catch(() => {});
+    debounceFetch();
+    calc();
+    window.scrollTo({top:0, behavior:'smooth'});
 
   } catch(err) {
     body.innerHTML = '<div class="modal-loading">Could not load event data.</div>';
@@ -2259,12 +2308,100 @@ Write the brief now. Include: (1) a one-paragraph event overview, (2) what the d
   }
 }
 
+
+// ── Event Search ─────────────────────────────────────────────────────────────
+let searchTimer = null;
+let allEvents = null;
+
+async function loadAllEvents() {
+  if (allEvents) return allEvents;
+  try {
+    const res = await fetch(`${WORKSHOP_URL}/api/events`);
+    allEvents = await res.json();
+    return allEvents;
+  } catch(e) { return []; }
+}
+
+function runEventSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(_doSearch, 300);
+}
+
+async function _doSearch() {
+  const artist = (g('search-artist')?.value||'').trim().toLowerCase();
+  const promoter = (g('search-promoter')?.value||'').trim().toLowerCase();
+  const name = (g('search-event-name')?.value||'').trim().toLowerCase();
+  const type = (g('search-type')?.value||'');
+  const resultsEl = g('search-results');
+  if (!resultsEl) return;
+  if (!artist && !promoter && !name && !type) { resultsEl.style.display='none'; return; }
+  const events = await loadAllEvents();
+  const matches = events.filter(e => {
+    if (artist && !(e.artist_name||'').toLowerCase().includes(artist)) return false;
+    if (promoter && !(e.promoter_name||'').toLowerCase().includes(promoter)) return false;
+    if (name && !(e.event_name||'').toLowerCase().includes(name)) return false;
+    if (type && e.tier1_category !== type) return false;
+    return true;
+  }).slice(0, 15);
+  if (matches.length === 0) {
+    resultsEl.style.display='block';
+    resultsEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">No events found.</div>';
+    return;
+  }
+  resultsEl.style.display='block';
+  resultsEl.innerHTML = `<div style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">${matches.length} event${matches.length!==1?'s':''} found</div>` +
+    matches.map(e => {
+      const isCompleted = e.status === 'completed';
+      const statusColor = isCompleted ? 'var(--green)' : e.status === 'hold' ? 'var(--amber)' : 'var(--blue)';
+      const statusLabel = isCompleted ? 'Completed' : e.status === 'hold' ? 'Hold' : 'Confirmed';
+      const avgBar = e.avg_bar_revenue ? ' · Avg bar $'+Math.round(e.avg_bar_revenue).toLocaleString() : '';
+      const avgNet = e.avg_net_to_venue ? ' · Avg net $'+Math.round(e.avg_net_to_venue).toLocaleString() : '';
+      const action = isCompleted
+        ? `onclick="window.location.href='/api/event-recap?event_id=${e.id}'" title="View Event Recap"`
+        : `onclick="loadEventIntoForm(${e.id})" title="Load into Deal Creation form"`;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;background:#fff;border:1px solid var(--border);margin-bottom:5px;transition:border-color .1s" ${action}
+        onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text1)">${e.event_name||'—'}</div>
+          <div style="font-size:11px;color:var(--text2)">${e.event_date?e.event_date.substring(0,10):'—'} · ${e.promoter_name||'—'}${e.artist_name?' · '+e.artist_name:''}${avgBar}${avgNet}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;font-weight:600;color:${statusColor};background:rgba(0,0,0,0.04);padding:2px 8px;border-radius:10px">${statusLabel}</span>
+          <span style="font-size:11px;color:${isCompleted?'var(--green)':'var(--blue)'};font-weight:600">${isCompleted?'→ Recap':'→ Load'}</span>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function clearEventSearch() {
+  ['search-artist','search-promoter','search-event-name','search-type'].forEach(id => {
+    const el = g(id); if (el) { el.value = el.tagName === 'SELECT' ? '' : ''; }
+  });
+  const resultsEl = g('search-results');
+  if (resultsEl) resultsEl.style.display='none';
+}
+
+async function loadEventIntoForm(eventId) {
+  clearEventSearch();
+  openEventDetail(eventId, '');
+}
+
 // Auto-load event from URL query param on page load
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const eventId = params.get('event_id');
   if (eventId) {
-    openEventDetail(parseInt(eventId, 10), '');
+    // Check event status — completed events go to recap page
+    fetch(`${WORKSHOP_URL}/api/event-detail/${parseInt(eventId,10)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.event?.status === 'completed') {
+          window.location.replace(`/api/event-recap?event_id=${eventId}`);
+        } else {
+          openEventDetail(parseInt(eventId, 10), '');
+        }
+      })
+      .catch(() => openEventDetail(parseInt(eventId, 10), ''));
   }
   const promoterParam = params.get('promoter');
   if (promoterParam) {

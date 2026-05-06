@@ -526,7 +526,7 @@
   <div class="header-actions">
     <span id="venue-label" style="font-size: 12px; color: var(--text3); margin-right: 4px;">District Atlanta</span>
     <button class="btn" onclick="openNewEvent()">+ New Event</button>
-    <button class="btn btn-primary" onclick="openCalc()">Open Calculator</button>
+    <button class="btn btn-primary" onclick="window.location.href=window.location.origin+'/api/calculator'">+ New Event</button>
   </div>
 </header>
 
@@ -718,7 +718,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="openCalc()">Open Deal Calculator</button>
+      <button class="btn btn-primary" onclick="window.location.href=window.location.origin+'/api/calculator'">Open Deal Creation</button>
       <button class="btn" style="border-color:var(--amber); color:var(--amber);" onclick="saveNewEvent()">Place Hold Only</button>
     </div>
   </div>
@@ -1330,8 +1330,8 @@ function renderDetailPanel(dk) {
       const statusLabel = ev.status === 'completed' ? '✓ COMPLETED' : ev.status === 'confirmed' ? '● CONFIRMED' : '◌ HOLD — Not finalized';
       const hasActuals = ev.status === 'completed' && ev.netBar;
       const hasProjected = ev.status === 'confirmed' && ev.projBar;
-      const clickFn = ev.id ? `openEventInCalc(${ev.id})` : `openNewEventOnDate('${dk}')`;
-      const ctaLabel = ev.status === 'hold' ? 'Continue setup in Calculator →' : 'Open in Calculator →';
+      const clickFn = ev.id ? `openEventInCalc(${ev.id},'${ev.status || ''}')` : `openNewEventOnDate('${dk}')`;
+      const ctaLabel = ev.status === 'completed' ? 'View Event Recap →' : ev.status === 'hold' ? 'Continue setup in Calculator →' : 'Open Deal Creation →';
       const ctaColor = ev.status === 'hold' ? '#8B5E0A' : '#2C5F8A';
       const revenueTotal = hasActuals ? (ev.netBar + ev.doorNet) : hasProjected ? (ev.projBar + ev.projDoor) : null;
       html += `
@@ -1409,17 +1409,20 @@ function renderDetailPanel(dk) {
   html += `
     <div class="detail-cta">
       <button class="btn btn-primary" onclick="openNewEventOnDate('${dk}')">+ Book Event on This Date</button>
-      <button class="btn" onclick="openCalc()">Open Deal Calculator</button>
+      <button class="btn" onclick="window.location.href=BASE_URL+'/api/calculator'">+ New Deal</button>
     </div>
   `;
 
   document.getElementById('detail-body').innerHTML = html;
 }
 
-function openEventInCalc(id) {
+function openEventInCalc(id, status) {
   if (!id) { openCalc(); return; }
-  const url = `${BASE_URL}/api/calculator?event_id=${id}`;
-  window.location.href = url;
+  if (status === 'completed') {
+    window.location.href = `${BASE_URL}/api/event-recap?event_id=${id}`;
+  } else {
+    window.location.href = `${BASE_URL}/api/calculator?event_id=${id}`;
+  }
 }
 
 async function deleteHold(id, date) {

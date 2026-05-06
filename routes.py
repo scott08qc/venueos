@@ -557,8 +557,10 @@ def create_app(static_dir: str) -> FastAPI:
                 SELECT e.id, e.event_name, e.event_date, e.day_of_week,
                        e.tier1_category, e.promoter_name,
                        COALESCE(e.artist_name, e.headliner) AS artist_name,
+                       e.status, e.expected_attendance,
                        e.projected_door_revenue, e.projected_bar_revenue, e.projected_table_revenue,
-                       e.revel_bar_gross,
+                       e.revel_bar_gross, e.actual_bar_revenue,
+                       e.net_revenue_actual, e.actual_attendance,
                        COALESCE(r.review_status, 'No Review') AS review_status
                 FROM events e
                 LEFT JOIN post_event_reviews r ON r.event_id = e.id
@@ -1709,6 +1711,14 @@ def create_app(static_dir: str) -> FastAPI:
     def serve_promoters_hub():
         promo_path = os.path.join(os.path.dirname(__file__), "promoters.html")
         with open(promo_path, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+
+    # ── Event Recap ───────────────────────────────────────────────────────────
+
+    @api.get("/event-recap", response_class=HTMLResponse)
+    def serve_event_recap():
+        recap_path = os.path.join(os.path.dirname(__file__), "event-recap.html")
+        with open(recap_path, "r") as f: content = f.read()
         return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
     @api.get("/promoters/summary")

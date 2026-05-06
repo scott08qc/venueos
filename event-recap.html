@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VenueOS · Event Recap</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg:#F7F5F2;--surface:#FFFFFF;--surface2:#F4F2EF;--border:#E8E4DF;--border2:#D8D4CF;
+  --text1:#1A1714;--text2:#5A5652;--text3:#9B9793;
+  --blue:#2C5F8A;--blue-light:#EBF2F9;--blue-mid:#C5D9EC;
+  --green:#2A7A4B;--green-light:#EBF5F0;--green-mid:#B6DFC8;
+  --red:#B83232;--red-light:#FDEAEA;
+  --amber:#B85C00;--amber-light:#FDF3EA;--amber-mid:#F5CEAA;
+  --purple:#6B3A8C;--purple-light:#F5EEF8;
+  --gold:#8C6A00;--gold-light:#FDF8E8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* Header */
+.hdr{background:#FFFFFF;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.logo{font-size:17px;font-weight:600;letter-spacing:-0.02em;color:var(--text1)}
+.logo span{color:var(--blue)}
+.hdr-badge{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--green-light);color:var(--green);border:1px solid var(--green-mid);margin-left:10px}
+.hdr-nav{display:flex;align-items:center;gap:10px}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;transition:all .15s}
+.back-btn:hover{border-color:var(--blue);color:var(--blue)}
+.new-event-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#fff;text-decoration:none;padding:7px 14px;border:none;border-radius:8px;background:var(--blue);cursor:pointer;transition:background .15s}
+.new-event-btn:hover{background:#245178}
+
+/* Layout */
+.page{max-width:900px;margin:0 auto;padding:28px 24px}
+
+/* Event hero header */
+.event-hero{background:var(--blue);border-radius:14px;padding:24px 28px;margin-bottom:24px;color:white}
+.event-hero-name{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
+.event-hero-meta{font-size:13px;opacity:0.75;margin-bottom:16px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hero-stat{background:rgba(255,255,255,0.12);border-radius:8px;padding:10px 14px}
+.hero-stat-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;opacity:0.65;margin-bottom:3px}
+.hero-stat-value{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
+.hero-stat-sub{font-size:10px;opacity:0.6;margin-top:2px}
+.hero-stat.pos .hero-stat-value{color:#4ADE80}
+.hero-stat.neg .hero-stat-value{color:#F87171}
+.hero-stat.amber .hero-stat-value{color:#FCD34D}
+@media(max-width:600px){.hero-stats{grid-template-columns:1fr 1fr}}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:all .15s;margin-bottom:-1px}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab:hover:not(.active){color:var(--text1)}
+
+/* Tab content */
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* Sections */
+.detail-section{margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.detail-section-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);padding-bottom:7px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.detail-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:0}
+.detail-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:600px){.detail-grid-3{grid-template-columns:1fr 1fr}}
+.detail-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
+.detail-stat-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.detail-stat-value{font-family:'DM Mono',monospace;font-size:16px;font-weight:500}
+.detail-stat-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.detail-stat.highlight{border-color:var(--blue-mid);background:var(--blue-light)}
+.detail-stat.highlight .detail-stat-value{color:var(--blue)}
+.detail-stat.green{border-color:var(--green-mid);background:var(--green-light)}
+.detail-stat.green .detail-stat-value{color:var(--green)}
+.detail-stat.red{border-color:#F5BABA;background:var(--red-light)}
+.detail-stat.red .detail-stat-value{color:var(--red)}
+.detail-stat.amber{border-color:var(--amber-mid);background:var(--amber-light)}
+.detail-stat.amber .detail-stat-value{color:var(--amber)}
+
+/* PvA */
+.pva-row{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:12px}
+.pva-row:last-child{border-bottom:none}
+.pva-row.header{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3)}
+.pva-label{color:var(--text2)}
+.pva-proj{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)}
+.pva-actual{font-family:'DM Mono',monospace;font-size:12px;font-weight:500}
+.pva-actual.pos{color:var(--green)}.pva-actual.neg{color:var(--red)}
+.pva-var{font-family:'DM Mono',monospace;font-size:11px}
+.pva-var.pos{color:var(--green)}.pva-var.neg{color:var(--red)}.pva-var.flat{color:var(--text3)}
+
+/* Item table */
+.item-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.item-table th{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
+.item-table th:first-child{text-align:left}
+.item-table td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right}
+.item-table td:first-child{text-align:left;color:var(--text1)}
+.item-table tr:hover td{background:var(--surface2)}
+.item-table tr:last-child td{border-bottom:none}
+.item-cat-badge{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle}
+.cat-bottle{background:var(--amber-light);color:var(--amber)}
+.cat-spirits{background:var(--blue-light);color:var(--blue)}
+.cat-beer{background:#FDF8E8;color:var(--gold)}
+.cat-cocktail{background:var(--green-light);color:var(--green)}
+.cat-na{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+
+/* SR table */
+.sr-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.sr-table th{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sr-table th:first-child{text-align:left}
+.sr-table td{padding:8px 10px;border-bottom:1px solid rgba(0,0,0,0.05);text-align:right;font-family:'DM Mono',monospace}
+.sr-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif;color:var(--text2)}
+.sr-table tr.total-row td{font-weight:600;border-top:2px solid var(--border2);border-bottom:none;color:var(--text1)}
+.sr-table td.var-pos{color:var(--green)}.sr-table td.var-neg{color:var(--red)}.sr-table td.var-flat{color:var(--text3)}
+
+/* Obs box */
+.obs-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.obs-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.obs-body{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* TP */
+.tp-content{font-size:13px;line-height:1.75;color:var(--text1);white-space:pre-wrap}
+.tp-copy-btn{margin-top:16px;padding:9px 16px;background:var(--blue);border:none;border-radius:8px;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.tp-copy-btn:hover{background:#245178}
+.tp-loading{text-align:center;padding:32px;color:var(--text3)}
+
+/* Deal terms chip row */
+.deal-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.deal-chip{background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--blue)}
+.deal-chip.amber{background:var(--amber-light);border-color:var(--amber-mid);color:var(--amber)}
+.deal-chip.green{background:var(--green-light);border-color:var(--green-mid);color:var(--green)}
+
+/* Market context */
+.market-narrative{margin-top:8px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.6}
+
+/* Bottom action bar */
+.action-bar{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.action-bar-left{font-size:13px;color:var(--text2)}
+.action-bar-right{display:flex;gap:10px}
+.btn-secondary{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue)}
+.btn-primary{padding:8px 16px;border:none;border-radius:8px;background:var(--blue);font-size:13px;font-weight:600;color:white;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.btn-primary:hover{background:#245178}
+
+/* Loading / error */
+.page-loading{text-align:center;padding:80px 24px;color:var(--text3);font-size:15px}
+.page-error{text-align:center;padding:60px 24px}
+.page-error-title{font-size:16px;font-weight:600;color:var(--red);margin-bottom:8px}
+.page-error-sub{font-size:13px;color:var(--text2)}
+
+/* Draw indicators */
+.draw-good{color:var(--green);font-weight:600}
+.draw-ok{color:var(--amber);font-weight:600}
+.draw-bad{color:var(--red);font-weight:600}
+
+@media print{
+  .hdr,.tabs,.action-bar,.hdr-nav,.back-btn,.new-event-btn,.tp-copy-btn{display:none!important}
+  .tab-panel{display:block!important}
+  .page{max-width:100%;padding:0}
+  .event-hero,.detail-section,.detail-stat{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div style="display:flex;align-items:center">
+    <a href="/api/calendar" style="text-decoration:none"><div class="logo">Venue<span>OS</span></div></a>
+    <div class="hdr-badge">Event Recap</div>
+  </div>
+  <div class="hdr-nav">
+    <a class="back-btn" href="/api/calendar">← Calendar</a>
+    <button class="new-event-btn" onclick="window.location.href='/api/calculator'">+ New Event</button>
+  </div>
+</div>
+
+<div class="page" id="page-root">
+  <div class="page-loading" id="loading-state">Loading event data…</div>
+</div>
+
+<script>
+const WORKSHOP_URL = window.location.origin;
+const marketNarrativeCache = {};
+
+const ATLANTA_MARKET_EVENTS = [
+  {date:'2026-01-02',name:'ATL NYE Hangover Night @ Believe',type:'edm',demo:'EDM 21-32',cap:1500,competitor:true},
+  {date:'2026-01-03',name:'Hawks vs Cavaliers @ State Farm Arena',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
+  {date:'2026-01-10',name:'Braves Winter Warm-Up',type:'sports',demo:'Sports 28-55',cap:5000,competitor:false},
+  {date:'2026-01-16',name:'MLK Day',type:'holiday',demo:null,cap:null,competitor:false},
+  {date:'2026-01-17',name:'Metro Boomin @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-30',cap:21000,competitor:false},
+  {date:'2026-01-23',name:'Chris Brown @ State Farm Arena',type:'liveration',demo:'R&B 22-38',cap:21000,competitor:false},
+  {date:'2026-01-24',name:'John Summit @ Believe Music Hall',type:'edm',demo:'House 22-35',cap:1500,competitor:true},
+  {date:'2026-01-30',name:'Hawks vs Celtics',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
+  {date:'2026-01-31',name:'ATL Latin Fest @ The Loft',type:'liveration',demo:'Latin 21-40',cap:1000,competitor:true},
+  {date:'2026-02-06',name:'Atlanta United Preseason',type:'sports',demo:'Soccer 20-40',cap:15000,competitor:false},
+  {date:'2026-02-07',name:'Bad Bunny @ State Farm Arena',type:'liveration',demo:'Latin 18-35',cap:21000,competitor:false},
+  {date:'2026-02-13',name:'Drake @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-32',cap:21000,competitor:false},
+  {date:'2026-02-14',name:"Valentine's Day",type:'holiday',demo:null,cap:null,competitor:false},
+  {date:'2026-02-20',name:'Trap Music Museum Late Night',type:'hip_hop',demo:'Hip Hop 21-35',cap:400,competitor:true},
+  {date:'2026-02-21',name:'Hawks vs Knicks',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
+  {date:'2026-02-27',name:'Future & Metro Boomin @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-30',cap:21000,competitor:false},
+  {date:'2026-02-28',name:'A3C Hip Hop Conference',type:'liveration',demo:'Hip Hop 25-45',cap:5000,competitor:false},
+  {date:'2026-03-06',name:'Diplo @ Believe Music Hall',type:'edm',demo:'EDM/Open Format 22-35',cap:1500,competitor:true},
+  {date:'2026-03-07',name:'Braves Opening Day Practice',type:'sports',demo:'Sports 28-55',cap:2000,competitor:false},
+  {date:'2026-03-13',name:'SZA @ State Farm Arena',type:'liveration',demo:'R&B/Pop 20-35',cap:21000,competitor:false},
+  {date:'2026-03-14',name:'ATL Tequila Fest',type:'liveration',demo:'Latin/Mixed 25-45',cap:3000,competitor:false},
+  {date:'2026-03-20',name:'Cardi B @ State Farm Arena',type:'liveration',demo:'Hip Hop 20-35',cap:21000,competitor:false},
+  {date:'2026-03-21',name:'Braves Opening Day',type:'sports',demo:'Sports 28-55',cap:41000,competitor:false},
+  {date:'2026-03-27',name:'Hardwell @ Believe Music Hall',type:'edm',demo:'EDM 21-32',cap:1500,competitor:true},
+  {date:'2026-03-28',name:'Hawks Playoff Push Game',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
+  {date:'2026-04-03',name:'Braves Home Opener',type:'sports',demo:'Sports 28-55',cap:41000,competitor:false},
+  {date:'2026-04-04',name:'SweetWater 420 Fest — Warm-Up',type:'festival',demo:'Indie/Rock 22-45',cap:10000,competitor:false},
+  {date:'2026-04-10',name:'Dreamville Festival — Day 1',type:'festival',demo:'Hip Hop 20-35',cap:40000,competitor:false},
+  {date:'2026-04-11',name:'Dreamville Festival — Day 2',type:'festival',demo:'Hip Hop 20-35',cap:40000,competitor:false},
+  {date:'2026-04-17',name:'SweetWater 420 Festival — Day 1',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
+  {date:'2026-04-18',name:'SweetWater 420 Festival — Day 2',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
+  {date:'2026-04-19',name:'SweetWater 420 Festival — Day 3',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
+  {date:'2026-04-24',name:'Dogwood Festival',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
+  {date:'2026-04-25',name:'Dogwood Festival (closing)',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
+  {date:'2026-04-25',name:'Braves vs Mets',type:'sports',demo:'Sports 28-55',cap:41000,competitor:false},
+  {date:'2026-05-01',name:'Morgan Wallen @ State Farm Arena',type:'liveration',demo:'Country 25-45',cap:21000,competitor:false},
+  {date:'2026-05-03',name:'Kendrick Lamar @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-35',cap:21000,competitor:false},
+  {date:'2026-05-08',name:'Dead & Company @ Ameris',type:'liveration',demo:'Classic Rock 35-55',cap:12000,competitor:false},
+  {date:'2026-05-10',name:'Zedd @ Believe Music Hall',type:'edm',demo:'EDM 21-30',cap:1500,competitor:true},
+  {date:'2026-05-15',name:'Bad Bunny @ State Farm Arena',type:'liveration',demo:'Latin 18-35',cap:21000,competitor:false},
+];
+
+function getMarketContext(dateStr, eventType) {
+  if (!dateStr) return {events:[],competitors:[],overlapEvents:[],hasHoliday:false,hasFestival:false,demandLevel:'low'};
+  const d = dateStr.substring(0,10);
+  const events = ATLANTA_MARKET_EVENTS.filter(e => e.date === d);
+  const hasHoliday = events.some(e => e.type === 'holiday');
+  const hasFestival = events.some(e => e.type === 'festival');
+  const DEMO_OVERLAP = {
+    'Latin':['Latin','Reggaeton','Latin 18-35','Latin 21-40'],
+    'Electronic':['EDM','House','Techno','Bass','EDM 21-30','EDM 21-32','House 22-35','House 25-38'],
+    'Hip Hop and R&B':['Hip Hop','Trap','R&B','Hip Hop 18-35','Hip Hop 20-35','R&B 22-38'],
+    'hip_hop_rnb':['Hip Hop','Trap','R&B','Hip Hop 18-35','Hip Hop 20-35'],
+    'Open Format':[],
+    'Cover Band':[],
+    'Corporate and Private':[],
+    'college_university':[],
+  };
+  const internalDemos = DEMO_OVERLAP[eventType] || [];
+  const overlapEvents = events.filter(e => e.demo && internalDemos.some(d => e.demo.toLowerCase().includes(d.toLowerCase())));
+  const directCompetitors = events.filter(e => e.competitor);
+  const highOverlap = overlapEvents.length > 0;
+  const hasLargeShow = events.some(e => e.cap && e.cap >= 10000);
+  let demandLevel;
+  if (hasHoliday || hasFestival) demandLevel = 'high';
+  else if (directCompetitors.length > 0 || highOverlap) demandLevel = 'high';
+  else if (events.length > 0 && hasLargeShow) demandLevel = 'medium';
+  else if (events.length > 0) demandLevel = 'low';
+  else demandLevel = 'low';
+  return {events, competitors:directCompetitors, overlapEvents, hasHoliday, hasFestival, demandLevel};
+}
+
+function g(id){return document.getElementById(id)}
+function fmt2(n){
+  if(n===null||n===undefined||parseFloat(n)===0) return '$0';
+  return '$'+Math.abs(parseFloat(n)).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtPct(n){return n!==null&&n!==undefined?parseFloat(n).toFixed(1)+'%':'—'}
+function varClass(actual,proj){if(!actual||!proj)return 'flat';return actual>=proj?'pos':'neg'}
+function varStr(actual,proj){
+  if(!actual||!proj)return '—';
+  const diff=actual-proj; const pct=Math.round(Math.abs(diff)/proj*100);
+  return (diff>=0?'+':'-')+pct+'%';
+}
+
+let eventData = null;
+let currentTab = 'pl';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+tab));
+  if (tab === 'tp' && eventData) renderTPPanel();
+}
+
+async function loadEvent(eventId) {
+  try {
+    const res = await fetch(`${WORKSHOP_URL}/api/event-detail/${eventId}`);
+    if (!res.ok) throw new Error('Not found');
+    eventData = await res.json();
+    renderPage(eventData);
+  } catch(err) {
+    g('page-root').innerHTML = `<div class="page-error">
+      <div class="page-error-title">Event not found</div>
+      <div class="page-error-sub">Could not load event #${eventId}. <a href="/api/calendar" style="color:var(--blue)">Back to calendar</a></div>
+    </div>`;
+  }
+}
+
+function renderPage(data) {
+  const e = data.event;
+  const s = data.summary;
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+  const drawCls = !drawPct ? '' : drawPct >= 95 ? 'pos' : drawPct >= 80 ? 'amber' : 'neg';
+  const barActual = parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.net_bar_revenue || 0);
+  const netActual = parseFloat(e.net_revenue_actual || 0);
+  const totalActual = barActual + parseFloat(e.actual_door_revenue||0) + parseFloat(e.actual_table_revenue||e.table_bottle_service||0);
+
+  const heroNetCls = netActual > 0 ? 'pos' : netActual < 0 ? 'neg' : '';
+
+  g('page-root').innerHTML = `
+    <!-- Hero -->
+    <div class="event-hero">
+      <div class="event-hero-name">${e.event_name || 'Event Recap'}</div>
+      <div class="event-hero-meta">${e.event_date ? e.event_date.substring(0,10) : ''} · ${e.day_of_week||''} · ${e.tier1_category||''} · ${e.promoter_name||''}</div>
+      <div class="hero-stats">
+        <div class="hero-stat ${drawCls}">
+          <div class="hero-stat-label">Attendance</div>
+          <div class="hero-stat-value">${e.actual_attendance || '—'}</div>
+          <div class="hero-stat-sub">of ${e.expected_attendance||'—'} expected${drawPct?' · '+drawPct+'% draw':''}</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Total Revenue</div>
+          <div class="hero-stat-value">${fmt2(totalActual)}</div>
+          <div class="hero-stat-sub">bar ${fmt2(barActual)}</div>
+        </div>
+        <div class="hero-stat ${heroNetCls}">
+          <div class="hero-stat-label">Net to Venue</div>
+          <div class="hero-stat-value">${fmt2(netActual)}</div>
+          <div class="hero-stat-sub">${fmtPct(e.actual_effective_split)} effective split</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Bar Spend / Head</div>
+          <div class="hero-stat-value">${e.spend_per_head_actual ? '$'+parseFloat(e.spend_per_head_actual).toFixed(2) : '—'}</div>
+          <div class="hero-stat-sub">actual</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" data-tab="pl" onclick="switchTab('pl')">Full P&amp;L</div>
+      <div class="tab" data-tab="night" onclick="switchTab('night')">Night Summary</div>
+      <div class="tab" data-tab="report" onclick="switchTab('report')">Settlement Report</div>
+      <div class="tab" data-tab="tp" onclick="switchTab('tp')">Talking Points</div>
+    </div>
+
+    <!-- Tab panels -->
+    <div id="panel-pl" class="tab-panel active">${renderPLPanel(data)}</div>
+    <div id="panel-night" class="tab-panel">${renderNightPanel(data)}</div>
+    <div id="panel-report" class="tab-panel">${renderReportPanel(data)}</div>
+    <div id="panel-tp" class="tab-panel"><div class="detail-section"><div class="tp-loading" id="tp-loading-msg">Click the "Talking Points" tab to generate your pre-meeting brief.</div></div></div>
+
+    <div class="action-bar">
+      <div class="action-bar-left">Event ID #${e.id} · ${e.status || 'completed'}</div>
+      <div class="action-bar-right">
+        <button class="btn-secondary" onclick="window.print()">🖨 Print / PDF</button>
+        <button class="btn-primary" onclick="window.location.href='/api/calculator?promoter=${encodeURIComponent(e.promoter_name||'')}'" >+ Book Similar Event</button>
+      </div>
+    </div>
+  `;
+
+  // Load market narrative for night tab after render
+  setTimeout(() => loadMarketNarratives(data), 100);
+}
+
+function renderPLPanel(data) {
+  const e = data.event;
+  const s = data.summary;
+  const items = data.items || [];
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+  const drawCls = !drawPct ? '' : drawPct >= 95 ? 'green' : drawPct >= 80 ? 'amber' : 'red';
+  const barActual = parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.net_bar_revenue || 0);
+  const doorActual = parseFloat(e.actual_door_revenue || 0);
+  const tableActual = parseFloat(e.actual_table_revenue || e.table_bottle_service || 0);
+  const totalActualRev = barActual + doorActual + tableActual;
+  const totalProjRev = parseFloat(e.projected_bar_revenue||0) + parseFloat(e.projected_door_revenue||0) + parseFloat(e.projected_table_revenue||0);
+
+  let html = `<div class="detail-section">
+    <div class="detail-section-title">Night Summary</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat ${drawCls}">
+        <div class="detail-stat-label">Draw</div>
+        <div class="detail-stat-value">${e.actual_attendance || '—'}</div>
+        <div class="detail-stat-sub">of ${e.expected_attendance||'—'} expected · ${drawPct?drawPct+'%':'—'}</div>
+      </div>
+      <div class="detail-stat highlight">
+        <div class="detail-stat-label">Total Revenue</div>
+        <div class="detail-stat-value">${fmt2(totalActualRev)}</div>
+        <div class="detail-stat-sub">proj. ${fmt2(totalProjRev)}</div>
+      </div>
+      <div class="detail-stat ${parseFloat(e.net_revenue_actual)>0?'green':'red'}">
+        <div class="detail-stat-label">Net to Venue</div>
+        <div class="detail-stat-value">${fmt2(e.net_revenue_actual)}</div>
+        <div class="detail-stat-sub">${fmtPct(e.actual_effective_split)} effective split</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Bar Spend / Head</div>
+        <div class="detail-stat-value">${e.spend_per_head_actual?'$'+parseFloat(e.spend_per_head_actual).toFixed(2):'—'}</div>
+        <div class="detail-stat-sub">actual</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Tips</div>
+        <div class="detail-stat-value">${fmt2(e.tips)}</div>
+        <div class="detail-stat-sub">${barActual?(parseFloat(e.tips||0)/barActual*100).toFixed(1)+'% of bar':''}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Bottle Service</div>
+        <div class="detail-stat-value">${fmt2(s.bottle_service_revenue)}</div>
+        <div class="detail-stat-sub">${s.bottle_count} bottles · ${s.total_item_revenue>0?Math.round(s.bottle_service_revenue/s.total_item_revenue*100)+'% of bar':''}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Projected vs. Actual</div>
+    <div class="pva-row header"><div>Line</div><div>Projected</div><div>Actual</div><div>Variance</div></div>
+    <div class="pva-row"><div class="pva-label">Attendance</div><div class="pva-proj">${e.expected_attendance||'—'}</div><div class="pva-actual ${varClass(e.actual_attendance,e.expected_attendance)}">${e.actual_attendance||'—'}</div><div class="pva-var ${varClass(e.actual_attendance,e.expected_attendance)}">${varStr(e.actual_attendance,e.expected_attendance)}</div></div>
+    <div class="pva-row"><div class="pva-label">Bar Revenue</div><div class="pva-proj">${fmt2(e.projected_bar_revenue)}</div><div class="pva-actual ${varClass(barActual,e.projected_bar_revenue)}">${fmt2(barActual)}</div><div class="pva-var ${varClass(barActual,e.projected_bar_revenue)}">${varStr(barActual,e.projected_bar_revenue)}</div></div>
+    <div class="pva-row"><div class="pva-label">Door Revenue</div><div class="pva-proj">${fmt2(e.projected_door_revenue)}</div><div class="pva-actual ${varClass(e.actual_door_revenue,e.projected_door_revenue)}">${fmt2(e.actual_door_revenue)}</div><div class="pva-var ${varClass(e.actual_door_revenue,e.projected_door_revenue)}">${varStr(e.actual_door_revenue,e.projected_door_revenue)}</div></div>
+    <div class="pva-row"><div class="pva-label">Table Revenue</div><div class="pva-proj">${fmt2(e.projected_table_revenue)}</div><div class="pva-actual ${varClass(tableActual,e.projected_table_revenue)}">${fmt2(tableActual)}</div><div class="pva-var ${varClass(tableActual,e.projected_table_revenue)}">${varStr(tableActual,e.projected_table_revenue)}</div></div>
+    <div class="pva-row"><div class="pva-label">Net to Venue</div><div class="pva-proj">—</div><div class="pva-actual ${parseFloat(e.net_revenue_actual)>0?'pos':'neg'}">${fmt2(e.net_revenue_actual)}</div><div class="pva-var flat">—</div></div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Deal Terms Used</div>
+    <div class="deal-chips">
+      <div class="deal-chip">Door: Venue ${100-(e.door_split_promoter||0)}% / Pro ${e.door_split_promoter||0}%</div>
+      <div class="deal-chip">Bar: Venue ${100-(e.bar_split_promoter||0)}% / Pro ${e.bar_split_promoter||0}%</div>
+      ${e.artist_fee_landed?`<div class="deal-chip amber">Artist Fee: ${fmt2(e.artist_fee_landed)}</div>`:''}
+      ${e.actual_effective_split?`<div class="deal-chip green">Effective Split: ${fmtPct(e.actual_effective_split)}</div>`:''}
+    </div>
+  </div>`;
+
+  if (items.length > 0) {
+    html += `<div class="detail-section">
+      <div class="detail-section-title">Bar Item Mix</div>
+      <div style="overflow-x:auto">
+        <table class="item-table">
+          <thead><tr><th>Item</th><th>Qty</th><th>Revenue</th><th>COGS</th><th>GM%</th></tr></thead>
+          <tbody>${items.map(item => {
+            const catMap={'Bottle Service':'bottle','Spirits':'spirits','Beer':'beer','Cocktails':'cocktail','Non-Alcoholic':'na'};
+            const catCls=catMap[item.item_category]||'';
+            const gm=item.total_revenue>0?Math.round((1-item.total_cost/item.total_revenue)*100):0;
+            const gmCls=gm>=85?'color:var(--green)':gm>=70?'color:var(--amber)':'color:var(--red)';
+            return `<tr><td>${item.item_name}<span class="item-cat-badge cat-${catCls}">${item.item_subcategory||item.item_category}</span></td><td style="font-family:'DM Mono',monospace">${item.quantity_sold}</td><td style="font-family:'DM Mono',monospace">${fmt2(item.total_revenue)}</td><td style="font-family:'DM Mono',monospace;color:var(--text3)">${fmt2(item.total_cost)}</td><td style="font-family:'DM Mono',monospace;${gmCls}">${gm}%</td></tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  if (e.crowd_demographic_observations || e.promoter_performance_notes || e.what_to_replicate || e.what_to_change) {
+    html += `<div class="detail-section">
+      <div class="detail-section-title">Post-Event Notes</div>
+      ${e.crowd_demographic_observations?`<div class="obs-box"><div class="obs-label">Crowd</div><div class="obs-body">${e.crowd_demographic_observations}</div></div>`:''}
+      ${e.promoter_performance_notes?`<div class="obs-box"><div class="obs-label">Promoter Performance</div><div class="obs-body">${e.promoter_performance_notes}</div></div>`:''}
+      ${e.what_to_replicate?`<div class="obs-box"><div class="obs-label">What to Replicate</div><div class="obs-body">${e.what_to_replicate}</div></div>`:''}
+      ${e.what_to_change?`<div class="obs-box"><div class="obs-label">What to Change</div><div class="obs-body">${e.what_to_change}</div></div>`:''}
+    </div>`;
+  }
+
+  return html;
+}
+
+function renderNightPanel(data) {
+  const e = data.event;
+  const s = data.summary;
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+  const drawCls = !drawPct ? '' : drawPct >= 95 ? 'green' : drawPct >= 80 ? 'amber' : 'red';
+  const barActual = parseFloat(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue||0);
+  const doorActual = parseFloat(e.actual_door_revenue||0);
+  const tableActual = parseFloat(e.actual_table_revenue||e.table_bottle_service||0);
+  const totalActual = barActual + doorActual + tableActual;
+  const ctx = getMarketContext(e.event_date, e.tier1_category);
+  const demandColor = ctx.demandLevel==='high'?'var(--green)':ctx.demandLevel==='medium'?'var(--amber)':'var(--text3)';
+  const typeLabel = {liveration:'Live Nation',sports:'Sports',festival:'Festival',holiday:'Holiday',edm:'EDM',hip_hop:'Hip Hop'};
+  const typeColor = {liveration:'var(--blue)',sports:'#60A5FA',festival:'#A78BFA',holiday:'#34D399',edm:'#7C3AED',hip_hop:'var(--blue)'};
+
+  const marketEvRows = ctx.events.map(ev => {
+    const isComp = ev.competitor;
+    const label = typeLabel[ev.type] || ev.type;
+    const color = typeColor[ev.type] || 'var(--text2)';
+    const capStr = ev.cap ? ` · cap ${ev.cap.toLocaleString()}` : '';
+    const demoStr = ev.demo ? ` · ${ev.demo}` : '';
+    if (isComp) {
+      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;margin-bottom:4px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#FBBF24;min-width:60px;padding-top:1px">⚠ Competitor</span>
+        <span style="font-size:12px;color:#FBBF24;font-weight:500">${ev.name}<span style="color:var(--text3);font-weight:400">${demoStr}${capStr}</span></span>
+      </div>`;
+    }
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;margin-bottom:2px">
+      <span style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${color};min-width:60px;padding-top:1px">${label}</span>
+      <span style="font-size:12px;color:var(--text2)">${ev.name}${demoStr?`<span style="color:var(--text3)"> · ${ev.demo}</span>`:''}${capStr?`<span style="color:var(--text3)">${capStr}</span>`:''}</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="detail-section">
+    <div class="detail-section-title">Event Details</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat"><div class="detail-stat-label">Event</div><div class="detail-stat-value" style="font-size:13px">${e.event_name||'—'}</div><div class="detail-stat-sub">${e.event_date?e.event_date.substring(0,10):'—'} · ${e.day_of_week||''}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Type</div><div class="detail-stat-value" style="font-size:13px">${e.tier1_category||'—'}</div><div class="detail-stat-sub">${e.tier2_subcategory||''}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Promoter</div><div class="detail-stat-value" style="font-size:13px">${e.promoter_name||'—'}</div><div class="detail-stat-sub">${e.artist_name||''}</div></div>
+      <div class="detail-stat ${drawCls}"><div class="detail-stat-label">Attendance</div><div class="detail-stat-value">${e.actual_attendance||'—'}</div><div class="detail-stat-sub">of ${e.expected_attendance||'—'} · ${drawPct?drawPct+'% draw':'—'}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Doors Open</div><div class="detail-stat-value" style="font-size:13px">${e.doors_open_time||'—'}</div><div class="detail-stat-sub">close: ${e.event_close_time||'—'}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Artist Genre</div><div class="detail-stat-value" style="font-size:13px">${e.artist_genre||'—'}</div></div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">
+      <span>Market Context — Atlanta</span>
+      <span style="font-size:11px;font-weight:600;color:${demandColor};letter-spacing:0.05em;text-transform:uppercase">● ${ctx.demandLevel.charAt(0).toUpperCase()+ctx.demandLevel.slice(1)} Demand Night</span>
+    </div>
+    ${ctx.events.length>0?`<div style="margin-bottom:10px">${marketEvRows}</div>`:'<div style="font-size:12px;color:var(--text3);padding:4px 0">No major market events on record for this date.</div>'}
+    <div id="market-narrative-night" class="market-narrative"><span style="color:var(--text3);font-style:italic">Loading market narrative…</span></div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Revenue Overview</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat highlight"><div class="detail-stat-label">Total Revenue</div><div class="detail-stat-value">${fmt2(totalActual)}</div><div class="detail-stat-sub">proj. ${fmt2(parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0))}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Bar Revenue</div><div class="detail-stat-value">${fmt2(barActual)}</div><div class="detail-stat-sub">proj. ${fmt2(e.projected_bar_revenue)}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Door Revenue</div><div class="detail-stat-value">${fmt2(doorActual)}</div><div class="detail-stat-sub">proj. ${fmt2(e.projected_door_revenue)}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Table / Bottle</div><div class="detail-stat-value">${fmt2(tableActual)}</div><div class="detail-stat-sub">proj. ${fmt2(e.projected_table_revenue)}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Bar Spend / Head</div><div class="detail-stat-value">${e.spend_per_head_actual?'$'+parseFloat(e.spend_per_head_actual).toFixed(2):'—'}</div><div class="detail-stat-sub">actual</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Tips</div><div class="detail-stat-value">${fmt2(e.tips)}</div><div class="detail-stat-sub">${barActual?(parseFloat(e.tips||0)/barActual*100).toFixed(1)+'% of bar':''}</div></div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Settlement</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat ${parseFloat(e.net_revenue_actual)>=0?'green':'red'}"><div class="detail-stat-label">Net to Venue</div><div class="detail-stat-value">${fmt2(e.net_revenue_actual)}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Effective Split</div><div class="detail-stat-value">${fmtPct(e.actual_effective_split||e.effective_split_percentage)}</div><div class="detail-stat-sub">promoter's total take</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Bottle Service</div><div class="detail-stat-value">${fmt2(s.bottle_service_revenue)}</div><div class="detail-stat-sub">${s.bottle_count} bottles · ${barActual>0?Math.round(s.bottle_service_revenue/barActual*100)+'% of bar':''}</div></div>
+    </div>
+  </div>
+  ${e.settlement_notes?`<div class="detail-section"><div class="detail-section-title">Settlement Notes</div><div class="obs-box"><div class="obs-body">${e.settlement_notes}</div></div></div>`:''}`;
+}
+
+function renderReportPanel(data) {
+  const e = data.event;
+  const s = data.summary;
+  const n = v => parseFloat(v)||0;
+  const na = v => (v===null||v===undefined||v==='')?null:parseFloat(v);
+  function d(v){return(v!==null&&v!==undefined&&parseFloat(v)!==0)?'$'+Math.round(Math.abs(parseFloat(v))).toLocaleString():'—';}
+  function vr(actual,proj,costLine){
+    if(actual===null||actual===undefined||proj===null||proj===undefined) return {t:'—',c:'var-flat'};
+    const a=parseFloat(actual)||0;const p=parseFloat(proj)||0;
+    if(!p&&!a)return{t:'—',c:'var-flat'};if(!p||!a)return{t:'—',c:'var-flat'};
+    const diff=a-p;if(Math.abs(diff)<0.01)return{t:'±$0',c:'var-flat'};
+    const sign=diff>=0?'+':'-';const abs='$'+Math.round(Math.abs(diff)).toLocaleString();
+    const cls=costLine?(diff>0?'var-neg':'var-pos'):(diff>0?'var-pos':'var-neg');
+    return{t:sign+abs,c:cls};
+  }
+  function row(label,proj,actual,costLine,opts={}){
+    const pv=(proj!==null&&proj!==undefined)?parseFloat(proj):null;
+    const av=(actual!==null&&actual!==undefined)?parseFloat(actual):null;
+    if(!opts.total&&(pv===null||pv===0)&&(av===null||av===0))return '';
+    const v=vr(av,pv,costLine);
+    const projFmt=(pv!==null&&pv!==0)?'$'+Math.round(Math.abs(pv)).toLocaleString():'—';
+    const actFmt=(av!==null&&av!==0)?'$'+Math.round(Math.abs(av)).toLocaleString():'—';
+    const isTotal=opts.total?' class="total-row"':'';
+    return `<tr${isTotal}><td>${label}</td><td>${projFmt}</td><td>${actFmt}</td><td class="${v.c}">${v.t}</td></tr>`;
+  }
+  function ph(label){return `<tr><td colspan="4" style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:10px 10px 4px;background:var(--surface2)">${label}</td></tr>`;}
+  function divider(){return `<tr><td colspan="4" style="padding:0;height:1px;background:var(--border)"></td></tr>`;}
+  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
+  const doorProj=n(e.projected_door_revenue);const barProj=n(e.projected_bar_revenue);const tableProj=n(e.projected_table_revenue);
+  const doorActual=na(e.actual_door_revenue);
+  const barActual=na(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue);
+  const cogsActual=barActual>0?barActual*(n(e.bar_cogs_percentage)||16.1)/100:0;
+  const cogsProj=barProj>0?barProj*(n(e.bar_cogs_percentage)||16.1)/100:0;
+  const tableActual=na(e.actual_table_revenue??e.table_bottle_service);
+  const grossRevProj=doorProj+barProj+tableProj;
+  const grossRevActual=n(doorActual)+n(barActual)+n(tableActual);
+  const doorPayoutProj=doorProj*(n(e.door_split_promoter)/100);
+  const barPayoutProj=barProj*(n(e.bar_split_promoter)/100);
+  const tablePayoutProj=tableProj*(n(e.table_split_promoter||0)/100);
+  const artFeeProj=n(e.artist_fee_landed)+n(e.artist_fee_travel);
+  const houseFeeProj=n(e.house_fee_amount);
+  const doorPayoutActual=na(e.promoter_door_payout);
+  const barPayoutActual=na(e.promoter_bar_payout);
+  const tablePayoutActual=na(e.promoter_table_payout);
+  const artFeeActualVal=na(e.artist_cost_actual??e.artist_cost_paid_by_venue);
+  const totalPayoutsProj=doorPayoutProj+barPayoutProj+tablePayoutProj+artFeeProj-houseFeeProj;
+  const totalPayoutsActual=n(doorPayoutActual)+n(barPayoutActual)+n(tablePayoutActual)+n(artFeeActualVal);
+  const npcProj=grossRevProj-totalPayoutsProj-cogsProj;
+  const npcActual=grossRevActual-totalPayoutsActual-cogsActual;
+  const staffActual=na(e.staffing_cost_actual);
+  const netActual=na(e.net_revenue_actual);
+  const netProj=null;
+  const marginActual=grossRevActual>0?(n(netActual)/grossRevActual*100):0;
+  const effectiveSplit=n(e.actual_effective_split||e.effective_split_percentage);
+  const sph=n(e.spend_per_head_actual);const tips=n(e.tips);
+  const bottlePct=n(barActual)>0?(s.bottle_service_revenue/n(barActual)*100):0;
+
+  return `<div class="detail-section">
+    <div class="detail-section-title">Event Header</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Event Name</span><span style="font-weight:600">${e.event_name||'—'}</span></div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Date</span>${e.event_date?e.event_date.substring(0,10):'—'} · ${e.day_of_week||''}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Event Type</span>${e.tier1_category||'—'}${e.tier2_subcategory?' · '+e.tier2_subcategory:''}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Promoter</span>${e.promoter_name||'—'}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Artist</span>${e.artist_name||'—'}</div>
+      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Attendance</span>${e.actual_attendance||'—'} actual / ${e.expected_attendance||'—'} expected${drawPct?' ('+drawPct+'% draw)':''}</div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Full P&amp;L — Projected vs. Actual</div>
+    <table class="sr-table">
+      <thead><tr><th style="text-align:left">Line Item</th><th>Projected</th><th>Actual</th><th>Variance</th></tr></thead>
+      <tbody>
+        ${ph('Revenue')}
+        ${row('Gross ticket revenue',doorProj,doorActual,false)}
+        ${row('Gross bar revenue',barProj,barActual,false)}
+        ${row('Less COGS',cogsProj>0?-cogsProj:0,cogsActual>0?-cogsActual:0,true)}
+        ${row('Table & bottle service',tableProj,tableActual,false)}
+        ${row('Total Gross Revenue',grossRevProj,grossRevActual,false,{total:true})}
+        ${divider()}
+        ${ph('Promoter & Artist Payouts')}
+        ${row('Door payout',doorPayoutProj,doorPayoutActual,true)}
+        ${row('Bar payout',barPayoutProj,barPayoutActual,true)}
+        ${row('Table payout',tablePayoutProj,tablePayoutActual,true)}
+        ${row('Artist fee',artFeeProj,artFeeActualVal,true)}
+        ${row('House fee',houseFeeProj,null,false)}
+        ${row('Net to Venue (pre-cost)',npcProj,npcActual,false,{total:true})}
+        ${divider()}
+        ${ph('Operating Costs')}
+        ${row('Staffing (actual total)',null,staffActual,true)}
+        ${row('Total Costs',null,staffActual,true,{total:true})}
+        ${divider()}
+        ${ph('Bottom Line')}
+        <tr class="total-row">
+          <td>Net to Venue</td>
+          <td>—</td>
+          <td style="color:${netActual>=0?'var(--green)':'var(--red)'};font-weight:600">${netActual?'$'+Math.round(netActual).toLocaleString():'—'}</td>
+          <td class="var-flat">—</td>
+        </tr>
+        <tr>
+          <td>Margin %</td>
+          <td>—</td>
+          <td>${marginActual?marginActual.toFixed(1)+'%':'—'}</td>
+          <td class="var-flat">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">Net to Venue Summary</div>
+    <div class="detail-grid-3">
+      <div class="detail-stat highlight"><div class="detail-stat-label">Total Revenue</div><div class="detail-stat-value">${fmt2(grossRevActual||grossRevProj)}</div><div class="detail-stat-sub">actual</div></div>
+      <div class="detail-stat ${netActual>=0?'green':'red'}"><div class="detail-stat-label">Net to Venue</div><div class="detail-stat-value">${fmt2(netActual)}</div><div class="detail-stat-sub">actual</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Effective Split %</div><div class="detail-stat-value">${effectiveSplit?fmtPct(effectiveSplit):'—'}</div><div class="detail-stat-sub">promoter's share</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Bar Spend / Head</div><div class="detail-stat-value">${sph?'$'+sph.toFixed(2):'—'}</div><div class="detail-stat-sub">actual</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Tips</div><div class="detail-stat-value">${fmt2(tips)}</div><div class="detail-stat-sub">${barActual>0?(tips/barActual*100).toFixed(1)+'% of bar':''}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">Bottle Svc % of Bar</div><div class="detail-stat-value">${bottlePct>0?bottlePct.toFixed(1)+'%':'—'}</div><div class="detail-stat-sub">${fmt2(s.bottle_service_revenue)} · ${s.bottle_count} bottles</div></div>
+    </div>
+  </div>
+  ${e.settlement_notes?`<div class="detail-section"><div class="detail-section-title">Settlement Notes</div><div class="obs-box"><div class="obs-body">${e.settlement_notes}</div></div></div>`:''}`;
+}
+
+async function renderTPPanel() {
+  const panel = g('panel-tp');
+  if (!eventData) return;
+  const e = eventData.event;
+  const s = eventData.summary;
+  panel.innerHTML = `<div class="detail-section"><div class="tp-loading">Generating pre-meeting brief…</div></div>`;
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+  const prompt = `You are a venue operator preparing for a deal conversation with a promoter. Based on the following event data, write a concise, professional pre-meeting brief with talking points. Be direct and data-driven. Structure it clearly with sections. Do not use bullet points — use short paragraphs. Tone: professional, constructive, focused on future deal terms.
+
+EVENT: ${e.event_name||'Event'}
+DATE: ${e.event_date?e.event_date.substring(0,10):''}
+PROMOTER: ${e.promoter_name||''}
+ARTIST: ${e.artist_name||'N/A'}
+PERFORMANCE:
+- Expected attendance: ${e.expected_attendance||'N/A'} | Actual: ${e.actual_attendance||'N/A'} (${drawPct?drawPct+'% of promise':'N/A'})
+- Bar revenue: projected $${parseFloat(e.projected_bar_revenue||0).toLocaleString()} | actual $${parseFloat(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue||0).toLocaleString()}
+- Door revenue: projected $${parseFloat(e.projected_door_revenue||0).toLocaleString()} | actual $${parseFloat(e.actual_door_revenue||0).toLocaleString()}
+- Bar spend per head: $${parseFloat(e.spend_per_head_actual||0).toFixed(2)}
+- Net to venue: $${parseFloat(e.net_revenue_actual||0).toLocaleString()}
+- Effective split: ${parseFloat(e.actual_effective_split||e.effective_split_percentage||0).toFixed(1)}%
+DEAL TERMS: Door Venue ${100-(e.door_split_promoter||0)}% / Pro ${e.door_split_promoter||0}%, Bar Venue ${100-(e.bar_split_promoter||0)}% / Pro ${e.bar_split_promoter||0}%, Artist fee $${parseFloat(e.artist_fee_landed||0).toLocaleString()}
+BOTTLE SERVICE: $${s.bottle_service_revenue?.toLocaleString()||0} (${s.bottle_count} bottles)
+NOTES: ${e.promoter_performance_notes||'None'}${e.what_to_change?'\nWhat to change: '+e.what_to_change:''}
+
+Write: (1) one-paragraph event overview, (2) what the data says about this promoter on this night, (3) specific talking points for the next deal negotiation, (4) recommended deal terms for the next similar event.`;
+
+  try {
+    const res = await fetch(`${WORKSHOP_URL}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const result = await res.json();
+    panel.innerHTML = `<div class="detail-section">
+      <div class="detail-section-title">Pre-Meeting Brief — ${e.promoter_name||'Promoter'}</div>
+      <div class="tp-content">${result.text||'Could not generate.'}</div>
+      <button class="tp-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(()=>{this.textContent='✓ Copied';setTimeout(()=>this.textContent='Copy to Clipboard',2000)})">Copy to Clipboard</button>
+    </div>`;
+  } catch(err) {
+    panel.innerHTML = `<div class="detail-section"><div class="tp-loading">Could not generate — check connection.</div></div>`;
+  }
+}
+
+async function loadMarketNarratives(data) {
+  const e = data.event;
+  const ctx = getMarketContext(e.event_date, e.tier1_category);
+  const drawPct = e.actual_attendance && e.expected_attendance
+    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
+  const projNet = parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0);
+  const marketList = ctx.events.length>0 ? ctx.events.map(ev=>`- ${ev.name} (${ev.type}${ev.demo?', '+ev.demo:''})`).join('\n') : '- No major market events recorded';
+  const compList = ctx.competitors.length>0 ? ctx.competitors.map(ev=>ev.name).join(', ') : 'none';
+  const overlapList = ctx.overlapEvents.length>0 ? ctx.overlapEvents.map(ev=>ev.name).join(', ') : 'none';
+
+  const prompt = `You are a venue performance analyst. Write 2-3 sentences interpreting how Atlanta market conditions on ${e.event_date?e.event_date.substring(0,10):'this date'} may have influenced this event's performance. Be specific and factual.
+
+Event: ${e.event_name||'—'}, ${e.tier1_category||'—'}, Promoter: ${e.promoter_name||'—'}
+Attendance: ${e.actual_attendance||'—'} actual vs ${e.expected_attendance||'—'} projected${drawPct?' ('+drawPct+'% draw)':''}
+Revenue: $${parseFloat(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue||0).toLocaleString()} bar vs $${parseFloat(e.projected_bar_revenue||0).toLocaleString()} projected
+Net to Venue: $${parseFloat(e.net_revenue_actual||0).toLocaleString()}
+Market conditions: ${marketList}
+Direct competitors: ${compList}
+Demographic overlap events: ${overlapList}
+
+Under 60 words. Past tense. Focus on whether market conditions helped, hurt, or were neutral.`;
+
+  try {
+    const res = await fetch(`${WORKSHOP_URL}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const result = await res.json();
+    const text = result.text||'';
+    const html = `<span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Market Narrative</span>${text}`;
+    const el = g('market-narrative-night');
+    if (el) el.innerHTML = html;
+  } catch(err) {
+    const el = g('market-narrative-night');
+    if (el) el.innerHTML = '<span style="color:var(--text3);font-style:italic">Could not generate narrative.</span>';
+  }
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('event_id');
+  if (eventId) {
+    loadEvent(parseInt(eventId, 10));
+  } else {
+    g('page-root').innerHTML = `<div class="page-error">
+      <div class="page-error-title">No event specified</div>
+      <div class="page-error-sub">Open an event from the <a href="/api/calendar" style="color:var(--blue)">calendar</a> to see its recap.</div>
+    </div>`;
+  }
+});
+</script>
+</body>
+</html>
