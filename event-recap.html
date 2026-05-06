@@ -4,261 +4,1407 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VenueOS · Performance Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+/* ─────────────────────────────────────────────────────────────────────────
+   DESIGN SYSTEM — VenueOS Performance Dashboard
+   Editorial executive aesthetic. Restrained palette. Strong hierarchy.
+   ───────────────────────────────────────────────────────────────────────── */
 :root {
-  --bg:#F2F0ED; --surface:#FFFFFF; --surface2:#F8F7F5; --surface3:#EEECEA;
-  --border:#E4E0DB; --border2:#D0CBC4;
-  --text1:#18160F; --text2:#504C46; --text3:#908B84;
-  --blue:#1D4E75; --blue2:#2C5F8A; --blue-light:#EBF2F9; --blue-mid:#BDD4E8;
-  --green:#1E6B3C; --green2:#2A7A4B; --green-light:#EAF4EE; --green-mid:#A8D9BC;
-  --red:#A02828; --red2:#B83232; --red-light:#FCEAEA; --red-mid:#EDBBBB;
-  --amber:#9A4D00; --amber2:#B85C00; --amber-light:#FDF2E8; --amber-mid:#F0C99A;
-  --purple:#5B2D8E; --purple-light:#F3EDF9;
-  --gold:#7A5800;
-  --radius:10px; --radius-lg:14px; --radius-xl:18px;
-  --shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 12px rgba(0,0,0,0.04);
-  --shadow-lg:0 4px 16px rgba(0,0,0,0.1),0 1px 4px rgba(0,0,0,0.06);
+  /* Surfaces — warm off-white system */
+  --bg:        #FAFAF7;
+  --surface:   #FFFFFF;
+  --surface-2: #F4F2EE;
+  --surface-3: #ECE9E3;
+  --border:    #E4E0DA;
+  --border-2:  #D1CCC4;
+  --border-3:  #B5AFA6;
+
+  /* Ink */
+  --ink-1: #15130E;
+  --ink-2: #423F39;
+  --ink-3: #757069;
+  --ink-4: #9E988F;
+
+  /* Brand — deep editorial navy */
+  --brand:        #16395C;
+  --brand-hover:  #1F4E7A;
+  --brand-light:  #E9F0F7;
+  --brand-mid:    #B8CDDE;
+
+  /* Semantic — saturated, deep, restrained */
+  --pos:        #1B5E3F;
+  --pos-2:      #237D54;
+  --pos-light:  #E8F1EC;
+  --pos-mid:    #A6CDB6;
+
+  --neg:        #8E1F1F;
+  --neg-2:      #B12B2B;
+  --neg-light:  #F7E9E9;
+  --neg-mid:    #DFB6B6;
+
+  --warn:       #7A4A00;
+  --warn-2:     #985C00;
+  --warn-light: #F8EFE0;
+  --warn-mid:   #DEC499;
+
+  --gold:       #6B4F0E;
+  --violet:     #5C3380;
+
+  /* Radii + shadows */
+  --r-sm: 6px;
+  --r:    10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+
+  --sh-1: 0 1px 2px rgba(20,16,8,0.04), 0 1px 3px rgba(20,16,8,0.04);
+  --sh-2: 0 1px 2px rgba(20,16,8,0.05), 0 4px 14px rgba(20,16,8,0.05);
+  --sh-3: 0 4px 18px rgba(20,16,8,0.08), 0 1px 4px rgba(20,16,8,0.05);
+
+  /* Typography scale */
+  --t-display: 56px;
+  --t-h1: 30px;
+  --t-h2: 22px;
+  --t-h3: 17px;
+  --t-body: 13.5px;
+  --t-sm: 12px;
+  --t-xs: 10.5px;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);font-size:14px;line-height:1.5;min-height:100vh}
 
-/* ── Nav ─────────────────────────────────────────────────────────────────── */
-.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;justify-content:space-between;align-items:center;height:52px;position:sticky;top:0;z-index:200;box-shadow:0 1px 0 var(--border)}
-.nav-left{display:flex;align-items:center;gap:16px}
-.logo{font-size:16px;font-weight:700;letter-spacing:-0.03em;color:var(--text1);text-decoration:none}
-.logo em{color:var(--blue2);font-style:normal}
-.nav-sep{width:1px;height:20px;background:var(--border)}
-.nav-title{font-size:13px;font-weight:500;color:var(--text2)}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:500;color:var(--text2);background:var(--surface);cursor:pointer;text-decoration:none;transition:all .15s;font-family:'DM Sans',sans-serif}
-.nav-btn:hover{border-color:var(--blue2);color:var(--blue2)}
-.nav-btn.primary{background:var(--blue2);color:#fff;border-color:var(--blue2)}
-.nav-btn.primary:hover{background:var(--blue)}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink-1);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
 
-/* ── Mode bar ────────────────────────────────────────────────────────────── */
-.mode-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:0;height:44px}
-.mode-tab{padding:0 18px;height:44px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
-.mode-tab.active{color:var(--blue2);border-bottom-color:var(--blue2)}
-.mode-tab:hover:not(.active){color:var(--text1)}
-.mode-sep{flex:1}
+/* Numerals always tabular */
+.num { font-family: 'DM Mono', ui-monospace, monospace; font-feature-settings: 'tnum' 1; letter-spacing: -0.02em; }
 
-/* ── Search / Range bar ──────────────────────────────────────────────────── */
-.search-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.search-field{display:flex;flex-direction:column;gap:3px}
-.search-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3)}
-.search-input{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text1);background:var(--surface);min-width:150px;transition:border-color .15s}
-.search-input:focus{outline:none;border-color:var(--blue2)}
-.search-input.sm{min-width:110px}
-.range-presets{display:flex;gap:4px;align-items:flex-end;padding-bottom:0}
-.range-btn{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;color:var(--text3);background:var(--surface);cursor:pointer;transition:all .15s;white-space:nowrap}
-.range-btn:hover,.range-btn.active{background:var(--blue-light);color:var(--blue2);border-color:var(--blue-mid)}
-.search-go{height:34px;padding:0 16px;background:var(--blue2);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
-.search-go:hover{background:var(--blue)}
+/* Eyebrows — small caps tracker */
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 
-/* ── Page wrapper ────────────────────────────────────────────────────────── */
-.page{padding:20px 24px;max-width:1280px;margin:0 auto}
+/* ── Top nav ───────────────────────────────────────────────────────────── */
+.nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.nav-left { display: flex; align-items: center; gap: 18px; }
+.logo {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+.logo em { color: var(--brand); font-style: normal; }
+.nav-sep { width: 1px; height: 22px; background: var(--border); }
+.nav-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: -0.005em;
+}
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  background: var(--surface);
+  transition: all .12s;
+}
+.nav-btn:hover { border-color: var(--brand); color: var(--brand); }
+.nav-btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+.nav-btn.primary:hover { background: var(--brand-hover); }
 
-/* ── KPI scorecard ───────────────────────────────────────────────────────── */
-.scorecard{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px}
-@media(max-width:1100px){.scorecard{grid-template-columns:repeat(4,1fr)}}
-@media(max-width:700px){.scorecard{grid-template-columns:repeat(2,1fr)}}
+/* ── Mode + search bars ────────────────────────────────────────────────── */
+.mode-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+.mode-tab {
+  padding: 0 18px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .12s;
+  letter-spacing: -0.005em;
+}
+.mode-tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+.mode-tab:hover:not(.active) { color: var(--ink-1); }
 
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;position:relative;overflow:hidden;cursor:default;transition:box-shadow .15s}
-.kpi:hover{box-shadow:var(--shadow-lg)}
-.kpi-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
-.kpi-value{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;letter-spacing:-0.02em;line-height:1;margin-bottom:5px}
-.kpi-sub{font-size:11px;color:var(--text3);line-height:1.3}
-.kpi-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue-mid);border-radius:0 0 0 0}
-.kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;margin-top:4px}
-.kpi.green{border-top:3px solid var(--green2)}
-.kpi.green .kpi-value{color:var(--green2)}
-.kpi.red{border-top:3px solid var(--red2)}
-.kpi.red .kpi-value{color:var(--red2)}
-.kpi.amber{border-top:3px solid var(--amber2)}
-.kpi.amber .kpi-value{color:var(--amber2)}
-.kpi.blue{border-top:3px solid var(--blue2)}
-.kpi.blue .kpi-value{color:var(--blue2)}
-.kpi.neutral{border-top:3px solid var(--border2)}
-.kpi.hero{border-top:3px solid var(--blue2);background:var(--blue-light)}
-.kpi.hero .kpi-value{color:var(--blue)}
-.badge-up{background:var(--green-light);color:var(--green2);border:1px solid var(--green-mid)}
-.badge-down{background:var(--red-light);color:var(--red2);border:1px solid var(--red-mid)}
-.badge-flat{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
+.search-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.search-field { display: flex; flex-direction: column; gap: 4px; }
+.search-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.search-input {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink-1);
+  background: var(--surface);
+  min-width: 160px;
+  transition: border-color .12s;
+}
+.search-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light); }
+.search-input.sm { min-width: 120px; }
+.range-presets { display: flex; gap: 4px; }
+.range-btn {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  background: var(--surface);
+  letter-spacing: 0.02em;
+  transition: all .12s;
+}
+.range-btn:hover, .range-btn.active {
+  background: var(--brand-light);
+  color: var(--brand);
+  border-color: var(--brand-mid);
+}
+.search-go {
+  height: 36px;
+  padding: 0 18px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  transition: background .12s;
+}
+.search-go:hover { background: var(--brand-hover); }
 
-/* ── AI summary strip ────────────────────────────────────────────────────── */
-.ai-strip{background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 100%);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
-.ai-icon{width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.ai-content{}
-.ai-label{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:4px}
-.ai-text{font-size:13px;color:#fff;line-height:1.65}
-.ai-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.ai-chip{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)}
-.ai-chip.warn{background:rgba(251,191,36,0.2);border-color:rgba(251,191,36,0.4);color:#FCD34D}
-.ai-chip.good{background:rgba(74,222,128,0.15);border-color:rgba(74,222,128,0.3);color:#4ADE80}
+/* ── Page ──────────────────────────────────────────────────────────────── */
+.page {
+  padding: 28px 28px 64px;
+  max-width: 1320px;
+  margin: 0 auto;
+}
 
-/* ── Two-column layout ───────────────────────────────────────────────────── */
-.cols{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-bottom:16px}
-.cols.full{grid-template-columns:1fr}
-@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+/* ── Event header — editorial masthead ─────────────────────────────────── */
+.masthead {
+  margin-bottom: 28px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 22px;
+}
+.masthead-left { min-width: 0; }
+.masthead-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.masthead-eyebrow .badge-status {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.badge-status.completed { background: var(--pos-light); color: var(--pos); border: 1px solid var(--pos-mid); }
+.badge-status.confirmed { background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand-mid); }
+.badge-status.hold      { background: var(--warn-light); color: var(--warn); border: 1px solid var(--warn-mid); }
+.masthead-event-name {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: var(--t-h1);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink-1);
+  margin-bottom: 8px;
+}
+.masthead-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+.masthead-meta > span { display: inline-flex; align-items: center; }
+.masthead-meta .sep {
+  margin: 0 12px;
+  color: var(--ink-4);
+  font-weight: 400;
+}
+.masthead-meta .label { color: var(--ink-3); margin-right: 5px; font-size: 12px; }
+.masthead-meta .promoter-link {
+  color: var(--brand);
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 1px dashed var(--brand-mid);
+}
+.masthead-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+  min-width: 180px;
+}
+.masthead-right .eyebrow { font-size: 9.5px; }
+.masthead-right .date-day {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+  line-height: 1.1;
+}
+.masthead-right .date-full {
+  font-size: 12px;
+  color: var(--ink-3);
+}
 
-/* ── Cards ───────────────────────────────────────────────────────────────── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow)}
-.card+.card{margin-top:14px}
-.card-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.card-title-action{font-size:11px;font-weight:500;color:var(--blue2);cursor:pointer;text-transform:none;letter-spacing:0}
+/* ── Hero KPI cards (3-card row) ────────────────────────────────────────── */
+.hero-row {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 980px) { .hero-row { grid-template-columns: 1fr; } }
 
-/* ── Waterfall / payout chart ────────────────────────────────────────────── */
-.waterfall{display:flex;flex-direction:column;gap:5px}
-.wf-row{display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;min-height:28px}
-.wf-label{font-size:12px;color:var(--text2);text-align:right}
-.wf-bar-wrap{position:relative;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden}
-.wf-bar{height:100%;border-radius:4px;transition:width .5s ease}
-.wf-bar.rev{background:var(--blue-mid)}
-.wf-bar.payout{background:var(--red-mid)}
-.wf-bar.cost{background:var(--amber-mid)}
-.wf-bar.net-pos{background:var(--green-mid)}
-.wf-bar.net-neg{background:var(--red-mid)}
-.wf-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;text-align:right;white-space:nowrap;min-width:72px}
-.wf-val.pos{color:var(--green2)}.wf-val.neg{color:var(--red2)}.wf-val.dim{color:var(--text3)}
-.wf-divider{grid-column:1/-1;height:1px;background:var(--border);margin:3px 0}
-.wf-total .wf-label{font-weight:600;color:var(--text1)}
-.wf-total .wf-val{font-size:14px}
+.hero-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 22px 24px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 168px;
+  box-shadow: var(--sh-1);
+}
+.hero-card.primary {
+  background: linear-gradient(180deg, #14304F 0%, #16395C 100%);
+  color: #fff;
+  border: none;
+}
+.hero-card.primary .eyebrow { color: rgba(255,255,255,0.62); }
+.hero-card.primary .h-sub  { color: rgba(255,255,255,0.78); }
+.hero-card.primary .h-band { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.9); }
 
-/* ── Bar mix ─────────────────────────────────────────────────────────────── */
-.bar-mix-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
-@media(max-width:700px){.bar-mix-grid{grid-template-columns:repeat(3,1fr)}}
-.mix-tile{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center}
-.mix-tile-label{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
-.mix-tile-value{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--text1)}
-.mix-tile-sub{font-size:10px;color:var(--text3);margin-top:2px}
-.mix-tile.spirits{border-top:3px solid var(--blue2)}
-.mix-tile.bottle{border-top:3px solid var(--amber2)}
-.mix-tile.beer{border-top:3px solid var(--gold)}
-.mix-tile.cocktail{border-top:3px solid var(--green2)}
-.mix-tile.na{border-top:3px solid var(--text3)}
+.h-eyebrow { display: flex; justify-content: space-between; align-items: center; }
+.h-value {
+  font-family: 'Inter Tight', sans-serif;
+  font-feature-settings: 'tnum' 1;
+  font-size: var(--t-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  margin: 12px 0 6px;
+}
+.h-value.tight { font-size: 44px; }
+.h-value.pos { color: var(--pos); }
+.h-value.neg { color: var(--neg); }
+.h-value.warn { color: var(--warn); }
+.h-sub {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.h-band {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+  align-self: flex-start;
+  letter-spacing: -0.005em;
+}
+.h-band.pos { background: var(--pos-light); border-color: var(--pos-mid); color: var(--pos); }
+.h-band.neg { background: var(--neg-light); border-color: var(--neg-mid); color: var(--neg); }
+.h-band.warn { background: var(--warn-light); border-color: var(--warn-mid); color: var(--warn); }
+.h-band-arrow { font-size: 9px; }
+
+.h-progress {
+  height: 4px;
+  background: var(--surface-3);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.h-progress-bar { height: 100%; border-radius: 2px; transition: width .6s ease; }
+.h-progress-marker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 10px;
+  background: var(--ink-1);
+  border-radius: 1px;
+}
+
+/* Margin-pad specific */
+.margin-pad-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  margin-top: 8px;
+  font-size: 11.5px;
+}
+.margin-pad-detail .row { display: flex; justify-content: space-between; padding: 2px 0; }
+.margin-pad-detail .label { color: var(--ink-3); }
+.margin-pad-detail .val { font-family: 'DM Mono', monospace; color: var(--ink-1); font-weight: 500; }
+
+/* ── Tier-2 KPI grid ───────────────────────────────────────────────────── */
+.tier2-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+@media (max-width: 1100px) { .tier2-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 660px)  { .tier2-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-eyebrow {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-family: 'Inter Tight', sans-serif;
+  font-feature-settings: 'tnum' 1;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--ink-1);
+  margin-bottom: 4px;
+}
+.kpi-value.dim { color: var(--ink-4); }
+.kpi-sub { font-size: 11.5px; color: var(--ink-3); line-height: 1.4; }
+.kpi-band {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  align-self: flex-start;
+}
+.kpi-band.pos { background: var(--pos-light); color: var(--pos); }
+.kpi-band.neg { background: var(--neg-light); color: var(--neg); }
+.kpi-band.flat { background: var(--surface-2); color: var(--ink-3); }
+.kpi.has-spark { padding-bottom: 8px; }
+.kpi-spark { height: 28px; margin-top: 2px; }
+
+/* ── AI intelligence strip ─────────────────────────────────────────────── */
+.intel-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 18px;
+  align-items: start;
+  box-shadow: var(--sh-1);
+}
+.intel-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Inter Tight', sans-serif;
+}
+.intel-content { min-width: 0; }
+.intel-content .eyebrow { margin-bottom: 6px; }
+.intel-rule {
+  font-size: 13.5px;
+  color: var(--ink-1);
+  line-height: 1.55;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.intel-narrative {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.65;
+  margin-top: 8px;
+}
+.intel-narrative.loading { color: var(--ink-4); font-style: italic; }
+.intel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.intel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0;
+  border: 1px solid;
+}
+.intel-chip.pos  { background: var(--pos-light); color: var(--pos); border-color: var(--pos-mid); }
+.intel-chip.neg  { background: var(--neg-light); color: var(--neg); border-color: var(--neg-mid); }
+.intel-chip.warn { background: var(--warn-light); color: var(--warn); border-color: var(--warn-mid); }
+.intel-chip.info { background: var(--brand-light); color: var(--brand); border-color: var(--brand-mid); }
+.intel-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Collectiv callout ─────────────────────────────────────────────────── */
+.callout-collectiv {
+  background: linear-gradient(95deg, #FCF6E8 0%, #F8EFE0 100%);
+  border: 1px solid var(--warn-mid);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+.callout-collectiv .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--warn);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+.callout-collectiv .body {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.callout-collectiv .body strong { color: var(--warn); font-weight: 600; }
+.callout-collectiv .figure {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--warn);
+  letter-spacing: -0.02em;
+  text-align: right;
+}
+.callout-collectiv .figure .label {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warn-2);
+  margin-top: 2px;
+  letter-spacing: 0.1em;
+}
+
+/* ── Two column layout ─────────────────────────────────────────────────── */
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 2.05fr) minmax(280px, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 1080px) { .cols { grid-template-columns: 1fr; } }
+
+/* ── Cards ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 22px 24px;
+  box-shadow: var(--sh-1);
+  margin-bottom: 14px;
+}
+.card:last-child { margin-bottom: 0; }
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 18px;
+}
+.card-head h2 {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  color: var(--ink-1);
+}
+.card-head .meta {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+/* ── SVG Waterfall ─────────────────────────────────────────────────────── */
+.waterfall {
+  margin-top: 4px;
+}
+.wf-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 130px;
+  gap: 14px;
+  align-items: center;
+  height: 30px;
+  position: relative;
+}
+.wf-label {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-align: right;
+  letter-spacing: -0.005em;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.wf-label .marker {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-4);
+  width: 14px;
+  text-align: center;
+}
+.wf-bar-track {
+  position: relative;
+  height: 22px;
+  background: transparent;
+}
+.wf-bar {
+  position: absolute;
+  top: 4px;
+  height: 14px;
+  border-radius: 2px;
+  transition: width .55s cubic-bezier(.2,.6,.2,1);
+}
+.wf-bar.add  { background: linear-gradient(180deg, #2E6FA1 0%, #1F4E7A 100%); }
+.wf-bar.cogs { background: linear-gradient(180deg, #B85A2C 0%, #8E4218 100%); }
+.wf-bar.split{ background: linear-gradient(180deg, #B12B2B 0%, #8E1F1F 100%); }
+.wf-bar.opex { background: linear-gradient(180deg, #5C3380 0%, #422458 100%); }
+.wf-bar.pos-total  { background: linear-gradient(180deg, #237D54 0%, #1B5E3F 100%); }
+.wf-bar.neg-total  { background: linear-gradient(180deg, #B12B2B 0%, #8E1F1F 100%); }
+.wf-bar.subtotal-line { background: var(--ink-3); height: 2px; top: 10px; }
+.wf-runline {
+  position: absolute;
+  top: 11px;
+  height: 2px;
+  background: var(--brand-mid);
+  border-radius: 1px;
+}
+.wf-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.wf-val.dim   { color: var(--ink-4); font-weight: 400; }
+.wf-val.pos   { color: var(--pos); }
+.wf-val.neg   { color: var(--neg); }
+.wf-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 0;
+}
+.wf-total {
+  margin: 4px 0;
+}
+.wf-total .wf-label {
+  font-weight: 600;
+  color: var(--ink-1);
+  font-size: 13px;
+}
+.wf-total .wf-val { font-size: 14.5px; font-weight: 600; }
+.wf-grand {
+  background: var(--surface-2);
+  border-radius: var(--r);
+  padding: 8px 0;
+  margin-top: 8px;
+}
+.wf-grand .wf-label { font-size: 14px; font-weight: 700; color: var(--ink-1); }
+.wf-grand .wf-val   { font-size: 19px; font-weight: 700; }
+
+/* Footer note inside the waterfall */
+.wf-foot {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  letter-spacing: -0.005em;
+}
+.wf-foot .key { display: flex; align-items: center; gap: 6px; }
+.wf-foot .key .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+/* ── Projected vs Actual ───────────────────────────────────────────────── */
+.pva-table { width: 100%; border-collapse: collapse; }
+.pva-table th {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+.pva-table th:first-child { text-align: left; }
+.pva-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  font-size: 13px;
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -0.01em;
+}
+.pva-table td:first-child {
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink-2);
+  letter-spacing: -0.005em;
+}
+.pva-table tr:last-child td { border-bottom: none; }
+.pva-table td.pos { color: var(--pos); }
+.pva-table td.neg { color: var(--neg); }
+.pva-table td.dim { color: var(--ink-4); }
+.pva-table tr.total td {
+  font-weight: 600;
+  border-top: 2px solid var(--border-2);
+  font-size: 14px;
+  color: var(--ink-1);
+}
+.pva-bar {
+  display: inline-block;
+  height: 4px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+  transition: width .4s ease;
+}
+.pva-bar.pos { background: var(--pos-2); }
+.pva-bar.neg { background: var(--neg-2); }
+
+/* ── Right rail components ─────────────────────────────────────────────── */
+.deal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 12.5px;
+}
+.deal-row:last-child { border-bottom: none; }
+.deal-row .label { color: var(--ink-3); font-size: 11.5px; }
+.deal-row .val { color: var(--ink-1); font-weight: 500; }
+
+.demand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.demand-high   { background: var(--neg-light); color: var(--neg); border: 1px solid var(--neg-mid); }
+.demand-medium { background: var(--warn-light); color: var(--warn); border: 1px solid var(--warn-mid); }
+.demand-low    { background: var(--pos-light); color: var(--pos); border: 1px solid var(--pos-mid); }
+
+.mkt-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  font-size: 12px;
+}
+.mkt-row:last-child { border-bottom: none; }
+.mkt-type {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: 64px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.mkt-name { font-size: 12.5px; color: var(--ink-2); flex: 1; line-height: 1.45; }
+.mkt-name strong { font-weight: 500; color: var(--ink-1); }
+.mkt-name .meta { color: var(--ink-4); font-size: 11px; }
+.mkt-cap {
+  font-size: 10.5px;
+  color: var(--ink-4);
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+.mkt-warn { color: var(--warn-2); }
+
+.mkt-narrative {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border-left: 3px solid var(--brand);
+  border-radius: 0 8px 8px 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
+.mkt-narrative .eyebrow { margin-bottom: 4px; display: block; }
+.mkt-narrative.loading { color: var(--ink-4); font-style: italic; }
+
+/* ── Bar mix ───────────────────────────────────────────────────────────── */
+.barmix-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 6px;
+}
+@media (max-width: 760px) { .barmix-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.mix-tile {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 14px 12px;
+  position: relative;
+  overflow: hidden;
+}
+.mix-tile-eyebrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.mix-tile-name {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.mix-tile-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-family: 'DM Mono', monospace;
+}
+.mix-tile-value {
+  font-family: 'Inter Tight', sans-serif;
+  font-feature-settings: 'tnum' 1;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--ink-1);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.mix-tile-value.dim { color: var(--ink-4); }
+.mix-tile-bench {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mix-tile-bench.pos { color: var(--pos); }
+.mix-tile-bench.neg { color: var(--neg); }
+.mix-tile.spirits  { border-top: 3px solid var(--brand); }
+.mix-tile.bottle   { border-top: 3px solid var(--warn-2); }
+.mix-tile.beer     { border-top: 3px solid var(--gold); }
+.mix-tile.cocktail { border-top: 3px solid var(--pos-2); }
+.mix-tile.na       { border-top: 3px solid var(--ink-4); }
 
 /* Item table */
-.item-table{width:100%;border-collapse:collapse;font-size:11.5px}
-.item-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
-.item-table th:first-child{text-align:left}
-.item-table td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;font-family:'DM Mono',monospace;font-size:11px}
-.item-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text1)}
-.item-table tr:last-child td{border-bottom:none}
-.item-table tr:hover td{background:var(--surface2)}
-.cat-badge{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle}
-.cat-spirits{background:var(--blue-light);color:var(--blue2)}
-.cat-bottle{background:var(--amber-light);color:var(--amber2)}
-.cat-beer{background:#FDF8E8;color:var(--gold)}
-.cat-cocktail{background:var(--green-light);color:var(--green2)}
-.cat-na{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
-
-/* ── Promoter scorecard ──────────────────────────────────────────────────── */
-.rep-header{background:var(--blue);border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
-.rep-name{font-size:14px;font-weight:600;color:#fff}
-.rep-sub{font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px}
-.rep-score-wrap{text-align:right}
-.rep-score{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;line-height:1}
-.rep-score-lbl{font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-top:2px}
-.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.score-item{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)}
-.score-item-label{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
-.score-item-value{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
-.score-item-sub{font-size:10px;color:var(--text2);margin-top:2px;line-height:1.3}
-.score-bar{height:3px;border-radius:2px;background:var(--border);margin-top:5px}
-.score-bar-fill{height:3px;border-radius:2px}
-.promoter-history-row{display:grid;grid-template-columns:80px 1fr auto auto auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:11px}
-.promoter-history-row:last-child{border-bottom:none}
-.ph-date{color:var(--text3);font-family:'DM Mono',monospace;font-size:10px}
-.ph-name{color:var(--text2);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ph-draw{font-family:'DM Mono',monospace;font-size:11px;font-weight:600}
-.ph-sph{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
-.ph-net{font-family:'DM Mono',monospace;font-size:11px}
-.draw-good{color:var(--green2)}.draw-ok{color:var(--amber2)}.draw-bad{color:var(--red2)}
-
-/* ── Market context ──────────────────────────────────────────────────────── */
-.demand-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
-.demand-high{background:var(--green-light);color:var(--green2);border:1px solid var(--green-mid)}
-.demand-medium{background:var(--amber-light);color:var(--amber2);border:1px solid var(--amber-mid)}
-.demand-low{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
-.mkt-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
-.mkt-row:last-child{border-bottom:none}
-.mkt-type{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;min-width:64px;padding-top:1px}
-.mkt-name{font-size:12px;color:var(--text2);flex:1}
-.mkt-warn{color:var(--amber2)}
-.mkt-cap{font-size:10px;color:var(--text3);white-space:nowrap}
-
-/* ── PvA table ───────────────────────────────────────────────────────────── */
-.pva-table{width:100%;border-collapse:collapse}
-.pva-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
-.pva-table th:first-child{text-align:left}
-.pva-table td{padding:8px 10px;border-bottom:1px solid rgba(0,0,0,0.04);font-size:12px;text-align:right;font-family:'DM Mono',monospace}
-.pva-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif;color:var(--text2)}
-.pva-table tr:last-child td{border-bottom:none}
-.pva-table tr.total td{font-weight:600;border-top:2px solid var(--border2);font-size:13px;color:var(--text1)}
-.pva-table td.pos{color:var(--green2)}.pva-table td.neg{color:var(--red2)}.pva-table td.dim{color:var(--text3)}
-.pva-group{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:8px 10px 4px;background:var(--surface2)}
-
-/* ── Range view charts ───────────────────────────────────────────────────── */
-.chart-wrap{position:relative;height:220px;margin-bottom:4px}
-.range-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
-@media(max-width:800px){.range-summary-grid{grid-template-columns:repeat(3,1fr)}}
-
-/* ── Range event table ───────────────────────────────────────────────────── */
-.event-table{width:100%;border-collapse:collapse}
-.event-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none;white-space:nowrap}
-.event-table th:first-child{text-align:left}
-.event-table th.sort-asc::after{content:' ↑'}
-.event-table th.sort-desc::after{content:' ↓'}
-.event-table td{padding:9px 12px;border-bottom:1px solid rgba(0,0,0,0.05);font-size:12px;text-align:right;font-family:'DM Mono',monospace}
-.event-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif}
-.event-table tbody tr{cursor:pointer;transition:background .1s}
-.event-table tbody tr:hover td{background:var(--blue-light)}
-.event-table tbody tr:last-child td{border-bottom:none}
-.event-table .ev-name{font-weight:500;color:var(--text1);font-size:12px}
-.event-table .ev-meta{font-size:10px;color:var(--text3);font-family:'DM Sans',sans-serif}
-.event-table td.pos{color:var(--green2)}.event-table td.neg{color:var(--red2)}
-.event-table tr.total-row td{font-weight:600;border-top:2px solid var(--border2);background:var(--surface2);font-size:13px}
-
-/* ── Export modal ────────────────────────────────────────────────────────── */
-.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal-box{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:400px;box-shadow:var(--shadow-lg)}
-.modal-title{font-size:15px;font-weight:600;margin-bottom:4px}
-.modal-sub{font-size:12px;color:var(--text3);margin-bottom:18px}
-.export-opt{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:8px;transition:border-color .15s}
-.export-opt:hover,.export-opt.selected{border-color:var(--blue2);background:var(--blue-light)}
-.export-opt-icon{font-size:20px;margin-top:1px}
-.export-opt-title{font-size:13px;font-weight:600;color:var(--text1);margin-bottom:2px}
-.export-opt-desc{font-size:11px;color:var(--text3)}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-.btn-cancel{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
-.btn-export{padding:8px 20px;border:none;border-radius:8px;background:var(--blue2);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-
-/* ── Misc ────────────────────────────────────────────────────────────────── */
-.loading-state{text-align:center;padding:80px 24px;color:var(--text3);font-size:15px}
-.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
-.empty-state-icon{font-size:32px;margin-bottom:8px}
-.empty-state-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px}
-.section-toggle{font-size:11px;color:var(--blue2);cursor:pointer;font-weight:500}
-.expand-icon{display:inline-block;transition:transform .2s}
-.expand-icon.open{transform:rotate(180deg)}
-.collapsible{overflow:hidden;transition:max-height .3s ease}
-
-/* ── Print ───────────────────────────────────────────────────────────────── */
-@media print{
-  .nav,.mode-bar,.search-bar,.nav-right,.modal-overlay{display:none!important}
-  .page{padding:0;max-width:100%}
-  .card,.kpi,.ai-strip{box-shadow:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  body{background:#fff}
+.items-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
 }
+.items-toggle {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all .12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.items-toggle:hover { border-color: var(--brand); color: var(--brand); }
+.expand-icon { display: inline-block; transition: transform .2s; font-size: 9px; }
+.expand-icon.open { transform: rotate(180deg); }
+.collapsible { overflow: hidden; transition: max-height .3s ease; }
+
+.item-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.item-table th {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.item-table th:first-child { text-align: left; }
+.item-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -0.01em;
+}
+.item-table td:first-child {
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink-1);
+  letter-spacing: -0.005em;
+}
+.item-table tr:last-child td { border-bottom: none; }
+.item-table tr:hover td { background: var(--surface-2); }
+.cat-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+}
+.cat-spirits  { background: var(--brand-light);  color: var(--brand); }
+.cat-bottle   { background: var(--warn-light);   color: var(--warn); }
+.cat-beer     { background: #F8F0DC; color: var(--gold); }
+.cat-cocktail { background: var(--pos-light);    color: var(--pos); }
+.cat-na       { background: var(--surface-3);    color: var(--ink-3); }
+.cat-fees     { background: var(--surface-3);    color: var(--ink-3); }
+
+/* ── Promoter scorecard ────────────────────────────────────────────────── */
+.rep-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1.4fr;
+  gap: 24px;
+}
+@media (max-width: 920px) { .rep-grid { grid-template-columns: 1fr; } }
+
+.rep-headline {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
+  border-radius: var(--r-md);
+  padding: 20px 22px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.rep-headline-left .name {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.rep-headline-left .sub {
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.72);
+}
+.rep-score {
+  text-align: right;
+}
+.rep-score-num {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.rep-score-num.high { color: #5FE3A1; }
+.rep-score-num.mid  { color: #FCD34D; }
+.rep-score-num.low  { color: #FCA5A5; }
+.rep-score-grade {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-top: 4px;
+}
+
+.rep-comp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.rep-comp {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.rep-comp .label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+.rep-comp .label .weight { color: var(--ink-3); font-weight: 600; font-size: 9px; }
+.rep-comp .value {
+  font-family: 'Inter Tight', sans-serif;
+  font-feature-settings: 'tnum' 1;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.rep-comp .sub {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.rep-comp .bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.rep-comp .bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .5s ease;
+}
+.rep-comp.high .value { color: var(--pos); }
+.rep-comp.high .bar-fill { background: var(--pos-2); }
+.rep-comp.mid .value  { color: var(--warn); }
+.rep-comp.mid .bar-fill  { background: var(--warn-2); }
+.rep-comp.low .value  { color: var(--neg); }
+.rep-comp.low .bar-fill  { background: var(--neg-2); }
+.rep-comp.empty .value { color: var(--ink-4); }
+
+.rep-bench {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+}
+.rep-bench-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 12px;
+}
+.rep-bench-row:last-child { border-bottom: none; }
+.rep-bench-row .label { color: var(--ink-2); }
+.rep-bench-row .nums { display: flex; gap: 12px; align-items: center; }
+.rep-bench-row .avg { color: var(--ink-4); font-family: 'DM Mono', monospace; font-size: 11.5px; }
+.rep-bench-row .actual { font-family: 'DM Mono', monospace; font-weight: 600; color: var(--ink-1); font-size: 12.5px; }
+.rep-bench-row .delta { font-family: 'DM Mono', monospace; font-size: 11.5px; padding: 1px 7px; border-radius: 999px; }
+.rep-bench-row .delta.pos { background: var(--pos-light); color: var(--pos); }
+.rep-bench-row .delta.neg { background: var(--neg-light); color: var(--neg); }
+.rep-bench-row .delta.flat { background: var(--surface-3); color: var(--ink-3); }
+
+/* History timeline */
+.rep-history h3 {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 12px;
+}
+.rep-spark {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.rep-spark-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 11.5px;
+}
+.rep-spark-head .title { font-weight: 600; color: var(--ink-2); }
+.rep-spark-head .meta { color: var(--ink-4); }
+.rep-spark-svg { width: 100%; height: 64px; display: block; }
+
+.history-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 60px 60px 80px;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background .1s;
+}
+.history-row:last-child { border-bottom: none; }
+.history-row:hover { background: var(--surface-2); }
+.history-row .ph-date { color: var(--ink-4); font-family: 'DM Mono', monospace; font-size: 10.5px; }
+.history-row .ph-name { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-row .ph-name strong { color: var(--ink-1); font-weight: 500; }
+.history-row .ph-num { font-family: 'DM Mono', monospace; text-align: right; font-size: 11px; }
+.history-row .ph-num.pos { color: var(--pos); font-weight: 600; }
+.history-row .ph-num.neg { color: var(--neg); font-weight: 600; }
+.history-row .ph-num.warn { color: var(--warn); }
+.history-row .ph-num.dim { color: var(--ink-4); }
+
+/* ── Notes section ─────────────────────────────────────────────────────── */
+.notes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 760px) { .notes-grid { grid-template-columns: 1fr; } }
+.note-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.note-box.replicate { background: var(--pos-light); border-color: var(--pos-mid); }
+.note-box.change    { background: var(--warn-light); border-color: var(--warn-mid); }
+.note-box .eyebrow { margin-bottom: 6px; }
+.note-box .text {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+/* ── States ────────────────────────────────────────────────────────────── */
+.loading-state, .empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--ink-3);
+}
+.empty-state-icon {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--ink-4);
+  margin-bottom: 10px;
+  letter-spacing: -0.04em;
+}
+.empty-state-title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+  margin-bottom: 4px;
+}
+.empty-state-sub { font-size: 13px; color: var(--ink-3); }
+
+.no-data {
+  font-size: 12px;
+  color: var(--ink-4);
+  padding: 14px 0;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ── Range view ────────────────────────────────────────────────────────── */
+.range-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+@media (max-width: 880px) { .range-summary-grid { grid-template-columns: repeat(3, 1fr); } }
+.chart-wrap { position: relative; height: 240px; }
+
+.event-table { width: 100%; border-collapse: collapse; }
+.event-table th {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 9px 12px;
+  text-align: right;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.event-table th:first-child { text-align: left; }
+.event-table th.sort-asc::after { content: '  ↑'; color: var(--brand); }
+.event-table th.sort-desc::after { content: '  ↓'; color: var(--brand); }
+.event-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 12.5px;
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+}
+.event-table td:first-child {
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+}
+.event-table tbody tr {
+  cursor: pointer;
+  transition: background .1s;
+}
+.event-table tbody tr:hover td { background: var(--brand-light); }
+.event-table tbody tr:last-child td { border-bottom: none; }
+.event-table .ev-name { font-weight: 500; color: var(--ink-1); font-size: 12.5px; }
+.event-table .ev-meta { font-size: 10.5px; color: var(--ink-4); font-family: 'DM Sans', sans-serif; }
+.event-table td.pos { color: var(--pos); }
+.event-table td.neg { color: var(--neg); }
+.event-table tr.total-row td {
+  font-weight: 600;
+  border-top: 2px solid var(--border-2);
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+/* ── Export modal ──────────────────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20,16,8,0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: 28px;
+  width: 440px;
+  box-shadow: var(--sh-3);
+}
+.modal-title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin-bottom: 4px;
+}
+.modal-sub { font-size: 12.5px; color: var(--ink-3); margin-bottom: 18px; }
+.export-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all .12s;
+}
+.export-opt:hover, .export-opt.selected { border-color: var(--brand); background: var(--brand-light); }
+.export-opt .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.export-opt-title { font-size: 13.5px; font-weight: 600; color: var(--ink-1); margin-bottom: 2px; letter-spacing: -0.005em; }
+.export-opt-desc  { font-size: 11.5px; color: var(--ink-3); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.btn-cancel {
+  padding: 9px 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+}
+.btn-export {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 8px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.btn-export:hover { background: var(--brand-hover); }
+
+/* ── Print ─────────────────────────────────────────────────────────────── */
+@media print {
+  .nav, .mode-bar, .search-bar, .nav-right, .modal-overlay { display: none !important; }
+  .page { padding: 0; max-width: 100%; }
+  .card, .hero-card, .kpi, .intel-strip, .callout-collectiv {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body { background: #fff; }
+}
+
+/* ── Search results bar ────────────────────────────────────────────────── */
+.search-results {
+  flex: 1;
+  display: none;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.search-results .label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+.search-result-pill {
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-1);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .12s;
+}
+.search-result-pill:hover { border-color: var(--brand); color: var(--brand); }
+.search-result-pill .date { color: var(--ink-4); margin-right: 5px; }
 </style>
 </head>
 <body>
 
-<!-- Nav -->
+<!-- ─── Top nav ─── -->
 <nav class="nav">
   <div class="nav-left">
     <a class="logo" href="/api/calendar">Venue<em>OS</em></a>
@@ -266,20 +1412,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);fo
     <span class="nav-title">Performance Dashboard</span>
   </div>
   <div class="nav-right">
-    <a class="nav-btn" href="/api/calendar">← Calendar</a>
+    <a class="nav-btn" href="/api/calendar">Calendar</a>
     <button class="nav-btn" onclick="window.location.href='/api/calculator'">+ New Event</button>
     <button class="nav-btn primary" onclick="openExportModal()">↓ Export</button>
   </div>
 </nav>
 
-<!-- Mode bar -->
 <div class="mode-bar">
   <div class="mode-tab active" id="mode-single" onclick="setMode('single')">Single Event</div>
   <div class="mode-tab" id="mode-range" onclick="setMode('range')">Date Range</div>
-  <div class="mode-sep"></div>
 </div>
 
-<!-- Search bar (single mode) -->
+<!-- Single mode search bar -->
 <div class="search-bar" id="search-bar-single">
   <div class="search-field">
     <div class="search-label">Artist</div>
@@ -294,25 +1438,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);fo
     <input class="search-input" id="s-name" placeholder="e.g. Latin Saturday" oninput="runSearch()" autocomplete="off">
   </div>
   <div class="search-field">
-    <div class="search-label">Event Type</div>
+    <div class="search-label">Type</div>
     <select class="search-input sm" id="s-type" onchange="runSearch()">
       <option value="">All types</option>
-      <option value="Latin">Latin</option>
+      <option value="latin">Latin</option>
+      <option value="hip_hop_rnb">Hip Hop / R&B</option>
       <option value="Electronic">Electronic</option>
-      <option value="Hip Hop and R&B">Hip Hop / R&B</option>
-      <option value="hip_hop_rnb">Hip Hop / R&B (alt)</option>
       <option value="Open Format">Open Format</option>
       <option value="Live Performance">Live</option>
-      <option value="Corporate and Private">Corporate</option>
+      <option value="corporate_private">Corporate</option>
       <option value="Cover Band">Cover Band</option>
       <option value="Sports and Viewing">Sports</option>
       <option value="college_university">College</option>
     </select>
   </div>
-  <div id="search-results-bar" style="flex:1;display:none"></div>
+  <div id="search-results-bar" class="search-results"></div>
 </div>
 
-<!-- Search bar (range mode) -->
+<!-- Range mode search bar -->
 <div class="search-bar" id="search-bar-range" style="display:none">
   <div class="search-field">
     <div class="search-label">From</div>
@@ -325,13 +1468,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);fo
   <div class="range-presets">
     <button class="range-btn" onclick="setRange('week')">This Week</button>
     <button class="range-btn" onclick="setRange('month')">This Month</button>
-    <button class="range-btn" onclick="setRange('quarter')">This Quarter</button>
+    <button class="range-btn" onclick="setRange('quarter')">Quarter</button>
     <button class="range-btn" onclick="setRange('ytd')">YTD</button>
   </div>
   <button class="search-go" onclick="loadRange()">View Range →</button>
 </div>
 
-<!-- Main content -->
 <div class="page" id="page-root">
   <div class="loading-state">Loading…</div>
 </div>
@@ -342,15 +1484,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);fo
     <div class="modal-title">Export Report</div>
     <div class="modal-sub">Choose the level of detail to include</div>
     <div class="export-opt selected" id="exp-full" onclick="selectExport('full')">
-      <div class="export-opt-icon">📊</div>
+      <div class="icon">F</div>
       <div><div class="export-opt-title">Full Detail</div><div class="export-opt-desc">All KPIs, deal structure, costs, bar mix, promoter scorecard</div></div>
     </div>
     <div class="export-opt" id="exp-promoter" onclick="selectExport('promoter')">
-      <div class="export-opt-icon">🤝</div>
+      <div class="icon">P</div>
       <div><div class="export-opt-title">Promoter Summary</div><div class="export-opt-desc">Revenue and draw data only — costs and net hidden</div></div>
     </div>
     <div class="export-opt" id="exp-investor" onclick="selectExport('investor')">
-      <div class="export-opt-icon">📈</div>
+      <div class="icon">I</div>
       <div><div class="export-opt-title">Investor Summary</div><div class="export-opt-desc">Top-line revenue, margin trend, key stats only</div></div>
     </div>
     <div class="modal-actions">
@@ -361,907 +1503,1420 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);fo
 </div>
 
 <script>
+/* ─────────────────────────────────────────────────────────────────────────
+   DISTRICT BENCHMARKS — locked constants from Ryan's 2025 Operating Cost model
+   ───────────────────────────────────────────────────────────────────────── */
+const DISTRICT = {
+  OP_CARRY_STATIC:    8601,    // $/night — Rent, Tax, Insurance, Utilities, Salaries, etc.
+  OP_CARRY_VARIABLE:  3873,    // $/night — Cash Out, Tipped Wages, Security, Cleaning
+  OP_CARRY_TOTAL:    12474,    // $/night
+  POUR_COST_BENCHMARK: 13.6,   // % — District 2025 actual total pour
+  CHARGED_COGS_DEFAULT: 25,    // % — what venue charges promoter (overrideable per event)
+  DRY_GOODS_DEFAULT:    5,     // % — cups, napkins, garnishes, straws
+  COLLECTIV_RECOVERY_GAP: 1974,// $/night under-recovery on Collectiv shows
+  ANNUAL_OPERATING_NIGHTS: 140,
+  SPH_BENCH: 35,               // $ — District average Bar Spend Per Head
+};
+
 const BASE = window.location.origin;
 let currentMode = 'single';
 let currentEventId = null;
 let currentEventData = null;
 let allEvents = null;
 let exportMode = 'full';
-let searchTimer = null;
 let rangeChart = null;
 let itemsExpanded = false;
+let categoryBenchmarks = null;
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-function g(id){return document.getElementById(id)}
-function fmt(n,decimals=0){
-  if(n===null||n===undefined||isNaN(parseFloat(n))) return '—';
-  const v=parseFloat(n);
-  if(Math.abs(v)>=1000000) return '$'+(v/1000000).toFixed(1)+'M';
-  if(Math.abs(v)>=1000) return '$'+(v/1000).toFixed(1)+'K';
-  return '$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+/* ─── Helpers ─────────────────────────────────────────────────────────── */
+const g  = id => document.getElementById(id);
+const num = v => (v === null || v === undefined || v === '') ? 0 : (parseFloat(v) || 0);
+
+function fmtMoney(n, opts = {}) {
+  if (n === null || n === undefined || isNaN(parseFloat(n))) return '—';
+  const v = parseFloat(n);
+  const abs = Math.abs(v);
+  if (opts.short && abs >= 1000000) return (v < 0 ? '-' : '') + '$' + (abs / 1000000).toFixed(1) + 'M';
+  if (opts.short && abs >= 10000)   return (v < 0 ? '-' : '') + '$' + (abs / 1000).toFixed(1) + 'K';
+  return (v < 0 ? '-' : '') + '$' + abs.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
-function fmtFull(n){
-  if(n===null||n===undefined) return '—';
-  const v=parseFloat(n)||0;
-  return '$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+function fmtMoneyDelta(n) {
+  if (n === null || n === undefined || isNaN(parseFloat(n))) return '—';
+  const v = parseFloat(n);
+  return (v >= 0 ? '+' : '−') + '$' + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
-function fmtPct(n,dec=1){if(n===null||n===undefined||isNaN(parseFloat(n)))return '—';return parseFloat(n).toFixed(dec)+'%'}
-function varPct(actual,proj){
-  if(!actual||!proj) return null;
-  return Math.round((parseFloat(actual)-parseFloat(proj))/Math.abs(parseFloat(proj))*100);
+function fmtPct(n, dec = 1) {
+  if (n === null || n === undefined || isNaN(parseFloat(n))) return '—';
+  return parseFloat(n).toFixed(dec) + '%';
 }
-function badgeHtml(pct, label=''){
-  if(pct===null||pct===undefined) return '';
-  const cls = pct>=0?'badge-up':'badge-down';
-  const arrow = pct>=0?'▲':'▼';
-  return `<span class="kpi-badge ${cls}">${arrow} ${Math.abs(pct)}%${label?' vs '+label:''}</span>`;
+function fmtInt(n) {
+  if (n === null || n === undefined || isNaN(parseFloat(n))) return '—';
+  return Math.round(parseFloat(n)).toLocaleString('en-US');
 }
-function colorClass(n, thresholds={good:null,bad:null}, higherBetter=true){
-  if(n===null||n===undefined) return 'neutral';
-  const v=parseFloat(n);
-  if(higherBetter){
-    if(thresholds.good!==null&&v>=thresholds.good) return 'green';
-    if(thresholds.bad!==null&&v<=thresholds.bad) return 'red';
-    return 'amber';
-  } else {
-    if(thresholds.good!==null&&v<=thresholds.good) return 'green';
-    if(thresholds.bad!==null&&v>=thresholds.bad) return 'red';
-    return 'amber';
-  }
+function dateLong(s) {
+  if (!s) return '—';
+  const d = new Date(s.substring(0, 10) + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
-function varClass(a,p){if(!a||!p)return 'dim';return parseFloat(a)>=parseFloat(p)?'pos':'neg'}
-function varStr(a,p){
-  if(!a&&!p) return '—';
-  if(!p||parseFloat(p)===0) return '—';
-  const d=parseFloat(a||0)-parseFloat(p);
-  const pct=Math.round(Math.abs(d)/Math.abs(parseFloat(p))*100);
-  return (d>=0?'+':'-')+pct+'%';
+function dateShort(s) {
+  if (!s) return '—';
+  return s.substring(5, 10);
 }
 
-// ── Mode toggle ───────────────────────────────────────────────────────────
-function setMode(mode){
-  currentMode=mode;
-  g('mode-single').classList.toggle('active',mode==='single');
-  g('mode-range').classList.toggle('active',mode==='range');
-  g('search-bar-single').style.display=mode==='single'?'':'none';
-  g('search-bar-range').style.display=mode==='range'?'':'none';
-  if(mode==='range') renderRangePlaceholder();
-  else if(currentEventId) loadEvent(currentEventId);
+/* ─────────────────────────────────────────────────────────────────────────
+   DERIVATION ENGINE — single source of truth for the dashboard's numbers
+   Every UI component reads from the result of this function.
+   ───────────────────────────────────────────────────────────────────────── */
+function deriveDashboardModel(data) {
+  const e = data.event || {};
+  const s = data.summary || {};
+
+  /* ── Revenue (actuals first, then night-of-actuals, then revel) ── */
+  const barActual   = num(e.actual_bar_revenue ?? e.total_bar_sales ?? e.net_bar_revenue ?? 0);
+  const doorActual  = num(e.actual_door_revenue ?? (num(e.door_revenue_cash) + num(e.door_revenue_card)));
+  const tableActual = num(e.actual_table_revenue ?? e.table_bottle_service ?? 0);
+  const grossRev    = barActual + doorActual + tableActual;
+
+  /* ── Cost components ── */
+  // Liquor COGS — from item-level if present, otherwise estimate at district benchmark
+  const liquorCogs    = num(s.total_item_cogs ?? barActual * 0.11);
+  const liquorPourPct = barActual > 0 ? (liquorCogs / barActual) * 100 : 0;
+  const dryGoodsRate  = DISTRICT.DRY_GOODS_DEFAULT / 100;
+  const dryGoodsCost  = barActual * dryGoodsRate;
+  const totalPourCost = liquorCogs + dryGoodsCost;
+  const totalPourPct  = barActual > 0 ? (totalPourCost / barActual) * 100 : 0;
+
+  // Charged COGS — what venue contractually bills promoter (default 25%)
+  const chargedCogsPct = num(e.bar_cogs_percentage) > 0
+    ? num(e.bar_cogs_percentage)
+    : DISTRICT.CHARGED_COGS_DEFAULT;
+  const chargedCogsAmt = barActual * chargedCogsPct / 100;
+  const marginPadPct   = chargedCogsPct - totalPourPct;
+  const marginPadAmt   = chargedCogsAmt - totalPourCost;
+
+  /* ── Promoter splits & fees ── */
+  const barPayout   = num(e.promoter_bar_payout)   || (barActual * num(e.bar_split_promoter)   / 100);
+  const doorPayout  = num(e.promoter_door_payout)  || (doorActual * num(e.door_split_promoter)  / 100);
+  const tablePayout = num(e.promoter_table_payout) || (tableActual * num(e.table_split_promoter) / 100);
+  const artistFee   = num(e.artist_fee_landed) + num(e.artist_fee_travel);
+  const totalPayouts = barPayout + doorPayout + tablePayout + artistFee;
+
+  /* ── Net pre-op (after pour costs and payouts, before facility carry) ── */
+  const netPreOp = grossRev - totalPourCost - totalPayouts;
+
+  /* ── Per-night op carry ── */
+  const opCarryStatic   = DISTRICT.OP_CARRY_STATIC;
+  const opCarryVariable = num(e.staffing_cost_actual) > 0
+    ? num(e.staffing_cost_actual)
+    : DISTRICT.OP_CARRY_VARIABLE;
+  const opCarryTotal = opCarryStatic + opCarryVariable;
+
+  /* ── Net to venue (the headline) ── */
+  const netToVenue = netPreOp - opCarryTotal;
+
+  /* ── Breakeven — gross revenue needed to net $0 ── */
+  // Solve: gross - pour% - payouts - opCarry = 0  (ignoring promoter split scaling)
+  // For a simple hero card: breakeven = totalPourCost + totalPayouts + opCarryTotal
+  const breakeven = totalPourCost + totalPayouts + opCarryTotal;
+  const revenueAboveBreakeven = grossRev - breakeven;
+
+  /* ── Promoter & Collectiv ── */
+  const isCollectiv = (e.promoter_name || '').trim().toLowerCase() === 'collectiv';
+
+  /* ── Attendance / SPH ── */
+  const attendance = num(e.actual_attendance) || num(e.total_headcount);
+  const expected   = num(e.expected_attendance);
+  const drawPct    = (attendance > 0 && expected > 0) ? Math.round(attendance / expected * 100) : null;
+  const sph        = num(e.spend_per_head_actual) > 0
+    ? num(e.spend_per_head_actual)
+    : (attendance > 0 ? barActual / attendance : 0);
+
+  /* ── Data-presence flags for empty-state architecture ── */
+  const has = {
+    barRevenue:   barActual > 0,
+    doorRevenue:  doorActual > 0,
+    attendance:   attendance > 0,
+    expected:     expected > 0,
+    splits:       num(e.bar_split_promoter) > 0 || num(e.door_split_promoter) > 0 || num(e.promoter_bar_payout) > 0 || num(e.promoter_door_payout) > 0,
+    artistFee:    artistFee > 0,
+    projections:  num(e.projected_bar_revenue) > 0 || num(e.projected_door_revenue) > 0,
+    items:        (data.items || []).length > 0,
+  };
+
+  return {
+    e, s,
+    barActual, doorActual, tableActual, grossRev,
+    liquorCogs, liquorPourPct, dryGoodsCost, totalPourCost, totalPourPct,
+    chargedCogsPct, chargedCogsAmt, marginPadPct, marginPadAmt,
+    barPayout, doorPayout, tablePayout, artistFee, totalPayouts,
+    netPreOp, opCarryStatic, opCarryVariable, opCarryTotal, netToVenue,
+    breakeven, revenueAboveBreakeven,
+    isCollectiv,
+    attendance, expected, drawPct, sph,
+    bottleCount: num(s.bottle_count),
+    bottleRev:   num(s.bottle_service_revenue),
+    has,
+  };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MODE TOGGLE / SEARCH
+   ───────────────────────────────────────────────────────────────────────── */
+function setMode(mode) {
+  currentMode = mode;
+  g('mode-single').classList.toggle('active', mode === 'single');
+  g('mode-range').classList.toggle('active', mode === 'range');
+  g('search-bar-single').style.display = mode === 'single' ? '' : 'none';
+  g('search-bar-range').style.display  = mode === 'range'  ? '' : 'none';
+  if (mode === 'range') renderRangePlaceholder();
+  else if (currentEventId) loadEvent(currentEventId);
   else renderSearchPrompt();
 }
 
-// ── Search ────────────────────────────────────────────────────────────────
-async function getEvents(){
-  if(allEvents) return allEvents;
-  const res=await fetch(`${BASE}/api/events`);
-  allEvents=await res.json();
+async function getEvents() {
+  if (allEvents) return allEvents;
+  const res = await fetch(`${BASE}/api/events`);
+  allEvents = await res.json();
   return allEvents;
 }
 
-let _searchDebounce=null;
-function runSearch(){
+let _searchDebounce = null;
+function runSearch() {
   clearTimeout(_searchDebounce);
-  _searchDebounce=setTimeout(_doSearch,280);
+  _searchDebounce = setTimeout(_doSearch, 240);
 }
-
-async function _doSearch(){
-  const artist=(g('s-artist').value||'').trim().toLowerCase();
-  const promoter=(g('s-promoter').value||'').trim().toLowerCase();
-  const name=(g('s-name').value||'').trim().toLowerCase();
-  const type=(g('s-type').value||'');
-  const rBar=g('search-results-bar');
-  if(!artist&&!promoter&&!name&&!type){
-    rBar.style.display='none';
-    if(!currentEventId) renderSearchPrompt();
+async function _doSearch() {
+  const artist = (g('s-artist').value || '').trim().toLowerCase();
+  const prom   = (g('s-promoter').value || '').trim().toLowerCase();
+  const name   = (g('s-name').value || '').trim().toLowerCase();
+  const type   = g('s-type').value || '';
+  const rBar   = g('search-results-bar');
+  if (!artist && !prom && !name && !type) {
+    rBar.style.display = 'none';
+    if (!currentEventId) renderSearchPrompt();
     return;
   }
-  const events=await getEvents();
-  const matches=events.filter(e=>{
-    if(artist&&!(e.artist_name||'').toLowerCase().includes(artist)) return false;
-    if(promoter&&!(e.promoter_name||'').toLowerCase().includes(promoter)) return false;
-    if(name&&!(e.event_name||'').toLowerCase().includes(name)) return false;
-    if(type&&e.tier1_category!==type) return false;
+  const events = await getEvents();
+  const matches = events.filter(ev => {
+    if (artist && !(ev.artist_name || '').toLowerCase().includes(artist)) return false;
+    if (prom && !(ev.promoter_name || '').toLowerCase().includes(prom))   return false;
+    if (name && !(ev.event_name || '').toLowerCase().includes(name))      return false;
+    if (type && ev.tier1_category !== type)                                return false;
     return true;
-  }).slice(0,8);
-  if(matches.length===0){
-    rBar.style.display='flex';rBar.style.alignItems='center';
-    rBar.innerHTML='<span style="font-size:12px;color:var(--text3)">No events found</span>';
+  }).slice(0, 10);
+  if (matches.length === 0) {
+    rBar.style.display = 'flex';
+    rBar.innerHTML = '<span style="font-size:11.5px;color:var(--ink-4)">No events found</span>';
     return;
   }
-  rBar.style.display='flex';rBar.style.gap='6px';rBar.style.flexWrap='wrap';rBar.style.alignItems='center';
-  rBar.innerHTML=`<span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);white-space:nowrap">${matches.length} found:</span>`+
-    matches.map(e=>`<button onclick="loadEvent(${e.id});clearSearch()" style="padding:4px 10px;border:1px solid var(--border);border-radius:20px;background:var(--surface);font-size:11px;font-weight:500;cursor:pointer;color:var(--text1);white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='var(--blue2)';this.style.color='var(--blue2)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text1)'">
-      <span style="color:var(--text3)">${e.event_date?e.event_date.substring(5,10):''}</span> ${e.event_name||'—'}${e.artist_name?' · '+e.artist_name:''}
-    </button>`).join('');
+  rBar.style.display = 'flex';
+  rBar.innerHTML = `<span class="label">${matches.length} match${matches.length === 1 ? '' : 'es'}:</span>` +
+    matches.map(ev => `<button class="search-result-pill" onclick="loadEvent(${ev.id});clearSearch()"><span class="date">${dateShort(ev.event_date)}</span> ${ev.event_name || '—'}${ev.artist_name ? ' · ' + ev.artist_name : ''}</button>`).join('');
+}
+function clearSearch() {
+  ['s-artist', 's-promoter', 's-name', 's-type'].forEach(id => { const el = g(id); if (el) el.value = ''; });
+  g('search-results-bar').style.display = 'none';
 }
 
-function clearSearch(){
-  ['s-artist','s-promoter','s-name','s-type'].forEach(id=>{
-    const el=g(id);if(el)el.value='';
-  });
-  const rBar=g('search-results-bar');
-  if(rBar) rBar.style.display='none';
+/* ─── Empty/loading states ──────────────────────────────────────────────── */
+function renderSearchPrompt() {
+  g('page-root').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-icon">⌕</div>
+      <div class="empty-state-title">Search for an event</div>
+      <div class="empty-state-sub">Use any combination of artist, promoter, event name, or type above</div>
+    </div>`;
+}
+function renderRangePlaceholder() {
+  g('page-root').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-icon">▭</div>
+      <div class="empty-state-title">Select a date range</div>
+      <div class="empty-state-sub">Use a preset above or enter custom start and end dates</div>
+    </div>`;
 }
 
-// ── Single event ──────────────────────────────────────────────────────────
-async function loadEvent(id){
-  currentEventId=id;
-  g('page-root').innerHTML='<div class="loading-state">Loading event data…</div>';
-  try{
-    const res=await fetch(`${BASE}/api/event-detail/${id}`);
-    currentEventData=await res.json();
+async function loadEvent(id) {
+  currentEventId = id;
+  g('page-root').innerHTML = '<div class="loading-state">Loading event data…</div>';
+  try {
+    const res = await fetch(`${BASE}/api/event-detail/${id}`);
+    currentEventData = await res.json();
     renderDashboard(currentEventData);
-  }catch(e){
-    g('page-root').innerHTML=`<div class="loading-state">Could not load event — <a href="/api/calendar" style="color:var(--blue2)">back to calendar</a></div>`;
+  } catch (err) {
+    g('page-root').innerHTML = `<div class="loading-state">Could not load event — <a href="/api/calendar" style="color:var(--brand)">back to calendar</a></div>`;
   }
 }
 
-function renderSearchPrompt(){
-  g('page-root').innerHTML=`
-    <div class="empty-state">
-      <div class="empty-state-icon">🔍</div>
-      <div class="empty-state-title">Search for an event above</div>
-      <div style="font-size:12px;color:var(--text3)">Use any combination of artist, promoter, event name, or type</div>
-    </div>`;
-}
+/* ─────────────────────────────────────────────────────────────────────────
+   MAIN RENDER PIPELINE
+   ───────────────────────────────────────────────────────────────────────── */
+function renderDashboard(data) {
+  const m = deriveDashboardModel(data);
+  const e = m.e;
 
-function renderRangePlaceholder(){
-  g('page-root').innerHTML=`
-    <div class="empty-state">
-      <div class="empty-state-icon">📅</div>
-      <div class="empty-state-title">Select a date range above</div>
-      <div style="font-size:12px;color:var(--text3)">Choose preset or enter custom start and end dates</div>
-    </div>`;
-}
-
-// ── MAIN DASHBOARD RENDER ─────────────────────────────────────────────────
-function renderDashboard(data){
-  const e=data.event, s=data.summary, items=data.items||[], cats=data.categories||{};
-  const barActual=parseFloat(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue??0);
-  const doorActual=parseFloat(e.actual_door_revenue??0);
-  const tableActual=parseFloat(e.actual_table_revenue??e.table_bottle_service??0);
-  const totalRev=barActual+doorActual+tableActual;
-  const netActual=parseFloat(e.net_revenue_actual??0);
-  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
-  const margin=totalRev>0?netActual/totalRev*100:0;
-  const sph=parseFloat(e.spend_per_head_actual??0);
-  const cogs=(barActual>0&&s.total_cost>0)?s.total_cost/barActual*100:parseFloat(e.bar_cogs_percentage??16.1);
-
-  // KPI color classes
-  const netCls=netActual>0?'green':netActual<0?'red':'neutral';
-  const marginCls=colorClass(margin,{good:20,bad:10});
-  const drawCls=colorClass(drawPct,{good:90,bad:70});
-  const sphCls=colorClass(sph,{good:35,bad:20});
-  const cogsCls=colorClass(cogs,{good:18,bad:25},false);
-
-  // Variance badges vs projected
-  const barVar=varPct(barActual,e.projected_bar_revenue);
-  const drawVar=varPct(e.actual_attendance,e.expected_attendance);
-  const netVar=varPct(netActual,(parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0))*0.8);
-
-  let html=`
-  <!-- Scorecard -->
-  <div class="scorecard" id="scorecard">
-    <div class="kpi hero">
-      <div class="kpi-label">Total Revenue</div>
-      <div class="kpi-value">${fmt(totalRev)}</div>
-      <div class="kpi-sub">Bar ${fmt(barActual)} · Door ${fmt(doorActual)}</div>
-      ${badgeHtml(barVar,'proj')}
-    </div>
-    <div class="kpi ${netCls}">
-      <div class="kpi-label">Net to Venue</div>
-      <div class="kpi-value">${fmt(netActual)}</div>
-      <div class="kpi-sub">${fmtPct(e.actual_effective_split||e.effective_split_percentage)} promoter take</div>
-      ${badgeHtml(netVar,'proj')}
-    </div>
-    <div class="kpi ${marginCls}">
-      <div class="kpi-label">Margin</div>
-      <div class="kpi-value">${fmtPct(margin)}</div>
-      <div class="kpi-sub">District avg ~22%</div>
-    </div>
-    <div class="kpi ${drawCls}">
-      <div class="kpi-label">Draw</div>
-      <div class="kpi-value">${e.actual_attendance||'—'}</div>
-      <div class="kpi-sub">of ${e.expected_attendance||'—'} · ${drawPct?drawPct+'%':'—'}</div>
-      ${badgeHtml(drawVar,'proj')}
-    </div>
-    <div class="kpi ${sphCls}">
-      <div class="kpi-label">Bar / Head</div>
-      <div class="kpi-value">${sph?'$'+sph.toFixed(2):'—'}</div>
-      <div class="kpi-sub">District avg ~$35</div>
-    </div>
-    <div class="kpi ${cogsCls}">
-      <div class="kpi-label">Pour Cost %</div>
-      <div class="kpi-value">${fmtPct(cogs)}</div>
-      <div class="kpi-sub">Target &lt;18%</div>
-    </div>
-    <div class="kpi neutral">
-      <div class="kpi-label">Bottle Service</div>
-      <div class="kpi-value">${s.bottle_count||0}</div>
-      <div class="kpi-sub">${fmtFull(s.bottle_service_revenue)} · ${barActual>0?Math.round((s.bottle_service_revenue||0)/barActual*100)+'% of bar':'—'}</div>
-    </div>
-  </div>
-
-  <!-- AI Summary -->
-  <div class="ai-strip" id="ai-strip">
-    <div class="ai-icon">✦</div>
-    <div class="ai-content">
-      <div class="ai-label">Night Intelligence</div>
-      <div class="ai-text" id="ai-text"><span style="opacity:0.6;font-style:italic">Generating summary…</span></div>
-      <div class="ai-chips" id="ai-chips"></div>
-    </div>
-  </div>
-
-  <!-- Main two-column -->
-  <div class="cols">
-    <div>
-      <!-- P&L Waterfall -->
-      <div class="card">
-        <div class="card-title">Revenue & Payout Waterfall</div>
-        ${renderWaterfall(e,s,barActual,doorActual,tableActual,totalRev,netActual)}
+  const html = `
+    ${renderMasthead(m)}
+    ${renderHero(m)}
+    ${renderTier2(m)}
+    ${renderIntel(m)}
+    ${m.isCollectiv ? renderCollectivCallout(m) : ''}
+    <div class="cols">
+      <div>
+        ${renderWaterfallCard(m)}
+        ${renderPvACard(m)}
       </div>
-
-      <!-- Projected vs Actual -->
-      <div class="card">
-        <div class="card-title">Projected vs. Actual</div>
-        ${renderPvA(e,barActual,doorActual,tableActual,totalRev,netActual)}
+      <div>
+        ${renderMarginPadCard(m)}
+        ${renderDealCard(m)}
+        ${renderMarketCard(m)}
       </div>
     </div>
-
-    <!-- Right column -->
-    <div>
-      <!-- Event header card -->
-      <div class="card">
-        <div class="card-title">${e.event_name||'Event'}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
-          ${infoRow('Date',e.event_date?e.event_date.substring(0,10)+' · '+(e.day_of_week||''):'')}
-          ${infoRow('Type',e.tier1_category||'—')}
-          ${infoRow('Promoter',`<button onclick="loadEvent(${e.id})" style="all:unset;color:var(--blue2);cursor:pointer;font-weight:500;font-size:12px">${e.promoter_name||'—'}</button>`)}
-          ${infoRow('Artist',e.artist_name||'—')}
-          ${infoRow('Doors',e.doors_open_time?e.doors_open_time+' – '+(e.event_close_time||'close'):e.event_close_time||'—')}
-          ${infoRow('Status',`<span style="font-weight:600;color:${e.status==='completed'?'var(--green2)':'var(--blue2)'}">${e.status||'—'}</span>`)}
-        </div>
-        ${e.notes?`<div style="margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--text2);border-left:2px solid var(--border2)">${e.notes}</div>`:''}
-      </div>
-
-      <!-- Market context -->
-      <div class="card" id="market-card">
-        <div class="card-title">
-          Market Context
-          <span id="demand-pill"></span>
-        </div>
-        <div id="market-events-body"></div>
-        <div id="market-narrative" style="margin-top:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.65">
-          <span style="color:var(--text3);font-style:italic">Generating narrative…</span>
-        </div>
-      </div>
-
-      <!-- Deal structure -->
-      <div class="card">
-        <div class="card-title">Deal Structure</div>
-        ${renderDealStructure(e)}
-      </div>
-    </div>
-  </div>
-
-  <!-- Bar Mix — full width -->
-  <div class="card">
-    <div class="card-title">
-      Bar Mix — Category Breakdown
-      <span class="card-title-action section-toggle" onclick="toggleItems()"><span id="items-toggle-icon" class="expand-icon">▾</span> ${items.length} items</span>
-    </div>
-    ${renderBarMix(s,items,barActual)}
-  </div>
-
-  <!-- Promoter Scorecard — full width -->
-  <div class="card" id="promoter-card">
-    <div class="card-title">Promoter Scorecard — ${e.promoter_name||'—'}</div>
-    <div id="promoter-body"><div style="color:var(--text3);font-size:12px">Loading promoter data…</div></div>
-  </div>
-
-  ${(e.crowd_demographic_observations||e.promoter_performance_notes||e.what_to_replicate||e.what_to_change)?`
-  <!-- Post-event notes -->
-  <div class="card">
-    <div class="card-title">Post-Event Notes</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      ${e.crowd_demographic_observations?obsBox('Crowd Demographics',e.crowd_demographic_observations):''}
-      ${e.promoter_performance_notes?obsBox('Promoter Performance',e.promoter_performance_notes):''}
-      ${e.what_to_replicate?obsBox('Replicate Next Time',e.what_to_replicate,'var(--green-light)','var(--green-mid)'):''}
-      ${e.what_to_change?obsBox('What to Change',e.what_to_change,'var(--amber-light)','var(--amber-mid)'):''}
-    </div>
-  </div>`:''}
+    ${renderBarMixCard(m)}
+    ${renderPromoterCard(m)}
+    ${renderNotesCard(m)}
   `;
+  g('page-root').innerHTML = html;
 
-  g('page-root').innerHTML=html;
-
-  // Async loads
-  renderMarketContext(e,data);
-  loadAISummary(e,s,data);
-  loadPromoterScorecard(e.promoter_name,e.tier1_category,e);
+  // Async data loads after DOM mounts
+  loadCategoryBenchmarks(e.tier1_category, m);
+  loadIntelNarrative(m);
+  loadMarketNarrative(m);
+  loadPromoterScorecard(e.promoter_name, e.tier1_category, m);
 }
 
-function infoRow(label,value){
-  return `<div><div style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:2px">${label}</div><div style="font-size:12px;color:var(--text2)">${value||'—'}</div></div>`;
-}
-function obsBox(label,text,bg='var(--surface2)',border='var(--border)'){
-  return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:12px 14px">
-    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px">${label}</div>
-    <div style="font-size:12px;color:var(--text2);line-height:1.6">${text}</div>
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: MASTHEAD (event header)
+   ───────────────────────────────────────────────────────────────────────── */
+function renderMasthead(m) {
+  const e = m.e;
+  const status = (e.status || 'draft').toLowerCase();
+  const statusCls = ['completed','confirmed','hold'].includes(status) ? status : 'hold';
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+  const dateStr = e.event_date ? dateLong(e.event_date) : '—';
+  const dayOfWeek = e.day_of_week || (e.event_date ? new Date(e.event_date.substring(0,10)+'T00:00:00').toLocaleDateString('en-US',{weekday:'long'}) : '');
+
+  return `
+  <div class="masthead">
+    <div class="masthead-left">
+      <div class="masthead-eyebrow">
+        <span class="eyebrow">Event Recap</span>
+        <span class="badge-status ${statusCls}">${statusLabel}</span>
+      </div>
+      <h1 class="masthead-event-name">${e.event_name || 'Untitled Event'}</h1>
+      <div class="masthead-meta">
+        ${e.tier1_category ? `<span><span class="label">Type</span>${formatCategory(e.tier1_category)}</span><span class="sep">·</span>` : ''}
+        ${e.promoter_name ? `<span><span class="label">Promoter</span><span class="promoter-link" onclick="searchPromoter('${e.promoter_name.replace(/'/g,"\\'")}')">${e.promoter_name}</span></span><span class="sep">·</span>` : ''}
+        ${e.artist_name ? `<span><span class="label">Artist</span>${e.artist_name}</span><span class="sep">·</span>` : ''}
+        ${e.doors_open_time || e.event_close_time
+          ? `<span><span class="label">Hours</span>${e.doors_open_time || '—'} → ${e.event_close_time || 'close'}</span>`
+          : ''}
+      </div>
+    </div>
+    <div class="masthead-right">
+      <div class="eyebrow">Event Date</div>
+      <div class="date-day">${dayOfWeek || ''}</div>
+      <div class="date-full">${dateStr}</div>
+    </div>
   </div>`;
 }
 
-// ── Waterfall ─────────────────────────────────────────────────────────────
-function renderWaterfall(e,s,barActual,doorActual,tableActual,totalRev,netActual){
-  const cogsAmt=(s.total_cost>0)?s.total_cost:barActual*0.161;
-  const doorPayout=parseFloat(e.promoter_door_payout??doorActual*(e.door_split_promoter||0)/100);
-  const barPayout=parseFloat(e.promoter_bar_payout??barActual*(e.bar_split_promoter||0)/100);
-  const tablePayout=parseFloat(e.promoter_table_payout??tableActual*(e.table_split_promoter||0)/100);
-  const artFee=parseFloat(e.artist_fee_landed??0)+parseFloat(e.artist_fee_travel??0);
-  const totalPayouts=doorPayout+barPayout+tablePayout+artFee;
-  const npc=totalRev-totalPayouts-cogsAmt;
-  const staffCost=parseFloat(e.staffing_cost_actual??0);
-  const maxVal=totalRev||1;
+function formatCategory(c) {
+  return ({
+    'latin': 'Latin',
+    'hip_hop_rnb': 'Hip Hop / R&B',
+    'corporate_private': 'Corporate / Private',
+    'college_university': 'College',
+  })[c] || c;
+}
 
-  const rows=[
-    {label:'Gross Bar Revenue',val:barActual,cls:'rev'},
-    {label:'Gross Door Revenue',val:doorActual,cls:'rev'},
-    {label:'Table / Bottle',val:tableActual,cls:'rev'},
-    {label:'Total Revenue',val:totalRev,cls:'rev',total:true},
-    {divider:true},
-    {label:'Bar COGS',val:-cogsAmt,cls:'payout'},
-    {label:'Door Payout',val:-doorPayout,cls:'payout'},
-    {label:'Bar Payout',val:-barPayout,cls:'payout'},
-    {label:'Artist Fee',val:-artFee,cls:'payout'},
-    {label:'Net Pre-Cost',val:npc,cls:npc>=0?'net-pos':'net-neg',total:true},
-    {divider:true},
-    {label:'Staffing & Ops',val:-staffCost,cls:'cost'},
-    {label:'Net to Venue',val:netActual,cls:netActual>=0?'net-pos':'net-neg',total:true},
-  ];
+function searchPromoter(name) {
+  g('s-promoter').value = name;
+  runSearch();
+}
 
-  return '<div class="waterfall">'+rows.map(r=>{
-    if(r.divider) return '<div class="wf-divider"></div>';
-    const absVal=Math.abs(r.val||0);
-    const pct=Math.min(100,Math.round(absVal/maxVal*100));
-    const displayVal=(r.val>=0)?'+'+fmtFull(r.val):(r.val===0?'—':'-'+fmtFull(Math.abs(r.val)));
-    const valCls=r.val>0?'pos':r.val<0?'neg':'dim';
-    const rowCls=r.total?'wf-total':'';
-    return `<div class="wf-row ${rowCls}">
-      <div class="wf-label">${r.label}</div>
-      <div class="wf-bar-wrap"><div class="wf-bar ${r.cls}" style="width:${pct}%"></div></div>
-      <div class="wf-val ${valCls}">${displayVal}</div>
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: HERO ROW (3 cards — Net to Venue, Revenue vs Breakeven, Margin Pad)
+   ───────────────────────────────────────────────────────────────────────── */
+function renderHero(m) {
+  /* Card 1: Net to Venue (primary, dark navy) */
+  const netCls = m.netToVenue >= 0 ? 'pos' : 'neg';
+  const netBandCls = m.netToVenue >= 0 ? 'pos' : 'neg';
+
+  /* Card 2: Revenue vs Breakeven */
+  const revVsBreakCls = m.revenueAboveBreakeven >= 0 ? 'pos' : 'neg';
+  const breakevenProgressPct = m.breakeven > 0
+    ? Math.min(120, Math.round(m.grossRev / m.breakeven * 100))
+    : 0;
+
+  /* Card 3: Margin Pad */
+  const padCls = m.marginPadPct >= 5 ? 'pos' : m.marginPadPct >= 0 ? 'warn' : 'neg';
+  const padBandCls = m.marginPadPct >= 5 ? 'pos' : m.marginPadPct >= 0 ? 'warn' : 'neg';
+
+  return `
+  <div class="hero-row">
+    <!-- ── Net to Venue (hero) ── -->
+    <div class="hero-card primary">
+      <div class="h-eyebrow">
+        <span class="eyebrow">Net to Venue</span>
+        <span class="eyebrow" style="color:rgba(255,255,255,0.5)">After all costs</span>
+      </div>
+      <div class="h-value num">${m.has.barRevenue ? fmtMoneyDelta(m.netToVenue) : '—'}</div>
+      <div class="h-sub">
+        ${m.has.barRevenue
+          ? `Gross ${fmtMoney(m.grossRev)} − pour ${fmtMoney(m.totalPourCost)} − payouts ${fmtMoney(m.totalPayouts)} − op carry ${fmtMoney(m.opCarryTotal)}`
+          : 'Awaiting bar revenue data'}
+      </div>
+      <div class="h-band ${netBandCls}">
+        <span class="h-band-arrow">${m.netToVenue >= 0 ? '▲' : '▼'}</span>
+        ${m.has.barRevenue
+          ? (m.netToVenue >= 0 ? 'Profitable night' : 'Below breakeven by ' + fmtMoney(Math.abs(m.netToVenue)))
+          : 'Insufficient data'}
+      </div>
+    </div>
+
+    <!-- ── Revenue vs Breakeven ── -->
+    <div class="hero-card">
+      <div class="h-eyebrow">
+        <span class="eyebrow">Revenue vs Breakeven</span>
+        <span class="eyebrow">Need ${fmtMoney(m.breakeven, {short:true})}</span>
+      </div>
+      <div class="h-value num ${revVsBreakCls}">${m.has.barRevenue ? fmtMoney(m.grossRev) : '—'}</div>
+      <div class="h-sub">
+        ${m.has.barRevenue
+          ? `${m.revenueAboveBreakeven >= 0 ? '+' : '−'}${fmtMoney(Math.abs(m.revenueAboveBreakeven))} vs breakeven of ${fmtMoney(m.breakeven)}`
+          : 'Bar, door, and table revenue'}
+      </div>
+      <div class="h-progress">
+        <div class="h-progress-bar" style="width:${Math.min(100,breakevenProgressPct)}%;background:${m.revenueAboveBreakeven >= 0 ? 'var(--pos-2)' : 'var(--neg-2)'}"></div>
+        <div class="h-progress-marker" style="left:${Math.min(99,Math.max(0,m.breakeven > 0 ? Math.round(m.breakeven / Math.max(m.grossRev, m.breakeven) * 100) : 0))}%"></div>
+      </div>
+      <div class="h-band ${revVsBreakCls}">
+        <span class="h-band-arrow">${m.revenueAboveBreakeven >= 0 ? '▲' : '▼'}</span>
+        ${m.has.barRevenue
+          ? (breakevenProgressPct >= 100 ? 'Crossed breakeven' : breakevenProgressPct + '% of breakeven')
+          : 'Awaiting data'}
+      </div>
+    </div>
+
+    <!-- ── Margin Pad ── -->
+    <div class="hero-card">
+      <div class="h-eyebrow">
+        <span class="eyebrow">Pour Margin Pad</span>
+        <span class="eyebrow">Charged − Actual</span>
+      </div>
+      <div class="h-value num tight ${padCls}">${m.has.barRevenue ? (m.marginPadPct >= 0 ? '+' : '') + fmtPct(m.marginPadPct) : '—'}</div>
+      <div class="h-sub">${m.has.barRevenue ? fmtMoneyDelta(m.marginPadAmt) + ' cushion on ' + fmtMoney(m.barActual) + ' bar' : 'Cushion vs contracted COGS'}</div>
+      <div class="margin-pad-detail">
+        <div class="row"><span class="label">Charged COGS</span><span class="val">${fmtPct(m.chargedCogsPct,1)}</span></div>
+        <div class="row"><span class="label">Liquor pour</span><span class="val">${m.has.barRevenue ? fmtPct(m.liquorPourPct,1) : '—'}</span></div>
+        <div class="row"><span class="label">Dry goods</span><span class="val">${fmtPct(DISTRICT.DRY_GOODS_DEFAULT,1)}</span></div>
+        <div class="row"><span class="label">Total pour</span><span class="val">${m.has.barRevenue ? fmtPct(m.totalPourPct,1) : '—'}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: TIER-2 KPI ROW
+   ───────────────────────────────────────────────────────────────────────── */
+function renderTier2(m) {
+  const e = m.e;
+  // Bar Revenue
+  const barCard = `
+    <div class="kpi">
+      <div class="kpi-eyebrow">Bar Revenue</div>
+      <div class="kpi-value num ${m.has.barRevenue ? '' : 'dim'}">${m.has.barRevenue ? fmtMoney(m.barActual) : '—'}</div>
+      <div class="kpi-sub">${m.has.barRevenue && m.attendance ? fmtMoney(m.barActual / m.attendance) + '/head' : 'Spirits, bottles, beer, NA'}</div>
     </div>`;
-  }).join('')+'</div>';
-}
 
-// ── PvA table ─────────────────────────────────────────────────────────────
-function renderPvA(e,barActual,doorActual,tableActual,totalRev,netActual){
-  const rows=[
-    {label:'Attendance',proj:e.expected_attendance,actual:e.actual_attendance,fmt:'n'},
-    {label:'Bar Revenue',proj:e.projected_bar_revenue,actual:barActual},
-    {label:'Door Revenue',proj:e.projected_door_revenue,actual:doorActual},
-    {label:'Table Revenue',proj:e.projected_table_revenue,actual:tableActual},
-    {label:'Total Revenue',proj:(parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0)),actual:totalRev,total:true},
-    {label:'Net to Venue',proj:null,actual:netActual,total:true},
-  ];
-  return `<table class="pva-table">
-    <thead><tr><th style="text-align:left">Line</th><th>Projected</th><th>Actual</th><th>Variance</th></tr></thead>
-    <tbody>${rows.map(r=>{
-      const pv=r.proj?parseFloat(r.proj):null;
-      const av=r.actual?parseFloat(r.actual):null;
-      const pfmt=pv?(r.fmt==='n'?Math.round(pv).toLocaleString():fmtFull(pv)):'—';
-      const afmt=av!==null?(r.fmt==='n'?Math.round(av).toLocaleString():fmtFull(av)):'—';
-      const vs=varStr(av,pv);
-      const vc=varClass(av,pv);
-      return `<tr${r.total?' class="total"':''}>
-        <td>${r.label}</td>
-        <td class="dim">${pfmt}</td>
-        <td class="${vc}">${afmt}</td>
-        <td class="${vc}">${vs}</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
-}
-
-// ── Deal structure ────────────────────────────────────────────────────────
-function renderDealStructure(e){
-  const ds=[
-    {label:'Door Split',val:`Venue ${100-(e.door_split_promoter||0)}% · Pro ${e.door_split_promoter||0}%`},
-    {label:'Bar Split',val:`Venue ${100-(e.bar_split_promoter||0)}% · Pro ${e.bar_split_promoter||0}%`},
-    {label:'Effective Take',val:e.actual_effective_split?fmtPct(e.actual_effective_split)+' promoter':fmtPct(e.effective_split_percentage)+' promoter'},
-    {label:'Artist Fee',val:e.artist_fee_landed?fmtFull(e.artist_fee_landed)+(e.artist_fee_travel?' + '+fmtFull(e.artist_fee_travel)+' travel':''):'—'},
-    {label:'Table Split',val:`Venue ${100-(e.table_split_promoter||0)}% · Pro ${e.table_split_promoter||0}%`},
-  ];
-  return `<div style="display:flex;flex-direction:column;gap:0">${ds.map(r=>`
-    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:12px">
-      <span style="color:var(--text3);font-size:11px;font-weight:500">${r.label}</span>
-      <span style="font-weight:500;color:var(--text1)">${r.val}</span>
-    </div>`).join('')}</div>`;
-}
-
-// ── Bar Mix ───────────────────────────────────────────────────────────────
-function renderBarMix(s,items,barActual){
-  const cats=[
-    {key:'spirits',label:'Spirits',cls:'spirits'},
-    {key:'bottle',label:'Bottle Svc',cls:'bottle'},
-    {key:'beer',label:'Beer',cls:'beer'},
-    {key:'cocktail',label:'Cocktails',cls:'cocktail'},
-    {key:'na',label:'Non-Alc',cls:'na'},
-  ];
-  const catRevMap={'Spirits':'spirits','Bottle Service':'bottle','Beer':'beer','Cocktails':'cocktail','Non-Alcoholic':'na'};
-  const catRevTotals={};
-  items.forEach(it=>{
-    const c=catRevMap[it.item_category]||'na';
-    catRevTotals[c]=(catRevTotals[c]||0)+parseFloat(it.total_revenue||0);
-  });
-  // Fallback to summary fields
-  if(!catRevTotals.bottle&&s.bottle_service_revenue) catRevTotals.bottle=s.bottle_service_revenue;
-
-  const tilesHtml=cats.map(c=>{
-    const rev=catRevTotals[c.key]||0;
-    const pct=barActual>0?Math.round(rev/barActual*100):0;
-    return `<div class="mix-tile ${c.cls}">
-      <div class="mix-tile-label">${c.label}</div>
-      <div class="mix-tile-value">${rev?fmtFull(rev):'—'}</div>
-      <div class="mix-tile-sub">${pct>0?pct+'% of bar':'—'}</div>
+  // Door Revenue
+  const doorCard = `
+    <div class="kpi">
+      <div class="kpi-eyebrow">Door Revenue</div>
+      <div class="kpi-value num ${m.has.doorRevenue ? '' : 'dim'}">${m.has.doorRevenue ? fmtMoney(m.doorActual) : '—'}</div>
+      <div class="kpi-sub">${m.has.doorRevenue && m.attendance ? fmtMoney(m.doorActual / m.attendance) + '/head' : 'Tickets, walk-up, presale'}</div>
     </div>`;
+
+  // SPH
+  const sphCls = m.sph >= 35 ? 'pos' : m.sph >= 25 ? 'flat' : (m.sph > 0 ? 'neg' : 'flat');
+  const sphCard = `
+    <div class="kpi">
+      <div class="kpi-eyebrow">Bar / Head</div>
+      <div class="kpi-value num ${m.sph > 0 ? '' : 'dim'}">${m.sph > 0 ? '$' + m.sph.toFixed(2) : '—'}</div>
+      <div class="kpi-sub">District avg ~$${DISTRICT.SPH_BENCH}</div>
+      ${m.sph > 0 ? `<span class="kpi-band ${sphCls}">${m.sph >= DISTRICT.SPH_BENCH ? '▲ above' : '▼ below'} avg</span>` : ''}
+    </div>`;
+
+  // Bottle Service
+  const pctOfBar = m.barActual > 0 ? Math.round(m.bottleRev / m.barActual * 100) : 0;
+  const bottleCard = `
+    <div class="kpi">
+      <div class="kpi-eyebrow">Bottle Service</div>
+      <div class="kpi-value num ${m.bottleCount > 0 ? '' : 'dim'}">${m.bottleCount || '—'}<span style="font-size:13px;color:var(--ink-3);font-weight:400;letter-spacing:0;margin-left:4px">btls</span></div>
+      <div class="kpi-sub">${m.bottleRev > 0 ? fmtMoney(m.bottleRev) + ' · ' + pctOfBar + '% of bar' : 'No bottles recorded'}</div>
+    </div>`;
+
+  // Draw
+  const drawCls = m.drawPct === null ? 'flat' : m.drawPct >= 90 ? 'pos' : m.drawPct >= 70 ? 'flat' : 'neg';
+  const drawCard = `
+    <div class="kpi">
+      <div class="kpi-eyebrow">Draw</div>
+      <div class="kpi-value num ${m.drawPct !== null ? '' : 'dim'}">${m.drawPct !== null ? m.drawPct + '%' : '—'}</div>
+      <div class="kpi-sub">${m.has.attendance ? fmtInt(m.attendance) + ' of ' + fmtInt(m.expected || 0) : 'Headcount not entered'}</div>
+      ${m.drawPct !== null ? `<span class="kpi-band ${drawCls}">${m.drawPct >= 90 ? 'On target' : m.drawPct >= 70 ? 'Soft' : 'Underperformed'}</span>` : ''}
+    </div>`;
+
+  return `<div class="tier2-grid">${barCard}${doorCard}${sphCard}${bottleCard}${drawCard}</div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: AI INTELLIGENCE STRIP (rule-based + LLM)
+   ───────────────────────────────────────────────────────────────────────── */
+function generateRuleBasedSummary(m) {
+  const e = m.e;
+  // Headline first — "what's the answer for this event?"
+  let headline = '';
+  if (!m.has.barRevenue) {
+    headline = 'Awaiting bar revenue data — no settlement signal yet.';
+  } else if (m.netToVenue >= 0) {
+    headline = `${e.event_name || 'Event'} cleared the ${fmtMoney(m.opCarryTotal)} nightly carry by ${fmtMoneyDelta(m.netToVenue)}.`;
+  } else {
+    headline = `${e.event_name || 'Event'} fell short of nightly carry by ${fmtMoney(Math.abs(m.netToVenue))}.`;
+  }
+  return headline;
+}
+
+function generateSignalChips(m) {
+  const chips = [];
+  if (!m.has.barRevenue) return [{ label: 'Data pending', cls: 'info' }];
+
+  // Pour cost vs benchmark
+  if (m.totalPourPct > 0) {
+    if (m.totalPourPct <= DISTRICT.POUR_COST_BENCHMARK) {
+      chips.push({ label: `Pour ${fmtPct(m.totalPourPct)} — at/below district 13.6%`, cls: 'pos' });
+    } else if (m.totalPourPct <= DISTRICT.CHARGED_COGS_DEFAULT) {
+      chips.push({ label: `Pour ${fmtPct(m.totalPourPct)} — within margin pad`, cls: 'warn' });
+    } else {
+      chips.push({ label: `Pour ${fmtPct(m.totalPourPct)} — exceeds 25% charged`, cls: 'neg' });
+    }
+  }
+  // Margin pad as currency
+  if (m.marginPadAmt !== 0) {
+    chips.push({ label: `${fmtMoneyDelta(m.marginPadAmt)} margin pad`, cls: m.marginPadAmt >= 0 ? 'pos' : 'neg' });
+  }
+  // SPH
+  if (m.sph >= DISTRICT.SPH_BENCH * 1.15) chips.push({ label: `SPH $${m.sph.toFixed(0)} — strong`, cls: 'pos' });
+  else if (m.sph > 0 && m.sph < DISTRICT.SPH_BENCH * 0.7) chips.push({ label: `SPH $${m.sph.toFixed(0)} — weak`, cls: 'neg' });
+  // Bottle service
+  if (m.bottleCount >= 8) chips.push({ label: `${m.bottleCount} bottles · ${fmtMoney(m.bottleRev)}`, cls: 'pos' });
+  // Draw
+  if (m.drawPct !== null) {
+    if (m.drawPct >= 95) chips.push({ label: `Draw ${m.drawPct}% of expected`, cls: 'pos' });
+    else if (m.drawPct < 70) chips.push({ label: `Draw shortfall ${m.drawPct}%`, cls: 'neg' });
+  }
+  // Collectiv special
+  if (m.isCollectiv) chips.push({ label: `Collectiv: under-recovers $${DISTRICT.COLLECTIV_RECOVERY_GAP}/night`, cls: 'warn' });
+  return chips;
+}
+
+function renderIntel(m) {
+  const ruleSummary = generateRuleBasedSummary(m);
+  const chips = generateSignalChips(m);
+  return `
+  <div class="intel-strip">
+    <div class="intel-icon">✦</div>
+    <div class="intel-content">
+      <div class="eyebrow">Night Intelligence</div>
+      <div class="intel-rule">${ruleSummary}</div>
+      <div class="intel-narrative loading" id="intel-narrative">Generating GM briefing…</div>
+      <div class="intel-chips">
+        ${chips.map(c => `<span class="intel-chip ${c.cls}"><span class="intel-chip-dot"></span>${c.label}</span>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function loadIntelNarrative(m) {
+  const el = g('intel-narrative');
+  if (!el) return;
+  if (!m.has.barRevenue) {
+    el.classList.remove('loading');
+    el.style.display = 'none';
+    return;
+  }
+  const e = m.e;
+  const prompt = `You are the GM's right hand reading last night's event recap. Write 2-3 sentences (under 65 words) for the morning briefing. Lead with what drove the result. Cite one specific number that matters most. End with the single highest-leverage action for next time. No fluff, no hedging.
+
+Event: ${e.event_name}, ${e.event_date ? e.event_date.substring(0,10) : ''}
+Type: ${e.tier1_category || 'unknown'}, Promoter: ${e.promoter_name || 'unknown'}
+Bar: $${m.barActual.toFixed(0)} (${m.has.projections ? 'proj $' + num(e.projected_bar_revenue).toFixed(0) : 'no projection'})
+Pour cost: ${m.totalPourPct.toFixed(1)}% (district avg 13.6%, charged 25%)
+Margin pad: ${m.marginPadAmt >= 0 ? '+' : ''}$${m.marginPadAmt.toFixed(0)} cushion
+Net to venue: $${m.netToVenue.toFixed(0)} (op carry $${m.opCarryTotal.toFixed(0)})
+${m.bottleCount ? 'Bottle service: ' + m.bottleCount + ' bottles, $' + m.bottleRev.toFixed(0) : ''}
+${m.drawPct ? 'Draw: ' + m.drawPct + '% of expected' : ''}`;
+
+  try {
+    const res = await fetch(`${BASE}/api/talking-points`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const r = await res.json();
+    el.classList.remove('loading');
+    el.innerHTML = r.text || '';
+  } catch (err) {
+    el.style.display = 'none';
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: COLLECTIV CALLOUT
+   ───────────────────────────────────────────────────────────────────────── */
+function renderCollectivCallout(m) {
+  return `
+  <div class="callout-collectiv">
+    <div class="icon">!</div>
+    <div class="body">
+      <strong>Collectiv co-promote — structural under-recovery.</strong> District charges Collectiv a flat
+      $10,500 nightly house cost (unchanged since 2023), but the verified 2025 per-night carry is $12,474.
+      Every Collectiv night silently absorbs the gap. Recommended action: anchor the next renegotiation on the 2025 actual.
+    </div>
+    <div class="figure">
+      −$${DISTRICT.COLLECTIV_RECOVERY_GAP.toLocaleString()}
+      <span class="label">recovery gap / night</span>
+    </div>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: WATERFALL CARD
+   Rows are proportional to gross revenue. Subtotals get bold treatment.
+   ───────────────────────────────────────────────────────────────────────── */
+function renderWaterfallCard(m) {
+  const max = Math.max(Math.abs(m.grossRev), Math.abs(m.breakeven), 1);
+
+  const rows = [
+    { label: 'Bar Revenue',         val: m.barActual,     cls: 'add',  show: true },
+    { label: 'Door Revenue',        val: m.doorActual,    cls: 'add',  show: true },
+    { label: 'Table / Bottle',      val: m.tableActual,   cls: 'add',  show: m.tableActual > 0 },
+    { divider: true },
+    { label: 'Gross Revenue',       val: m.grossRev,      cls: 'subtotal', total: true, show: true },
+    { divider: true },
+    { label: 'Liquor COGS',         val: -m.liquorCogs,   cls: 'cogs', show: true,
+      sub: m.totalPourPct > 0 ? `${fmtPct(m.liquorPourPct,1)} of bar` : '' },
+    { label: 'Dry Goods (5%)',      val: -m.dryGoodsCost, cls: 'cogs', show: m.barActual > 0 },
+    { label: 'Promoter Bar Split',  val: -m.barPayout,    cls: 'split', show: true },
+    { label: 'Promoter Door Split', val: -m.doorPayout,   cls: 'split', show: m.doorPayout > 0 },
+    { label: 'Promoter Table Split',val: -m.tablePayout,  cls: 'split', show: m.tablePayout > 0 },
+    { label: 'Artist Fee',          val: -m.artistFee,    cls: 'split', show: m.has.artistFee },
+    { divider: true },
+    { label: 'Net Pre-Operating',   val: m.netPreOp,      cls: 'subtotal', total: true, show: true },
+    { divider: true },
+    { label: 'Op Carry — Static',   val: -m.opCarryStatic, cls: 'opex', show: true,
+      sub: 'Rent, salaries, utilities' },
+    { label: 'Op Carry — Variable', val: -m.opCarryVariable, cls: 'opex', show: true,
+      sub: 'Security, cleaning, hourly' },
+    { divider: true },
+    { label: 'Net to Venue',        val: m.netToVenue,    cls: 'grand', total: true, grand: true, show: true },
+  ];
+
+  const rowsHtml = rows.map(r => {
+    if (r.divider) return '<div class="wf-divider"></div>';
+    if (!r.show) return '';
+    const absVal = Math.abs(r.val);
+    const widthPct = Math.min(100, Math.round(absVal / max * 100));
+    const valStr = r.val === 0 ? '$0' : fmtMoneyDelta(r.val);
+    const valClass = r.val > 0 ? 'pos' : r.val < 0 ? 'neg' : 'dim';
+    const barClass = r.cls === 'subtotal' ? (r.val >= 0 ? 'pos-total' : 'neg-total')
+                  : r.cls === 'grand'    ? (r.val >= 0 ? 'pos-total' : 'neg-total')
+                  : r.cls;
+    const wrapClass = r.grand ? 'wf-grand wf-row' : r.total ? 'wf-row wf-total' : 'wf-row';
+    const subPart = r.sub ? `<span style="font-size:10.5px;color:var(--ink-4);font-weight:400">${r.sub}</span>` : '';
+    return `
+      <div class="${wrapClass}">
+        <div class="wf-label">${subPart}<span>${r.label}</span></div>
+        <div class="wf-bar-track">
+          ${absVal > 0 ? `<div class="wf-bar ${barClass}" style="left:0;width:${widthPct}%"></div>` : ''}
+        </div>
+        <div class="wf-val ${valClass}">${valStr}</div>
+      </div>`;
   }).join('');
 
-  const itemRows=items.length>0?`
-    <div class="collapsible" id="items-table-wrap" style="max-height:0;overflow:hidden">
-      <div style="overflow-x:auto;margin-top:14px">
-        <table class="item-table">
-          <thead><tr><th>Item</th><th>Qty</th><th>Revenue</th><th>COGS</th><th>GM%</th></tr></thead>
-          <tbody>${items.map(it=>{
-            const catCls={Spirits:'spirits','Bottle Service':'bottle',Beer:'beer',Cocktails:'cocktail','Non-Alcoholic':'na'}[it.item_category]||'na';
-            const gm=it.total_revenue>0?Math.round((1-it.total_cost/it.total_revenue)*100):0;
-            const gmCls=gm>=85?'color:var(--green2)':gm>=70?'color:var(--amber2)':'color:var(--red2)';
-            return `<tr>
-              <td>${it.item_name}<span class="cat-badge cat-${catCls}">${it.item_category}</span></td>
-              <td>${it.quantity_sold||'—'}</td>
-              <td>${fmtFull(it.total_revenue)}</td>
-              <td style="color:var(--text3)">${fmtFull(it.total_cost)}</td>
-              <td style="${gmCls}">${gm}%</td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>
-    </div>`:'';
-
-  return `<div class="bar-mix-grid">${tilesHtml}</div>${itemRows}`;
+  return `
+  <div class="card">
+    <div class="card-head">
+      <h2>P&L Cascade</h2>
+      <span class="meta">Gross → Pour → Splits → Op Carry → Net</span>
+    </div>
+    <div class="waterfall">${rowsHtml}</div>
+    <div class="wf-foot">
+      <div class="key"><span class="swatch" style="background:linear-gradient(180deg,#2E6FA1,#1F4E7A)"></span>Revenue</div>
+      <div class="key"><span class="swatch" style="background:linear-gradient(180deg,#B85A2C,#8E4218)"></span>Pour Cost</div>
+      <div class="key"><span class="swatch" style="background:linear-gradient(180deg,#B12B2B,#8E1F1F)"></span>Promoter / Artist</div>
+      <div class="key"><span class="swatch" style="background:linear-gradient(180deg,#5C3380,#422458)"></span>Op Carry</div>
+    </div>
+  </div>`;
 }
 
-function toggleItems(){
-  itemsExpanded=!itemsExpanded;
-  const wrap=g('items-table-wrap');
-  if(wrap){
-    wrap.style.maxHeight=itemsExpanded?wrap.scrollHeight+'px':'0';
-    wrap.style.overflow=itemsExpanded?'visible':'hidden';
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: PROJECTED VS ACTUAL CARD
+   ───────────────────────────────────────────────────────────────────────── */
+function renderPvACard(m) {
+  const e = m.e;
+  if (!m.has.projections && !m.has.barRevenue) {
+    return `
+    <div class="card">
+      <div class="card-head"><h2>Projected vs Actual</h2></div>
+      <div class="no-data">Neither projections nor actuals on file for this event.</div>
+    </div>`;
   }
-  const icon=g('items-toggle-icon');
-  if(icon) icon.classList.toggle('open',itemsExpanded);
+
+  const rows = [
+    { label: 'Attendance',    proj: e.expected_attendance, actual: m.attendance, fmt: 'int' },
+    { label: 'Bar Revenue',   proj: e.projected_bar_revenue, actual: m.barActual },
+    { label: 'Door Revenue',  proj: e.projected_door_revenue, actual: m.doorActual },
+    { label: 'Table Revenue', proj: e.projected_table_revenue, actual: m.tableActual },
+    { label: 'Total Revenue', proj: num(e.projected_bar_revenue) + num(e.projected_door_revenue) + num(e.projected_table_revenue), actual: m.grossRev, total: true },
+    { label: 'Net to Venue',  proj: null, actual: m.netToVenue, total: true },
+  ];
+
+  const tbody = rows.map(r => {
+    const pv = r.proj ? parseFloat(r.proj) : null;
+    const av = r.actual !== null && r.actual !== undefined ? parseFloat(r.actual) : null;
+    const fmt = (v) => r.fmt === 'int' ? fmtInt(v) : fmtMoney(v);
+    const pStr = pv ? fmt(pv) : '—';
+    const aStr = av !== null ? fmt(av) : '—';
+    let varStr = '—';
+    let varCls = 'dim';
+    if (av !== null && pv && pv !== 0) {
+      const delta = av - pv;
+      const pct = Math.round(delta / Math.abs(pv) * 100);
+      varStr = (delta >= 0 ? '+' : '') + pct + '%';
+      varCls = delta >= 0 ? 'pos' : 'neg';
+    }
+    return `
+      <tr${r.total ? ' class="total"' : ''}>
+        <td>${r.label}</td>
+        <td class="dim">${pStr}</td>
+        <td class="${varCls}">${aStr}</td>
+        <td class="${varCls}">${varStr}</td>
+      </tr>`;
+  }).join('');
+
+  return `
+  <div class="card">
+    <div class="card-head">
+      <h2>Projected vs Actual</h2>
+      <span class="meta">${m.has.projections ? 'Variance vs deal projections' : 'Projections not entered'}</span>
+    </div>
+    <table class="pva-table">
+      <thead><tr><th>Line</th><th>Projected</th><th>Actual</th><th>Variance</th></tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>
+  </div>`;
 }
 
-// ── Market context ────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: MARGIN PAD CARD (right rail)
+   ───────────────────────────────────────────────────────────────────────── */
+function renderMarginPadCard(m) {
+  const padCls = m.marginPadAmt >= 0 ? 'pos' : 'neg';
+  const padBgClass = m.marginPadAmt >= 0 ? 'pos-light' : 'neg-light';
+  return `
+  <div class="card">
+    <div class="card-head">
+      <h2>Margin Pad</h2>
+      <span class="meta">${fmtPct(m.chargedCogsPct,0)} charged − ${fmtPct(m.totalPourPct,1)} actual</span>
+    </div>
+    <div style="font-size:11.5px;color:var(--ink-3);line-height:1.55;margin-bottom:12px">
+      District contractually charges promoter <strong style="color:var(--ink-1)">${fmtPct(m.chargedCogsPct,0)}</strong>
+      bar COGS. Actual total pour was <strong style="color:var(--ink-1)">${m.has.barRevenue ? fmtPct(m.totalPourPct,1) : '—'}</strong>.
+      The delta is venue cushion.
+    </div>
+    <div style="background:var(--surface-2);border-radius:10px;padding:14px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--ink-3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase">Cushion</span>
+        <span class="num" style="font-size:24px;font-weight:600;letter-spacing:-0.025em;color:var(--${padCls})">
+          ${m.has.barRevenue ? fmtMoneyDelta(m.marginPadAmt) : '—'}
+        </span>
+      </div>
+      <div style="height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;position:relative">
+        <div style="position:absolute;top:0;left:0;height:100%;background:var(--${padCls === 'pos' ? 'pos-2' : 'neg-2'});width:${m.has.barRevenue ? Math.min(100, Math.max(0, m.marginPadPct / m.chargedCogsPct * 100)).toFixed(0) : 0}%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-4);margin-top:6px">
+        <span>0%</span>
+        <span>${fmtPct(m.chargedCogsPct,0)} charged</span>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px">
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink-3)">Charged</span><span class="num" style="font-weight:500">${m.has.barRevenue ? fmtMoney(m.chargedCogsAmt) : '—'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink-3)">Actual</span><span class="num" style="font-weight:500">${m.has.barRevenue ? fmtMoney(m.totalPourCost) : '—'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0"><span style="color:var(--ink-3)">Liquor</span><span class="num" style="font-weight:500">${m.has.barRevenue ? fmtMoney(m.liquorCogs) : '—'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0"><span style="color:var(--ink-3)">Dry goods</span><span class="num" style="font-weight:500">${m.has.barRevenue ? fmtMoney(m.dryGoodsCost) : '—'}</span></div>
+    </div>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: DEAL STRUCTURE CARD (right rail)
+   ───────────────────────────────────────────────────────────────────────── */
+function renderDealCard(m) {
+  const e = m.e;
+  if (!m.has.splits && !m.has.artistFee && !m.has.projections && !e.deal_structure_type) {
+    return `
+    <div class="card">
+      <div class="card-head"><h2>Deal Structure</h2></div>
+      <div class="no-data">No deal terms on file. Enter via Deal Calculator.</div>
+    </div>`;
+  }
+  const rows = [
+    { label: 'Door Split',  val: e.door_split_promoter ? `Venue ${100 - e.door_split_promoter}% · Pro ${e.door_split_promoter}%` : '—' },
+    { label: 'Bar Split',   val: e.bar_split_promoter ? `Venue ${100 - e.bar_split_promoter}% · Pro ${e.bar_split_promoter}%` : '—' },
+    { label: 'Table Split', val: e.table_split_promoter ? `Venue ${100 - e.table_split_promoter}% · Pro ${e.table_split_promoter}%` : '—' },
+    { label: 'Effective',   val: e.actual_effective_split ? fmtPct(e.actual_effective_split,1) + ' to promoter' : (e.effective_split_percentage ? fmtPct(e.effective_split_percentage,1) + ' to promoter' : '—') },
+    { label: 'Charged COGS',val: fmtPct(m.chargedCogsPct,0) },
+    { label: 'Artist Fee',  val: m.has.artistFee ? fmtMoney(m.artistFee) : '—' },
+  ];
+  return `
+  <div class="card">
+    <div class="card-head"><h2>Deal Structure</h2></div>
+    ${rows.map(r => `<div class="deal-row"><span class="label">${r.label}</span><span class="val">${r.val}</span></div>`).join('')}
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: MARKET CONTEXT CARD (right rail)
+   ───────────────────────────────────────────────────────────────────────── */
 const MARKET_EVENTS = [
   {date:'2026-01-02',name:'NYE Hangover Night @ Believe',type:'edm',demo:'EDM 21-32',cap:1500,competitor:true},
-  {date:'2026-01-17',name:'Metro Boomin @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-30',cap:21000,competitor:false},
-  {date:'2026-01-23',name:'Chris Brown @ State Farm Arena',type:'liveration',demo:'R&B 22-38',cap:21000,competitor:false},
+  {date:'2026-01-17',name:'Metro Boomin @ State Farm Arena',type:'concert',demo:'Hip Hop 18-30',cap:21000,competitor:false},
+  {date:'2026-01-23',name:'Chris Brown @ State Farm Arena',type:'concert',demo:'R&B 22-38',cap:21000,competitor:false},
   {date:'2026-01-24',name:'John Summit @ Believe Music Hall',type:'edm',demo:'House 22-35',cap:1500,competitor:true},
   {date:'2026-01-30',name:'Hawks vs Celtics',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
-  {date:'2026-01-31',name:'ATL Latin Fest @ The Loft',type:'liveration',demo:'Latin 21-40',cap:1000,competitor:true},
-  {date:'2026-02-07',name:'Bad Bunny @ State Farm Arena',type:'liveration',demo:'Latin 18-35',cap:21000,competitor:false},
-  {date:'2026-02-13',name:'Drake @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-32',cap:21000,competitor:false},
+  {date:'2026-01-31',name:'ATL Latin Fest @ The Loft',type:'concert',demo:'Latin 21-40',cap:1000,competitor:true},
+  {date:'2026-02-07',name:'Bad Bunny @ State Farm Arena',type:'concert',demo:'Latin 18-35',cap:21000,competitor:false},
+  {date:'2026-02-13',name:'Drake @ State Farm Arena',type:'concert',demo:'Hip Hop 18-32',cap:21000,competitor:false},
   {date:'2026-02-14',name:"Valentine's Day",type:'holiday',demo:null,cap:null,competitor:false},
   {date:'2026-02-20',name:'Trap Music Museum Late Night',type:'hip_hop',demo:'Hip Hop 21-35',cap:400,competitor:true},
-  {date:'2026-02-27',name:'Future & Metro Boomin @ SFA',type:'liveration',demo:'Hip Hop 18-30',cap:21000,competitor:false},
+  {date:'2026-02-27',name:'Future & Metro Boomin @ SFA',type:'concert',demo:'Hip Hop 18-30',cap:21000,competitor:false},
   {date:'2026-03-06',name:'Diplo @ Believe Music Hall',type:'edm',demo:'EDM 22-35',cap:1500,competitor:true},
-  {date:'2026-03-13',name:'SZA @ State Farm Arena',type:'liveration',demo:'R&B/Pop 20-35',cap:21000,competitor:false},
-  {date:'2026-03-20',name:'Cardi B @ State Farm Arena',type:'liveration',demo:'Hip Hop 20-35',cap:21000,competitor:false},
+  {date:'2026-03-13',name:'SZA @ State Farm Arena',type:'concert',demo:'R&B/Pop 20-35',cap:21000,competitor:false},
+  {date:'2026-03-20',name:'Cardi B @ State Farm Arena',type:'concert',demo:'Hip Hop 20-35',cap:21000,competitor:false},
   {date:'2026-03-21',name:'Braves Opening Day',type:'sports',demo:'Sports 28-55',cap:41000,competitor:false},
   {date:'2026-03-27',name:'Hardwell @ Believe Music Hall',type:'edm',demo:'EDM 21-32',cap:1500,competitor:true},
   {date:'2026-04-10',name:'Dreamville Festival — Day 1',type:'festival',demo:'Hip Hop 20-35',cap:40000,competitor:false},
   {date:'2026-04-11',name:'Dreamville Festival — Day 2',type:'festival',demo:'Hip Hop 20-35',cap:40000,competitor:false},
   {date:'2026-04-17',name:'SweetWater 420 Festival',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
   {date:'2026-04-24',name:'Dogwood Festival',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
-  {date:'2026-04-25',name:'Dogwood Festival (closing) + Braves vs Mets',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
-  {date:'2026-05-01',name:'Morgan Wallen @ State Farm Arena',type:'liveration',demo:'Country 25-45',cap:21000,competitor:false},
+  {date:'2026-04-25',name:'Dogwood Festival closing + Braves vs Mets',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
+  {date:'2026-05-01',name:'Morgan Wallen @ State Farm Arena',type:'concert',demo:'Country 25-45',cap:21000,competitor:false},
   {date:'2026-05-10',name:'Zedd @ Believe Music Hall',type:'edm',demo:'EDM 21-30',cap:1500,competitor:true},
-  {date:'2026-05-15',name:'Bad Bunny @ State Farm Arena',type:'liveration',demo:'Latin 18-35',cap:21000,competitor:false},
+  {date:'2026-05-15',name:'Bad Bunny @ State Farm Arena',type:'concert',demo:'Latin 18-35',cap:21000,competitor:false},
 ];
-const DEMO_OVERLAP={
-  'Latin':['Latin','latin','Reggaeton'],
-  'Electronic':['EDM','House','Techno','Bass'],
-  'Hip Hop and R&B':['Hip Hop','Trap','R&B'],
-  'hip_hop_rnb':['Hip Hop','Trap','R&B'],
-  'Open Format':[],
+const DEMO_OVERLAP = {
+  'latin': ['Latin','Reggaeton'],
+  'Electronic': ['EDM','House','Techno','Bass'],
+  'hip_hop_rnb': ['Hip Hop','Trap','R&B'],
+  'Open Format': [],
 };
 
-function renderMarketContext(e, data){
-  const dk=e.event_date?e.event_date.substring(0,10):null;
-  if(!dk){g('market-events-body').innerHTML='<div style="font-size:12px;color:var(--text3)">No date recorded.</div>';return;}
-  const mevts=MARKET_EVENTS.filter(m=>m.date===dk);
-  const internalDemos=DEMO_OVERLAP[e.tier1_category]||[];
-  const competitors=mevts.filter(m=>m.competitor);
-  const overlap=mevts.filter(m=>m.demo&&internalDemos.some(d=>m.demo.toLowerCase().includes(d.toLowerCase())));
-  const hasFestival=mevts.some(m=>m.type==='festival');
-  const hasHoliday=mevts.some(m=>m.type==='holiday');
-  let demand='low';
-  if(hasHoliday||hasFestival||competitors.length>0||overlap.length>0) demand='high';
-  else if(mevts.length>0&&mevts.some(m=>m.cap>=10000)) demand='medium';
+function renderMarketCard(m) {
+  const dk = m.e.event_date ? m.e.event_date.substring(0,10) : null;
+  const mevts = dk ? MARKET_EVENTS.filter(x => x.date === dk) : [];
+  const internal = DEMO_OVERLAP[m.e.tier1_category] || [];
+  const competitors = mevts.filter(x => x.competitor);
+  const overlap = mevts.filter(x => x.demo && internal.some(d => x.demo.toLowerCase().includes(d.toLowerCase())));
+  const hasFestival = mevts.some(x => x.type === 'festival');
+  const hasHoliday  = mevts.some(x => x.type === 'holiday');
+  const demand = (hasHoliday || hasFestival || competitors.length > 0 || overlap.length > 0) ? 'high'
+              : (mevts.length > 0 && mevts.some(x => x.cap >= 10000)) ? 'medium' : 'low';
+  const demandLabel = { high: 'High Demand', medium: 'Medium Demand', low: 'Light Calendar' }[demand];
 
-  const demandCls={high:'demand-high',medium:'demand-medium',low:'demand-low'}[demand];
-  const demandLabel={high:'High Demand',medium:'Medium Demand',low:'Low Demand'}[demand];
-  const dpEl=g('demand-pill');
-  if(dpEl) dpEl.innerHTML=`<span class="demand-pill ${demandCls}">● ${demandLabel}</span>`;
+  const typeColor = { concert: 'var(--brand)', edm: 'var(--violet)', sports: '#3B6EAB', festival: '#7B3F9B', holiday: 'var(--pos)', hip_hop: 'var(--brand)' };
+  const typeLabel = { concert: 'Concert', edm: 'EDM', sports: 'Sports', festival: 'Festival', holiday: 'Holiday', hip_hop: 'Hip Hop' };
 
-  const typeColor={liveration:'var(--blue2)',edm:'var(--purple)',sports:'#3B82F6',festival:'#8B5CF6',holiday:'var(--green2)',hip_hop:'var(--blue2)'};
-  const typeLabel={liveration:'Concert',edm:'EDM',sports:'Sports',festival:'Festival',holiday:'Holiday',hip_hop:'Hip Hop'};
-
-  if(mevts.length===0){
-    g('market-events-body').innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0">No major market events on record for this date.</div>';
-  } else {
-    g('market-events-body').innerHTML=mevts.map(m=>`
+  const eventsHtml = mevts.length === 0
+    ? '<div class="no-data">No major Atlanta market events on this date.</div>'
+    : mevts.map(x => `
       <div class="mkt-row">
-        <div class="mkt-type" style="color:${typeColor[m.type]||'var(--text3)'}">${typeLabel[m.type]||m.type}</div>
-        <div class="mkt-name ${m.competitor?'mkt-warn':''}">${m.competitor?'⚠ ':''}<strong style="font-weight:500">${m.name}</strong>${m.demo?`<span style="font-size:10px;color:var(--text3)"> · ${m.demo}</span>`:''}</div>
-        ${m.cap?`<div class="mkt-cap">${m.cap>=1000?(m.cap/1000).toFixed(0)+'K':m.cap} cap</div>`:''}
+        <div class="mkt-type" style="color:${typeColor[x.type] || 'var(--ink-4)'}">${typeLabel[x.type] || x.type}</div>
+        <div class="mkt-name ${x.competitor ? 'mkt-warn' : ''}">${x.competitor ? '⚠ ' : ''}<strong>${x.name}</strong>${x.demo ? `<br><span class="meta">${x.demo}</span>` : ''}</div>
+        ${x.cap ? `<div class="mkt-cap">${x.cap >= 1000 ? (x.cap/1000).toFixed(0) + 'K' : x.cap} cap</div>` : ''}
       </div>`).join('');
-  }
 
-  // AI market narrative
-  const ctx={mevts,competitors,overlap,demand};
-  loadMarketNarrative(e,data,ctx);
-}
-
-async function loadMarketNarrative(e,data,ctx){
-  const el=g('market-narrative');
-  if(!el) return;
-  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
-  const barActual=parseFloat(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue??0);
-  const prompt=`Venue performance analyst. 2-3 sentences on how Atlanta market conditions on ${e.event_date?e.event_date.substring(0,10):'this date'} influenced performance. Factual, specific, past tense, under 55 words.
-
-Event: ${e.event_name}, ${e.tier1_category}, Promoter: ${e.promoter_name}
-Draw: ${e.actual_attendance||'—'} of ${e.expected_attendance||'—'}${drawPct?' ('+drawPct+'%)':''}
-Bar: $${barActual.toLocaleString()} vs projected $${parseFloat(e.projected_bar_revenue||0).toLocaleString()}
-Market: ${ctx.mevts.length>0?ctx.mevts.map(m=>m.name).join(', '):'No major events'}
-Competitors: ${ctx.competitors.length>0?ctx.competitors.map(m=>m.name).join(', '):'none'}`;
-  try{
-    const res=await fetch(`${BASE}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    const r=await res.json();
-    el.innerHTML=`<span style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Market Narrative</span>${r.text||''}`;
-  }catch(err){
-    el.innerHTML='<span style="color:var(--text3);font-style:italic;font-size:11px">Could not generate narrative.</span>';
-  }
-}
-
-async function loadAISummary(e,s,data){
-  const el=g('ai-text');const chips=g('ai-chips');
-  if(!el) return;
-  const barActual=parseFloat(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue??0);
-  const netActual=parseFloat(e.net_revenue_actual??0);
-  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
-  const margin=(barActual+parseFloat(e.actual_door_revenue??0))>0?netActual/(barActual+parseFloat(e.actual_door_revenue??0))*100:0;
-  const prompt=`You are the GM's right hand. Write one sharp, direct paragraph (3-4 sentences) summarizing last night's event performance for an owner/GM morning briefing. Lead with the headline result. Include attendance draw accuracy, bar performance, and net outcome. Highlight the single most important improvement opportunity. Under 70 words. No fluff.
-
-Event: ${e.event_name}, ${e.event_date?e.event_date.substring(0,10):''}
-Type: ${e.tier1_category}, Promoter: ${e.promoter_name}
-Draw: ${e.actual_attendance||'—'} of ${e.expected_attendance||'—'}${drawPct?' ('+drawPct+'%)':''}
-Bar: $${barActual.toLocaleString()} (proj $${parseFloat(e.projected_bar_revenue||0).toLocaleString()})
-SPH: $${parseFloat(e.spend_per_head_actual||0).toFixed(2)}, Net: $${netActual.toLocaleString()}, Margin: ${margin.toFixed(1)}%
-Bottle service: ${s.bottle_count||0} bottles ($${(s.bottle_service_revenue||0).toLocaleString()})`;
-
-  try{
-    const res=await fetch(`${BASE}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    const r=await res.json();
-    el.innerHTML=r.text||'';
-    // Build signal chips
-    const signals=[];
-    if(drawPct!==null){
-      if(drawPct>=95) signals.push({text:'Strong draw',good:true});
-      else if(drawPct<75) signals.push({text:'Draw shortfall',good:false});
-    }
-    const sph=parseFloat(e.spend_per_head_actual||0);
-    if(sph>=40) signals.push({text:'High SPH',good:true});
-    else if(sph<25&&sph>0) signals.push({text:'Low bar spend',good:false});
-    if(margin>=22) signals.push({text:'Strong margin',good:true});
-    else if(margin<12&&margin!==0) signals.push({text:'Thin margin',good:false});
-    if(s.bottle_count>=8) signals.push({text:`${s.bottle_count} bottles sold`,good:true});
-    if(chips) chips.innerHTML=signals.map(sig=>`<span class="ai-chip ${sig.good?'good':'warn'}">${sig.text}</span>`).join('');
-  }catch(err){
-    el.innerHTML='<span style="opacity:0.6">Summary unavailable.</span>';
-  }
-}
-
-async function loadPromoterScorecard(promoterName,evType,e){
-  if(!promoterName){g('promoter-body').innerHTML='<div style="color:var(--text3);font-size:12px">No promoter recorded.</div>';return;}
-  try{
-    const params=new URLSearchParams({promoter:promoterName});
-    if(evType) params.append('event_type',evType);
-    const res=await fetch(`${BASE}/api/promoter-intelligence?${params}`);
-    const data=await res.json();
-    if(!data.found){
-      g('promoter-body').innerHTML=`<div style="color:var(--text3);font-size:12px">No history found for ${promoterName}.</div>`;
-      return;
-    }
-    const score=data.reputation_score;
-    const scoreCls=score>=7?'green':score>=5?'amber':'red';
-    const comps=data.score_components||{};
-    const compDefs=[
-      {key:'draw_accuracy',label:'Draw Accuracy',weight:'35%'},
-      {key:'bar_yield',label:'Bar Yield',weight:'30%'},
-      {key:'deal_profitability',label:'Deal Profit',weight:'25%'},
-      {key:'consistency',label:'Consistency',weight:'10%'},
-    ];
-    const rec=data.recommendations||{};
-    const hist=data.history||[];
-    g('promoter-body').innerHTML=`
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div>
-          <div class="rep-header">
-            <div>
-              <div class="rep-name">${data.promoter}</div>
-              <div class="rep-sub">${data.total_events} events total · ${data.type_events} matching type</div>
-            </div>
-            <div class="rep-score-wrap">
-              <div class="rep-score" style="color:${score>=7?'#4ADE80':score>=5?'#FCD34D':'#F87171'}">${score!==null?score.toFixed(1):'—'}</div>
-              <div class="rep-score-lbl">/ 10</div>
-            </div>
-          </div>
-          <div class="score-grid">
-            ${compDefs.map(cd=>{
-              const c=comps[cd.key];const v=c?.score;
-              const col=v>=7?'var(--green2)':v>=5?'var(--amber2)':v!==null&&v!==undefined?'var(--red2)':'var(--text3)';
-              const barW=v!==null&&v!==undefined?(v/10*100)+'%':'0%';
-              const barCol=v>=7?'var(--green2)':v>=5?'var(--amber2)':'var(--red2)';
-              return `<div class="score-item">
-                <div class="score-item-label">${cd.label} <span style="font-size:9px;color:var(--text3)">${cd.weight}</span></div>
-                <div class="score-item-value" style="color:${col}">${v!==null&&v!==undefined?v.toFixed(1):'—'}</div>
-                <div class="score-bar"><div class="score-bar-fill" style="width:${barW};background:${barCol}"></div></div>
-                <div class="score-item-sub">${c?.label||'No data'}</div>
-              </div>`;
-            }).join('')}
-          </div>
-          <!-- Benchmark vs this event -->
-          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px">
-            <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">This Night vs Historical Avg</div>
-            ${benchRow('Attendance',e.actual_attendance,rec.attendance?.suggested,'guests')}
-            ${benchRow('Bar Spend/Head',e.spend_per_head_actual,rec.spend_per_head?.suggested,'$',true)}
-            ${benchRow('Net to Venue',e.net_revenue_actual,rec.avg_net_to_venue,'$',true)}
-          </div>
-        </div>
-        <div>
-          <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Event History — ${promoterName}</div>
-          ${hist.length===0?'<div style="font-size:12px;color:var(--text3)">No completed events yet.</div>':
-            hist.map(h=>{
-              const drawCls=!h.draw_pct?'':h.draw_pct>=95?'draw-good':h.draw_pct>=80?'draw-ok':'draw-bad';
-              const netCls=h.net_revenue_actual>0?'pos':'neg';
-              return `<div class="promoter-history-row" style="cursor:pointer" onclick="loadEvent(${h.event_id})">
-                <div class="ph-date">${h.event_date?h.event_date.substring(0,10):''}</div>
-                <div class="ph-name">${h.event_name||'—'}</div>
-                <div class="ph-draw ${drawCls}">${h.draw_pct?h.draw_pct+'%':'—'}</div>
-                <div class="ph-sph">${h.spend_per_head_actual?'$'+h.spend_per_head_actual:'—'}</div>
-                <div class="ph-net ${netCls}">${h.net_revenue_actual?'$'+Math.round(h.net_revenue_actual).toLocaleString():'—'}</div>
-              </div>`;
-            }).join('')}
-        </div>
-      </div>`;
-  }catch(err){
-    g('promoter-body').innerHTML='<div style="color:var(--text3);font-size:12px">Could not load promoter data.</div>';
-  }
-}
-
-function benchRow(label,actual,hist,unit,isDollar=false){
-  if(!hist&&!actual) return '';
-  const a=parseFloat(actual||0);const h=parseFloat(hist||0);
-  const diff=h>0?Math.round((a-h)/h*100):null;
-  const diffCls=diff===null?'dim':diff>=0?'pos':'neg';
-  const diffStr=diff===null?'—':(diff>=0?'+':'')+diff+'%';
-  const fmtVal=(v)=>isDollar?'$'+Math.round(v).toLocaleString():Math.round(v).toLocaleString()+' '+unit;
-  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:11px">
-    <span style="color:var(--text2)">${label}</span>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="color:var(--text3)">avg ${h?fmtVal(h):'—'}</span>
-      <span style="font-weight:600;color:var(--text1)">${a?fmtVal(a):'—'}</span>
-      <span style="font-family:'DM Mono',monospace;font-size:11px" class="${diffCls}">${diffStr}</span>
+  return `
+  <div class="card">
+    <div class="card-head">
+      <h2>Market Context</h2>
+      <span class="demand-pill demand-${demand}">${demandLabel}</span>
+    </div>
+    ${eventsHtml}
+    <div class="mkt-narrative loading" id="mkt-narrative">
+      <span class="eyebrow">Market Read</span>
+      Analyzing market conditions on this date…
     </div>
   </div>`;
 }
 
-// ── RANGE VIEW ────────────────────────────────────────────────────────────
-function setRange(preset){
-  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-  const now=new Date();
-  let start,end;
-  end=now.toISOString().split('T')[0];
-  if(preset==='week'){
-    const d=new Date(now);d.setDate(d.getDate()-d.getDay());
-    start=d.toISOString().split('T')[0];
-  } else if(preset==='month'){
-    start=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
-  } else if(preset==='quarter'){
-    const q=Math.floor(now.getMonth()/3);
-    start=new Date(now.getFullYear(),q*3,1).toISOString().split('T')[0];
-  } else if(preset==='ytd'){
-    start=new Date(now.getFullYear(),0,1).toISOString().split('T')[0];
+async function loadMarketNarrative(m) {
+  const el = g('mkt-narrative');
+  if (!el) return;
+  const dk = m.e.event_date ? m.e.event_date.substring(0,10) : null;
+  if (!dk) { el.style.display = 'none'; return; }
+  const mevts = MARKET_EVENTS.filter(x => x.date === dk);
+  if (!m.has.barRevenue) {
+    el.classList.remove('loading');
+    el.innerHTML = `<span class="eyebrow">Market Read</span>Atlanta market context will be analyzed when bar revenue data is available.`;
+    return;
   }
-  g('r-start').value=start;
-  g('r-end').value=end;
+  const prompt = `Atlanta venue performance analyst. Read how market conditions on ${dk} influenced this event's outcome. 2 sentences, under 50 words, factual past tense, specific.
+
+Event: ${m.e.event_name}, ${m.e.tier1_category}, Promoter: ${m.e.promoter_name}
+Bar revenue: $${m.barActual.toFixed(0)}; Draw: ${m.drawPct ? m.drawPct + '%' : 'unknown'}
+Atlanta competing events: ${mevts.length > 0 ? mevts.map(x => x.name).join(', ') : 'none'}`;
+  try {
+    const res = await fetch(`${BASE}/api/talking-points`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const r = await res.json();
+    el.classList.remove('loading');
+    el.innerHTML = `<span class="eyebrow">Market Read</span>${r.text || ''}`;
+  } catch (err) {
+    el.style.display = 'none';
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: BAR MIX CARD (with type-average benchmarks)
+   ───────────────────────────────────────────────────────────────────────── */
+function renderBarMixCard(m) {
+  const items = (currentEventData.items || []).filter(i => i.item_category !== 'Fees');
+  const s = m.s;
+  const cats = [
+    { key: 'spirits',  label: 'Spirits',     cls: 'spirits',  rev: s.spirits_revenue || 0 },
+    { key: 'bottle',   label: 'Bottle Svc',  cls: 'bottle',   rev: s.bottle_service_revenue || 0 },
+    { key: 'cocktail', label: 'Cocktails',   cls: 'cocktail', rev: s.cocktail_revenue || 0 },
+    { key: 'beer',     label: 'Beer',        cls: 'beer',     rev: s.beer_revenue || 0 },
+    { key: 'na',       label: 'Non-Alc',     cls: 'na',       rev: s.na_revenue || 0 },
+  ];
+  const totalRev = cats.reduce((a, c) => a + c.rev, 0);
+
+  const tilesHtml = cats.map(c => {
+    const pct = totalRev > 0 ? Math.round(c.rev / totalRev * 100) : 0;
+    return `
+    <div class="mix-tile ${c.cls}">
+      <div class="mix-tile-eyebrow">
+        <span class="mix-tile-name">${c.label}</span>
+        <span class="mix-tile-pct">${pct}%</span>
+      </div>
+      <div class="mix-tile-value num ${c.rev > 0 ? '' : 'dim'}">${c.rev > 0 ? fmtMoney(c.rev) : '—'}</div>
+      <div class="mix-tile-bench" id="bench-${c.key}">vs ${formatCategory(m.e.tier1_category) || 'type'} avg…</div>
+    </div>`;
+  }).join('');
+
+  const itemRowsHtml = items.length === 0 ? '' : `
+    <div class="items-toolbar">
+      <span style="font-size:11.5px;color:var(--ink-3)">${items.length} items sold · COGS join via R365 reference file</span>
+      <button class="items-toggle" onclick="toggleItems()">
+        <span id="items-toggle-label">Show item detail</span>
+        <span id="items-toggle-icon" class="expand-icon">▾</span>
+      </button>
+    </div>
+    <div class="collapsible" id="items-table-wrap" style="max-height:0">
+      <div style="overflow-x:auto;margin-top:14px">
+        <table class="item-table">
+          <thead><tr><th>Item</th><th>Qty</th><th>Avg $</th><th>Revenue</th><th>COGS</th><th>GM%</th></tr></thead>
+          <tbody>${items.map(it => {
+            const catCls = { Spirits: 'spirits', 'Bottle Service': 'bottle', Beer: 'beer', Cocktails: 'cocktail', 'Non-Alcoholic': 'na' }[it.item_category] || 'na';
+            const rev = num(it.total_revenue);
+            const cogs = num(it.total_cost);
+            const gm = rev > 0 ? Math.round((1 - cogs / rev) * 100) : 0;
+            const gmCls = gm >= 85 ? 'pos' : gm >= 70 ? 'warn' : 'neg';
+            return `<tr>
+              <td>${it.item_name}<span class="cat-badge cat-${catCls}">${it.item_category}</span></td>
+              <td>${it.quantity_sold || '—'}</td>
+              <td>${it.unit_price ? '$' + parseFloat(it.unit_price).toFixed(2) : '—'}</td>
+              <td>${fmtMoney(rev)}</td>
+              <td style="color:var(--ink-4)">${fmtMoney(cogs)}</td>
+              <td style="color:var(--${gmCls})">${gm}%</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  return `
+  <div class="card">
+    <div class="card-head">
+      <h2>Bar Mix</h2>
+      <span class="meta">${totalRev > 0 ? fmtMoney(totalRev) + ' across categories' : 'No bar items recorded'}</span>
+    </div>
+    <div class="barmix-grid">${tilesHtml}</div>
+    ${itemRowsHtml}
+  </div>`;
+}
+
+function toggleItems() {
+  itemsExpanded = !itemsExpanded;
+  const wrap = g('items-table-wrap');
+  const icon = g('items-toggle-icon');
+  const lbl  = g('items-toggle-label');
+  if (wrap) {
+    wrap.style.maxHeight = itemsExpanded ? wrap.scrollHeight + 'px' : '0';
+  }
+  if (icon) icon.classList.toggle('open', itemsExpanded);
+  if (lbl)  lbl.textContent = itemsExpanded ? 'Hide item detail' : 'Show item detail';
+}
+
+async function loadCategoryBenchmarks(category, m) {
+  if (!category) return;
+  try {
+    const res = await fetch(`${BASE}/api/category-benchmarks?category=${encodeURIComponent(category)}`);
+    if (!res.ok) {
+      // Endpoint may not exist yet — gracefully no-op
+      ['spirits','bottle','cocktail','beer','na'].forEach(k => {
+        const el = g(`bench-${k}`); if (el) el.textContent = '';
+      });
+      return;
+    }
+    const data = await res.json();
+    if (!data || !data.found || (data.event_count || 0) < 2) {
+      ['spirits','bottle','cocktail','beer','na'].forEach(k => {
+        const el = g(`bench-${k}`);
+        if (el) el.textContent = `Need 2+ ${formatCategory(category)} events for benchmark`;
+      });
+      return;
+    }
+    const map = {
+      spirits:  { current: m.s.spirits_revenue,         avg: data.spirits_avg },
+      bottle:   { current: m.s.bottle_service_revenue,  avg: data.bottle_avg  },
+      cocktail: { current: m.s.cocktail_revenue,        avg: data.cocktail_avg },
+      beer:     { current: m.s.beer_revenue,            avg: data.beer_avg    },
+      na:       { current: m.s.na_revenue,              avg: data.na_avg      },
+    };
+    Object.entries(map).forEach(([k, v]) => {
+      const el = g(`bench-${k}`);
+      if (!el) return;
+      const cur = num(v.current), avg = num(v.avg);
+      if (avg <= 0) { el.textContent = ''; return; }
+      const delta = ((cur - avg) / avg) * 100;
+      const cls = delta >= 5 ? 'pos' : delta <= -5 ? 'neg' : '';
+      el.className = 'mix-tile-bench ' + cls;
+      el.innerHTML = `${delta >= 0 ? '▲ +' : '▼ '}${Math.abs(delta).toFixed(0)}% vs ${data.event_count}-event ${formatCategory(category)} avg`;
+    });
+  } catch (err) {
+    /* silent — show static labels */
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: PROMOTER SCORECARD (with sparkline trend)
+   ───────────────────────────────────────────────────────────────────────── */
+function renderPromoterCard(m) {
+  return `
+  <div class="card" id="promoter-card">
+    <div class="card-head">
+      <h2>Promoter Scorecard${m.e.promoter_name ? ' — ' + m.e.promoter_name : ''}</h2>
+      <span class="meta" id="promoter-meta"></span>
+    </div>
+    <div id="promoter-body">
+      <div class="loading-state" style="padding:40px 0">Loading promoter intelligence…</div>
+    </div>
+  </div>`;
+}
+
+function gradeFromScore(s) {
+  if (s === null || s === undefined) return { grade: '—', cls: '' };
+  if (s >= 8.5) return { grade: 'A', cls: 'high' };
+  if (s >= 7.0) return { grade: 'A−', cls: 'high' };
+  if (s >= 6.0) return { grade: 'B', cls: 'mid' };
+  if (s >= 5.0) return { grade: 'B−', cls: 'mid' };
+  if (s >= 4.0) return { grade: 'C', cls: 'low' };
+  return { grade: 'D', cls: 'low' };
+}
+
+async function loadPromoterScorecard(promoter, evType, m) {
+  const body = g('promoter-body');
+  const meta = g('promoter-meta');
+  if (!body) return;
+  if (!promoter) {
+    body.innerHTML = '<div class="no-data">No promoter recorded for this event.</div>';
+    return;
+  }
+  try {
+    const params = new URLSearchParams({ promoter });
+    if (evType) params.append('event_type', evType);
+    const res = await fetch(`${BASE}/api/promoter-intelligence?${params}`);
+    const data = await res.json();
+    if (!data.found) {
+      body.innerHTML = `<div class="no-data">No history found for ${promoter}.</div>`;
+      return;
+    }
+    if (meta) meta.textContent = `${data.total_events} events total · ${data.type_events} matching ${formatCategory(evType) || 'type'}`;
+
+    const score = data.reputation_score;
+    const grd = gradeFromScore(score);
+    const comps = data.score_components || {};
+    const compDefs = [
+      { key: 'draw_accuracy',     label: 'Draw Accuracy',  weight: '35%' },
+      { key: 'bar_yield',         label: 'Bar Yield',      weight: '30%' },
+      { key: 'deal_profitability',label: 'Deal Profit',    weight: '25%' },
+      { key: 'consistency',       label: 'Consistency',    weight: '10%' },
+    ];
+    const rec = data.recommendations || {};
+    const hist = (data.history || []).slice(0, 12);
+
+    const compsHtml = compDefs.map(cd => {
+      const c = comps[cd.key];
+      const v = c ? c.score : null;
+      const cls = v >= 7 ? 'high' : v >= 5 ? 'mid' : v !== null && v !== undefined ? 'low' : 'empty';
+      const fillW = (v !== null && v !== undefined) ? (v / 10 * 100) + '%' : '0%';
+      return `
+      <div class="rep-comp ${cls}">
+        <div class="label"><span>${cd.label}</span><span class="weight">${cd.weight}</span></div>
+        <div class="value num">${(v !== null && v !== undefined) ? v.toFixed(1) : '—'}</div>
+        <div class="sub">${c ? c.label : 'No data'}</div>
+        <div class="bar"><div class="bar-fill" style="width:${fillW}"></div></div>
+      </div>`;
+    }).join('');
+
+    const benchHtml = `
+      <div class="rep-bench">
+        ${benchRow('Attendance', m.attendance, rec.attendance && rec.attendance.suggested, 'guests')}
+        ${benchRow('Bar / Head', m.sph, rec.spend_per_head && rec.spend_per_head.suggested, '$', true)}
+        ${benchRow('Net to Venue', m.netToVenue, rec.avg_net_to_venue, '$', true)}
+      </div>`;
+
+    const sparklineHtml = renderHistorySparkline(hist);
+    const historyRows = hist.length === 0
+      ? '<div class="no-data">No completed events on file yet.</div>'
+      : hist.map(h => {
+        const drawCls = !h.draw_pct ? 'dim' : h.draw_pct >= 95 ? 'pos' : h.draw_pct >= 80 ? 'warn' : 'neg';
+        const netCls  = h.net_revenue_actual > 0 ? 'pos' : h.net_revenue_actual < 0 ? 'neg' : 'dim';
+        return `
+        <div class="history-row" onclick="loadEvent(${h.event_id})">
+          <div class="ph-date">${h.event_date ? h.event_date.substring(5,10) : ''}</div>
+          <div class="ph-name">${h.event_name ? `<strong>${h.event_name}</strong>` : '—'}</div>
+          <div class="ph-num ${drawCls}">${h.draw_pct ? h.draw_pct + '%' : '—'}</div>
+          <div class="ph-num">${h.spend_per_head_actual ? '$' + Math.round(h.spend_per_head_actual) : '—'}</div>
+          <div class="ph-num ${netCls}">${h.net_revenue_actual !== null && h.net_revenue_actual !== undefined ? fmtMoney(h.net_revenue_actual) : '—'}</div>
+        </div>`;
+      }).join('');
+
+    body.innerHTML = `
+      <div class="rep-grid">
+        <div>
+          <div class="rep-headline">
+            <div class="rep-headline-left">
+              <div class="name">${data.promoter}</div>
+              <div class="sub">${data.total_events} total events · ${data.type_events} ${formatCategory(evType) || ''} events</div>
+            </div>
+            <div class="rep-score">
+              <div class="rep-score-num ${grd.cls}">${score !== null ? score.toFixed(1) : '—'}</div>
+              <div class="rep-score-grade">Grade ${grd.grade} · / 10</div>
+            </div>
+          </div>
+          <div class="rep-comp-grid">${compsHtml}</div>
+          ${benchHtml}
+        </div>
+        <div class="rep-history">
+          ${sparklineHtml}
+          <h3>Event History</h3>
+          ${historyRows}
+        </div>
+      </div>`;
+  } catch (err) {
+    body.innerHTML = '<div class="no-data">Could not load promoter intelligence.</div>';
+  }
+}
+
+function benchRow(label, actual, hist, unit, isDollar = false) {
+  if (!hist && !actual) return '';
+  const a = num(actual), h = num(hist);
+  const delta = h > 0 ? Math.round((a - h) / h * 100) : null;
+  const cls = delta === null ? 'flat' : delta >= 0 ? 'pos' : 'neg';
+  const deltaStr = delta === null ? '—' : (delta >= 0 ? '+' : '') + delta + '%';
+  const fmtV = (v) => isDollar ? fmtMoney(v) : Math.round(v).toLocaleString() + ' ' + unit;
+  return `
+    <div class="rep-bench-row">
+      <span class="label">${label}</span>
+      <div class="nums">
+        <span class="avg">avg ${h ? fmtV(h) : '—'}</span>
+        <span class="actual">${a ? fmtV(a) : '—'}</span>
+        <span class="delta ${cls}">${deltaStr}</span>
+      </div>
+    </div>`;
+}
+
+function renderHistorySparkline(hist) {
+  if (!hist || hist.length === 0) return '';
+  const validBars = hist.filter(h => h.draw_pct !== null && h.draw_pct !== undefined).reverse();
+  if (validBars.length === 0) return '';
+  const w = 100, h = 64, pad = 4;
+  const xStep = validBars.length === 1 ? 0 : (w - pad * 2) / (validBars.length - 1);
+  const yMax = 120, yMin = 40;  // Draw% range
+  const yTo = (v) => h - pad - ((Math.max(yMin, Math.min(yMax, v)) - yMin) / (yMax - yMin)) * (h - pad * 2);
+
+  const linePts = validBars.map((b, i) => `${pad + i * xStep},${yTo(b.draw_pct)}`).join(' ');
+  const targetY = yTo(100);
+  const dots = validBars.map((b, i) => {
+    const x = pad + i * xStep, y = yTo(b.draw_pct);
+    const color = b.draw_pct >= 95 ? '#1B5E3F' : b.draw_pct >= 80 ? '#7A4A00' : '#8E1F1F';
+    return `<circle cx="${x}" cy="${y}" r="2.2" fill="${color}"/>`;
+  }).join('');
+
+  const avg = validBars.reduce((a, b) => a + b.draw_pct, 0) / validBars.length;
+
+  return `
+  <div class="rep-spark">
+    <div class="rep-spark-head">
+      <span class="title">Draw Accuracy Trend</span>
+      <span class="meta">avg ${avg.toFixed(0)}% · last ${validBars.length} events</span>
+    </div>
+    <svg class="rep-spark-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <line x1="${pad}" x2="${w-pad}" y1="${targetY}" y2="${targetY}" stroke="#D1CCC4" stroke-dasharray="2 3" stroke-width="0.6"/>
+      <polyline points="${linePts}" fill="none" stroke="#16395C" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-4);font-family:'DM Mono',monospace;margin-top:2px">
+      <span>${validBars[0].event_date ? validBars[0].event_date.substring(5,10) : ''}</span>
+      <span>100% target</span>
+      <span>${validBars[validBars.length-1].event_date ? validBars[validBars.length-1].event_date.substring(5,10) : ''}</span>
+    </div>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPONENT: POST-EVENT NOTES
+   ───────────────────────────────────────────────────────────────────────── */
+function renderNotesCard(m) {
+  const e = m.e;
+  const has = e.crowd_demographic_observations || e.promoter_performance_notes || e.what_to_replicate || e.what_to_change;
+  if (!has) return '';
+  return `
+  <div class="card">
+    <div class="card-head"><h2>Post-Event Observations</h2></div>
+    <div class="notes-grid">
+      ${e.crowd_demographic_observations ? `<div class="note-box"><div class="eyebrow">Crowd</div><div class="text">${e.crowd_demographic_observations}</div></div>` : ''}
+      ${e.promoter_performance_notes ? `<div class="note-box"><div class="eyebrow">Promoter Performance</div><div class="text">${e.promoter_performance_notes}</div></div>` : ''}
+      ${e.what_to_replicate ? `<div class="note-box replicate"><div class="eyebrow">Replicate Next Time</div><div class="text">${e.what_to_replicate}</div></div>` : ''}
+      ${e.what_to_change ? `<div class="note-box change"><div class="eyebrow">Change Next Time</div><div class="text">${e.what_to_change}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RANGE VIEW
+   ───────────────────────────────────────────────────────────────────────── */
+function setRange(preset) {
+  document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+  const now = new Date();
+  let start, end;
+  end = now.toISOString().split('T')[0];
+  if (preset === 'week') {
+    const d = new Date(now); d.setDate(d.getDate() - d.getDay());
+    start = d.toISOString().split('T')[0];
+  } else if (preset === 'month') {
+    start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  } else if (preset === 'quarter') {
+    const q = Math.floor(now.getMonth() / 3);
+    start = new Date(now.getFullYear(), q*3, 1).toISOString().split('T')[0];
+  } else if (preset === 'ytd') {
+    start = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+  }
+  g('r-start').value = start;
+  g('r-end').value = end;
   loadRange();
 }
 
-async function loadRange(){
-  const start=g('r-start').value;const end=g('r-end').value;
-  if(!start||!end){return;}
-  g('page-root').innerHTML='<div class="loading-state">Loading range data…</div>';
-  try{
-    const res=await fetch(`${BASE}/api/events-by-date?start=${start}&end=${end}`);
-    const events=await res.json();
-    renderRangeDashboard(events,start,end);
-  }catch(err){
-    g('page-root').innerHTML='<div class="loading-state">Could not load range data.</div>';
+async function loadRange() {
+  const start = g('r-start').value;
+  const end = g('r-end').value;
+  if (!start || !end) return;
+  g('page-root').innerHTML = '<div class="loading-state">Loading range data…</div>';
+  try {
+    const res = await fetch(`${BASE}/api/events-by-date?start=${start}&end=${end}`);
+    const events = await res.json();
+    renderRangeDashboard(events, start, end);
+  } catch (err) {
+    g('page-root').innerHTML = '<div class="loading-state">Could not load range data.</div>';
   }
 }
 
-// ── sort state
-let sortCol='event_date',sortDir=1;
+let sortCol = 'event_date', sortDir = 1;
+let _rangeEvents = null;
 
-function renderRangeDashboard(events,start,end){
-  const completed=events.filter(e=>e.status==='completed'||e.revel_bar_gross||e.net_bar_revenue);
-  if(events.length===0){
-    g('page-root').innerHTML=`<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">No events in this range</div></div>`;
+function renderRangeDashboard(events, start, end) {
+  if (events.length === 0) {
+    g('page-root').innerHTML = `<div class="empty-state"><div class="empty-state-icon">▭</div><div class="empty-state-title">No events in this range</div></div>`;
     return;
   }
+  const completed = events.filter(e => e.status === 'completed' || e.revel_bar_gross || e.net_bar_revenue);
+  const totalBar = completed.reduce((a, e) => a + num(e.net_bar_revenue || e.revel_bar_gross), 0);
+  const totalDoor = completed.reduce((a, e) => a + num(e.actual_door_revenue), 0);
+  const totalNet = completed.reduce((a, e) => a + num(e.net_revenue_actual), 0);
+  const totalRev = totalBar + totalDoor;
+  const avgMargin = totalRev > 0 ? totalNet / totalRev * 100 : 0;
+  const drawEvts = completed.filter(e => num(e.actual_attendance) && num(e.expected_attendance));
+  const avgDraw = drawEvts.length > 0 ? drawEvts.reduce((a, e) => a + num(e.actual_attendance) / num(e.expected_attendance), 0) / drawEvts.length * 100 : 0;
+  const sphEvts = completed.filter(e => num(e.spend_per_head_actual));
+  const avgSph = sphEvts.length > 0 ? sphEvts.reduce((a, e) => a + num(e.spend_per_head_actual), 0) / sphEvts.length : 0;
 
-  // Aggregate KPIs
-  const totalBar=completed.reduce((a,e)=>a+parseFloat(e.net_bar_revenue||e.revel_bar_gross||0),0);
-  const totalNet=completed.reduce((a,e)=>a+parseFloat(e.net_revenue_actual||0),0);
-  const totalDoor=completed.reduce((a,e)=>a+parseFloat(e.actual_door_revenue||0),0);
-  const totalRev=totalBar+totalDoor;
-  const avgMargin=totalRev>0?totalNet/totalRev*100:0;
-  const avgDraw=completed.filter(e=>e.actual_attendance&&e.expected_attendance).reduce((a,e,_,arr)=>a+parseFloat(e.actual_attendance)/parseFloat(e.expected_attendance)/arr.length,0)*100;
-  const avgSph=completed.filter(e=>e.spend_per_head_actual).reduce((a,e,_,arr)=>a+parseFloat(e.spend_per_head_actual)/arr.length,0);
+  const sorted = [...completed].sort((a, b) => a.event_date.localeCompare(b.event_date));
 
-  // Build chart data
-  const sorted=[...completed].sort((a,b)=>a.event_date.localeCompare(b.event_date));
-  const labels=sorted.map(e=>{const d=e.event_date.substring(5,10);return e.event_name?e.event_name.substring(0,12):d});
-  const barData=sorted.map(e=>parseFloat(e.net_bar_revenue||e.revel_bar_gross||0));
-  const netData=sorted.map(e=>parseFloat(e.net_revenue_actual||0));
-
-  g('page-root').innerHTML=`
-    <!-- Summary KPIs -->
-    <div class="range-summary-grid">
-      <div class="kpi hero"><div class="kpi-label">Total Revenue</div><div class="kpi-value">${fmt(totalRev)}</div><div class="kpi-sub">${completed.length} events · ${start} to ${end}</div></div>
-      <div class="kpi ${totalNet>0?'green':'red'}"><div class="kpi-label">Total Net</div><div class="kpi-value">${fmt(totalNet)}</div><div class="kpi-sub">across all events</div></div>
-      <div class="kpi ${colorClass(avgMargin,{good:20,bad:10})}"><div class="kpi-label">Avg Margin</div><div class="kpi-value">${fmtPct(avgMargin)}</div><div class="kpi-sub">target ≥22%</div></div>
-      <div class="kpi ${colorClass(avgDraw,{good:85,bad:70})}"><div class="kpi-label">Avg Draw %</div><div class="kpi-value">${avgDraw?fmtPct(avgDraw):'—'}</div><div class="kpi-sub">expected vs actual</div></div>
-      <div class="kpi ${colorClass(avgSph,{good:35,bad:20})}"><div class="kpi-label">Avg Bar/Head</div><div class="kpi-value">${avgSph?'$'+avgSph.toFixed(2):'—'}</div><div class="kpi-sub">per guest</div></div>
+  g('page-root').innerHTML = `
+    <div class="masthead">
+      <div class="masthead-left">
+        <div class="masthead-eyebrow"><span class="eyebrow">Range Performance</span></div>
+        <h1 class="masthead-event-name">${completed.length} Event${completed.length === 1 ? '' : 's'}</h1>
+        <div class="masthead-meta"><span><span class="label">Period</span>${start} → ${end}</span></div>
+      </div>
+      <div class="masthead-right">
+        <div class="eyebrow">Total Revenue</div>
+        <div class="date-day num">${fmtMoney(totalRev, {short: true})}</div>
+        <div class="date-full">across ${completed.length} events</div>
+      </div>
     </div>
-
-    <!-- Charts -->
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">Revenue & Net by Event</div>
+    <div class="range-summary-grid">
+      <div class="kpi"><div class="kpi-eyebrow">Total Revenue</div><div class="kpi-value num">${fmtMoney(totalRev,{short:true})}</div><div class="kpi-sub">Bar + door across range</div></div>
+      <div class="kpi"><div class="kpi-eyebrow">Total Net</div><div class="kpi-value num" style="color:${totalNet >= 0 ? 'var(--pos)' : 'var(--neg)'}">${fmtMoney(totalNet,{short:true})}</div><div class="kpi-sub">After all costs</div></div>
+      <div class="kpi"><div class="kpi-eyebrow">Avg Margin</div><div class="kpi-value num">${fmtPct(avgMargin)}</div><div class="kpi-sub">Net / revenue</div></div>
+      <div class="kpi"><div class="kpi-eyebrow">Avg Draw</div><div class="kpi-value num">${avgDraw ? fmtPct(avgDraw) : '—'}</div><div class="kpi-sub">Of expected attendance</div></div>
+      <div class="kpi"><div class="kpi-eyebrow">Avg Bar/Head</div><div class="kpi-value num">${avgSph ? '$' + avgSph.toFixed(2) : '—'}</div><div class="kpi-sub">Per guest</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Revenue by Event</h2><span class="meta">Bar revenue (blue) · Net to venue (overlay)</span></div>
       <div class="chart-wrap"><canvas id="range-chart"></canvas></div>
     </div>
-
-    <!-- Event table -->
     <div class="card">
-      <div class="card-title">All Events — ${start} to ${end} <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">(click column to sort · click row to drill in)</span></div>
+      <div class="card-head"><h2>All Events</h2><span class="meta">Click row to drill in · click column to sort</span></div>
       <div style="overflow-x:auto">
         <table class="event-table" id="range-table">
           <thead><tr>
-            <th style="text-align:left" onclick="sortRange(events,'event_date')" id="th-date">Date ↑</th>
-            <th style="text-align:left" onclick="sortRange(events,'event_name')" id="th-name">Event</th>
-            <th onclick="sortRange(events,'net_bar_revenue')" id="th-bar">Bar Rev</th>
-            <th onclick="sortRange(events,'actual_door_revenue')" id="th-door">Door Rev</th>
-            <th onclick="sortRange(events,'net_revenue_actual')" id="th-net">Net</th>
-            <th onclick="sortRange(events,'spend_per_head_actual')" id="th-sph">SPH</th>
-            <th onclick="sortRange(events,'actual_attendance')" id="th-draw">Draw</th>
-            <th id="th-type">Type</th>
+            <th onclick="sortRange(events,'event_date')">Date</th>
+            <th onclick="sortRange(events,'event_name')">Event</th>
+            <th onclick="sortRange(events,'net_bar_revenue')">Bar Rev</th>
+            <th onclick="sortRange(events,'actual_door_revenue')">Door</th>
+            <th onclick="sortRange(events,'net_revenue_actual')">Net</th>
+            <th onclick="sortRange(events,'spend_per_head_actual')">SPH</th>
+            <th onclick="sortRange(events,'actual_attendance')">Draw</th>
+            <th>Type</th>
           </tr></thead>
           <tbody id="range-tbody"></tbody>
         </table>
       </div>
     </div>`;
 
+  _rangeEvents = events;
   renderRangeTable(events);
 
-  // Chart
-  setTimeout(()=>{
-    const ctx2=g('range-chart')?.getContext('2d');
-    if(!ctx2) return;
-    if(rangeChart) rangeChart.destroy();
-    rangeChart=new Chart(ctx2,{
-      type:'bar',
-      data:{
+  setTimeout(() => {
+    const ctx = g('range-chart');
+    if (!ctx) return;
+    if (rangeChart) rangeChart.destroy();
+    const labels = sorted.map(e => e.event_date ? e.event_date.substring(5,10) : '');
+    const barData = sorted.map(e => num(e.net_bar_revenue || e.revel_bar_gross));
+    const netData = sorted.map(e => num(e.net_revenue_actual));
+    rangeChart = new Chart(ctx.getContext('2d'), {
+      type: 'bar',
+      data: {
         labels,
-        datasets:[
-          {label:'Bar Revenue',data:barData,backgroundColor:'rgba(44,95,138,0.5)',borderColor:'rgba(44,95,138,0.8)',borderWidth:1,borderRadius:4},
-          {label:'Net to Venue',data:netData,backgroundColor:netData.map(v=>v>=0?'rgba(42,122,75,0.6)':'rgba(184,50,50,0.5)'),borderColor:netData.map(v=>v>=0?'rgba(42,122,75,0.8)':'rgba(184,50,50,0.8)'),borderWidth:1,borderRadius:4,type:'bar'},
+        datasets: [
+          { label: 'Bar Revenue', data: barData,
+            backgroundColor: 'rgba(22,57,92,0.6)', borderColor: '#16395C', borderWidth: 1, borderRadius: 4 },
+          { label: 'Net to Venue', data: netData, type: 'line', tension: 0.3,
+            borderColor: '#1B5E3F', backgroundColor: 'rgba(27,94,63,0.1)',
+            borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#1B5E3F', fill: false },
         ]
       },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{position:'top',labels:{font:{family:'DM Sans'},boxWidth:12,padding:16}},tooltip:{callbacks:{label:(c)=>'$'+Math.round(c.raw||0).toLocaleString()}}},
-        scales:{x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:11},maxRotation:30}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'DM Sans',size:11},callback:(v)=>'$'+(v>=1000?(v/1000).toFixed(0)+'K':v)}}}
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 11 }, boxWidth: 12, padding: 16 } },
+          tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtMoney(c.raw) } },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 10 }, maxRotation: 30 } },
+          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { family: 'DM Mono', size: 10 }, callback: v => fmtMoney(v, {short:true}) } },
+        }
       }
     });
-  },100);
+  }, 80);
 }
 
-function renderRangeTable(events){
-  const sorted=[...events].sort((a,b)=>{
-    const av=a[sortCol]||0,bv=b[sortCol]||0;
-    if(typeof av==='string') return av.localeCompare(bv)*sortDir;
-    return (parseFloat(av||0)-parseFloat(bv||0))*sortDir;
+function renderRangeTable(events) {
+  const sorted = [...events].sort((a, b) => {
+    const av = a[sortCol] || 0, bv = b[sortCol] || 0;
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (parseFloat(av || 0) - parseFloat(bv || 0)) * sortDir;
   });
-  const tbody=g('range-tbody');
-  if(!tbody) return;
-  const totalBar=sorted.reduce((a,e)=>a+parseFloat(e.net_bar_revenue||e.revel_bar_gross||0),0);
-  const totalNet=sorted.reduce((a,e)=>a+parseFloat(e.net_revenue_actual||0),0);
-  const totalDoor=sorted.reduce((a,e)=>a+parseFloat(e.actual_door_revenue||0),0);
-  tbody.innerHTML=sorted.map(e=>{
-    const bar=parseFloat(e.net_bar_revenue||e.revel_bar_gross||0);
-    const door=parseFloat(e.actual_door_revenue||0);
-    const net=parseFloat(e.net_revenue_actual||0);
-    const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
-    const drawCls=drawPct?drawPct>=90?'pos':drawPct<70?'neg':'':'dim';
-    const netCls=net>0?'pos':net<0?'neg':'dim';
-    const link=`onclick="setMode('single');loadEvent(${e.id})"`;
-    return `<tr ${e.id?link:'style="cursor:default"'}>
-      <td style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text3)">${e.event_date?e.event_date.substring(0,10):''}</td>
-      <td><div class="ev-name">${e.event_name||'—'}</div><div class="ev-meta">${e.promoter_name||''}${e.artist_name?' · '+e.artist_name:''}</div></td>
-      <td>${bar?fmtFull(bar):'—'}</td>
-      <td>${door?fmtFull(door):'—'}</td>
-      <td class="${netCls}">${net?fmtFull(net):'—'}</td>
-      <td>${e.spend_per_head_actual?'$'+parseFloat(e.spend_per_head_actual).toFixed(2):'—'}</td>
-      <td class="${drawCls}">${drawPct?drawPct+'%':'—'}</td>
-      <td style="font-size:11px;color:var(--text3)">${e.tier1_category||'—'}</td>
+  const tbody = g('range-tbody');
+  if (!tbody) return;
+  const totalBar = sorted.reduce((a, e) => a + num(e.net_bar_revenue || e.revel_bar_gross), 0);
+  const totalDoor = sorted.reduce((a, e) => a + num(e.actual_door_revenue), 0);
+  const totalNet = sorted.reduce((a, e) => a + num(e.net_revenue_actual), 0);
+  tbody.innerHTML = sorted.map(e => {
+    const bar = num(e.net_bar_revenue || e.revel_bar_gross);
+    const door = num(e.actual_door_revenue);
+    const net = num(e.net_revenue_actual);
+    const drawPct = num(e.actual_attendance) && num(e.expected_attendance) ? Math.round(num(e.actual_attendance) / num(e.expected_attendance) * 100) : null;
+    const drawCls = drawPct ? drawPct >= 90 ? 'pos' : drawPct < 70 ? 'neg' : '' : '';
+    const netCls = net > 0 ? 'pos' : net < 0 ? 'neg' : '';
+    return `<tr ${e.id ? `onclick="setMode('single');loadEvent(${e.id})"` : ''}>
+      <td style="font-family:'DM Sans',sans-serif;color:var(--ink-3);font-size:11.5px">${e.event_date ? e.event_date.substring(0,10) : ''}</td>
+      <td><div class="ev-name">${e.event_name || '—'}</div><div class="ev-meta">${e.promoter_name || ''}${e.artist_name ? ' · ' + e.artist_name : ''}</div></td>
+      <td>${bar ? fmtMoney(bar) : '—'}</td>
+      <td>${door ? fmtMoney(door) : '—'}</td>
+      <td class="${netCls}">${net ? fmtMoney(net) : '—'}</td>
+      <td>${e.spend_per_head_actual ? '$' + parseFloat(e.spend_per_head_actual).toFixed(2) : '—'}</td>
+      <td class="${drawCls}">${drawPct ? drawPct + '%' : '—'}</td>
+      <td style="font-size:11.5px;color:var(--ink-3)">${formatCategory(e.tier1_category) || '—'}</td>
     </tr>`;
-  }).join('')+`<tr class="total-row">
+  }).join('') + `<tr class="total-row">
     <td style="font-family:'DM Sans',sans-serif">Totals</td>
     <td style="font-family:'DM Sans',sans-serif">${sorted.length} events</td>
-    <td>${fmtFull(totalBar)}</td>
-    <td>${fmtFull(totalDoor)}</td>
-    <td class="${totalNet>=0?'pos':'neg'}">${fmtFull(totalNet)}</td>
+    <td>${fmtMoney(totalBar)}</td>
+    <td>${fmtMoney(totalDoor)}</td>
+    <td class="${totalNet >= 0 ? 'pos' : 'neg'}">${fmtMoney(totalNet)}</td>
     <td>—</td><td>—</td><td>—</td>
   </tr>`;
 }
 
-let _rangeEvents=null;
-function sortRange(events,col){
-  _rangeEvents=events;
-  if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=-1;}
-  renderRangeTable(events);
+function sortRange(events, col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = -1; }
+  renderRangeTable(_rangeEvents || events);
 }
 
-// ── Export ────────────────────────────────────────────────────────────────
-function openExportModal(){g('export-modal').classList.add('open')}
-function closeExportModal(){g('export-modal').classList.remove('open')}
-function selectExport(mode){
-  exportMode=mode;
-  ['full','promoter','investor'].forEach(m=>{
-    g('exp-'+m).classList.toggle('selected',m===mode);
-  });
+/* ─────────────────────────────────────────────────────────────────────────
+   EXPORT MODAL
+   ───────────────────────────────────────────────────────────────────────── */
+function openExportModal()  { g('export-modal').classList.add('open'); }
+function closeExportModal() { g('export-modal').classList.remove('open'); }
+function selectExport(mode) {
+  exportMode = mode;
+  ['full','promoter','investor'].forEach(m => g('exp-' + m).classList.toggle('selected', m === mode));
 }
-function doExport(){
+function doExport() {
   closeExportModal();
-  document.body.setAttribute('data-export',exportMode);
-  setTimeout(()=>{
+  document.body.setAttribute('data-export', exportMode);
+  setTimeout(() => {
     window.print();
-    setTimeout(()=>document.body.removeAttribute('data-export'),500);
-  },100);
+    setTimeout(() => document.body.removeAttribute('data-export'), 500);
+  }, 100);
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',()=>{
-  const params=new URLSearchParams(window.location.search);
-  const eventId=params.get('event_id');
-  if(eventId){
-    loadEvent(parseInt(eventId,10));
-  } else {
-    renderSearchPrompt();
-  }
+/* ─────────────────────────────────────────────────────────────────────────
+   INIT
+   ───────────────────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('event_id');
+  if (eventId) loadEvent(parseInt(eventId, 10));
+  else renderSearchPrompt();
 });
 </script>
 </body>
