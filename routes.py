@@ -1911,6 +1911,57 @@ def create_app(static_dir: str) -> FastAPI:
                 result.append(d)
             return result
 
+    @api.get("/category-benchmarks")
+    def get_category_benchmarks(category: str):
+        """
+        Returns per-category bar mix averages across all completed events of the
+        given tier1_category. Used by the Event Recap dashboard's bar-mix tiles
+        to render '+/- X% vs N-event Latin avg'-style benchmark deltas.
+        """
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        with engine.connect() as conn:
+            event_ids = conn.execute(text("""
+                SELECT DISTINCT e.id
+                FROM events e
+                JOIN event_item_sales eis ON eis.event_id = e.id
+                WHERE e.tier1_category = :cat
+                  AND eis.quantity_sold > 0
+            """), {"cat": category}).fetchall()
+            event_count = len(event_ids)
+            if event_count < 2:
+                return {"found": False, "event_count": event_count, "category": category}
+
+            agg = conn.execute(text("""
+                SELECT
+                    AVG(CASE WHEN item_category = 'Spirits'         THEN cat_total END) AS spirits_avg,
+                    AVG(CASE WHEN item_category = 'Bottle Service'  THEN cat_total END) AS bottle_avg,
+                    AVG(CASE WHEN item_category = 'Cocktails'       THEN cat_total END) AS cocktail_avg,
+                    AVG(CASE WHEN item_category = 'Beer'            THEN cat_total END) AS beer_avg,
+                    AVG(CASE WHEN item_category = 'Non-Alcoholic'   THEN cat_total END) AS na_avg
+                FROM (
+                    SELECT eis.event_id, eis.item_category,
+                           SUM(eis.total_revenue) AS cat_total
+                    FROM event_item_sales eis
+                    JOIN events e ON e.id = eis.event_id
+                    WHERE e.tier1_category = :cat
+                      AND eis.quantity_sold > 0
+                    GROUP BY eis.event_id, eis.item_category
+                ) per_event
+            """), {"cat": category}).fetchone()
+
+            d = dict(agg._mapping) if agg else {}
+            for k, v in list(d.items()):
+                if v is None: d[k] = 0
+                elif hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                    d[k] = float(v)
+            return {
+                "found": True,
+                "category": category,
+                "event_count": event_count,
+                **d,
+            }
+
     @api.get("/events-by-date")
     def get_events_by_date(start: str, end: str):
         if not engine:
