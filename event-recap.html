@@ -3,749 +3,1264 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VenueOS · Event Recap</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>VenueOS · Performance Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  color-scheme: light;
-  --bg:#F7F5F2;--surface:#FFFFFF;--surface2:#F4F2EF;--border:#E8E4DF;--border2:#D8D4CF;
-  --text1:#1A1714;--text2:#5A5652;--text3:#9B9793;
-  --blue:#2C5F8A;--blue-light:#EBF2F9;--blue-mid:#C5D9EC;
-  --green:#2A7A4B;--green-light:#EBF5F0;--green-mid:#B6DFC8;
-  --red:#B83232;--red-light:#FDEAEA;
-  --amber:#B85C00;--amber-light:#FDF3EA;--amber-mid:#F5CEAA;
-  --purple:#6B3A8C;--purple-light:#F5EEF8;
-  --gold:#8C6A00;--gold-light:#FDF8E8;
+  --bg:#F2F0ED; --surface:#FFFFFF; --surface2:#F8F7F5; --surface3:#EEECEA;
+  --border:#E4E0DB; --border2:#D0CBC4;
+  --text1:#18160F; --text2:#504C46; --text3:#908B84;
+  --blue:#1D4E75; --blue2:#2C5F8A; --blue-light:#EBF2F9; --blue-mid:#BDD4E8;
+  --green:#1E6B3C; --green2:#2A7A4B; --green-light:#EAF4EE; --green-mid:#A8D9BC;
+  --red:#A02828; --red2:#B83232; --red-light:#FCEAEA; --red-mid:#EDBBBB;
+  --amber:#9A4D00; --amber2:#B85C00; --amber-light:#FDF2E8; --amber-mid:#F0C99A;
+  --purple:#5B2D8E; --purple-light:#F3EDF9;
+  --gold:#7A5800;
+  --radius:10px; --radius-lg:14px; --radius-xl:18px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 12px rgba(0,0,0,0.04);
+  --shadow-lg:0 4px 16px rgba(0,0,0,0.1),0 1px 4px rgba(0,0,0,0.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);font-size:14px;line-height:1.6;min-height:100vh}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);font-size:14px;line-height:1.5;min-height:100vh}
 
-/* Header */
-.hdr{background:#FFFFFF;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.logo{font-size:17px;font-weight:600;letter-spacing:-0.02em;color:var(--text1)}
-.logo span{color:var(--blue)}
-.hdr-badge{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--green-light);color:var(--green);border:1px solid var(--green-mid);margin-left:10px}
-.hdr-nav{display:flex;align-items:center;gap:10px}
-.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;transition:all .15s}
-.back-btn:hover{border-color:var(--blue);color:var(--blue)}
-.new-event-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#fff;text-decoration:none;padding:7px 14px;border:none;border-radius:8px;background:var(--blue);cursor:pointer;transition:background .15s}
-.new-event-btn:hover{background:#245178}
+/* ── Nav ─────────────────────────────────────────────────────────────────── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;justify-content:space-between;align-items:center;height:52px;position:sticky;top:0;z-index:200;box-shadow:0 1px 0 var(--border)}
+.nav-left{display:flex;align-items:center;gap:16px}
+.logo{font-size:16px;font-weight:700;letter-spacing:-0.03em;color:var(--text1);text-decoration:none}
+.logo em{color:var(--blue2);font-style:normal}
+.nav-sep{width:1px;height:20px;background:var(--border)}
+.nav-title{font-size:13px;font-weight:500;color:var(--text2)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:500;color:var(--text2);background:var(--surface);cursor:pointer;text-decoration:none;transition:all .15s;font-family:'DM Sans',sans-serif}
+.nav-btn:hover{border-color:var(--blue2);color:var(--blue2)}
+.nav-btn.primary{background:var(--blue2);color:#fff;border-color:var(--blue2)}
+.nav-btn.primary:hover{background:var(--blue)}
 
-/* Layout */
-.page{max-width:900px;margin:0 auto;padding:28px 24px}
+/* ── Mode bar ────────────────────────────────────────────────────────────── */
+.mode-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:0;height:44px}
+.mode-tab{padding:0 18px;height:44px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.mode-tab.active{color:var(--blue2);border-bottom-color:var(--blue2)}
+.mode-tab:hover:not(.active){color:var(--text1)}
+.mode-sep{flex:1}
 
-/* Event hero header */
-.event-hero{background:var(--blue);border-radius:14px;padding:24px 28px;margin-bottom:24px;color:white}
-.event-hero-name{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
-.event-hero-meta{font-size:13px;opacity:0.75;margin-bottom:16px}
-.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.hero-stat{background:rgba(255,255,255,0.12);border-radius:8px;padding:10px 14px}
-.hero-stat-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;opacity:0.65;margin-bottom:3px}
-.hero-stat-value{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
-.hero-stat-sub{font-size:10px;opacity:0.6;margin-top:2px}
-.hero-stat.pos .hero-stat-value{color:#4ADE80}
-.hero-stat.neg .hero-stat-value{color:#F87171}
-.hero-stat.amber .hero-stat-value{color:#FCD34D}
-@media(max-width:600px){.hero-stats{grid-template-columns:1fr 1fr}}
+/* ── Search / Range bar ──────────────────────────────────────────────────── */
+.search-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.search-field{display:flex;flex-direction:column;gap:3px}
+.search-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3)}
+.search-input{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text1);background:var(--surface);min-width:150px;transition:border-color .15s}
+.search-input:focus{outline:none;border-color:var(--blue2)}
+.search-input.sm{min-width:110px}
+.range-presets{display:flex;gap:4px;align-items:flex-end;padding-bottom:0}
+.range-btn{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;color:var(--text3);background:var(--surface);cursor:pointer;transition:all .15s;white-space:nowrap}
+.range-btn:hover,.range-btn.active{background:var(--blue-light);color:var(--blue2);border-color:var(--blue-mid)}
+.search-go{height:34px;padding:0 16px;background:var(--blue2);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.search-go:hover{background:var(--blue)}
 
-/* Tabs */
-.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
-.tab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:all .15s;margin-bottom:-1px}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-.tab:hover:not(.active){color:var(--text1)}
+/* ── Page wrapper ────────────────────────────────────────────────────────── */
+.page{padding:20px 24px;max-width:1280px;margin:0 auto}
 
-/* Tab content */
-.tab-panel{display:none}
-.tab-panel.active{display:block}
+/* ── KPI scorecard ───────────────────────────────────────────────────────── */
+.scorecard{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px}
+@media(max-width:1100px){.scorecard{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:700px){.scorecard{grid-template-columns:repeat(2,1fr)}}
 
-/* Sections */
-.detail-section{margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
-.detail-section-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);padding-bottom:7px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
-.detail-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:0}
-.detail-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:600px){.detail-grid-3{grid-template-columns:1fr 1fr}}
-.detail-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
-.detail-stat-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
-.detail-stat-value{font-family:'DM Mono',monospace;font-size:16px;font-weight:500}
-.detail-stat-sub{font-size:10px;color:var(--text2);margin-top:2px}
-.detail-stat.highlight{border-color:var(--blue-mid);background:var(--blue-light)}
-.detail-stat.highlight .detail-stat-value{color:var(--blue)}
-.detail-stat.green{border-color:var(--green-mid);background:var(--green-light)}
-.detail-stat.green .detail-stat-value{color:var(--green)}
-.detail-stat.red{border-color:#F5BABA;background:var(--red-light)}
-.detail-stat.red .detail-stat-value{color:var(--red)}
-.detail-stat.amber{border-color:var(--amber-mid);background:var(--amber-light)}
-.detail-stat.amber .detail-stat-value{color:var(--amber)}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;position:relative;overflow:hidden;cursor:default;transition:box-shadow .15s}
+.kpi:hover{box-shadow:var(--shadow-lg)}
+.kpi-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.kpi-value{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;letter-spacing:-0.02em;line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:11px;color:var(--text3);line-height:1.3}
+.kpi-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue-mid);border-radius:0 0 0 0}
+.kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;margin-top:4px}
+.kpi.green{border-top:3px solid var(--green2)}
+.kpi.green .kpi-value{color:var(--green2)}
+.kpi.red{border-top:3px solid var(--red2)}
+.kpi.red .kpi-value{color:var(--red2)}
+.kpi.amber{border-top:3px solid var(--amber2)}
+.kpi.amber .kpi-value{color:var(--amber2)}
+.kpi.blue{border-top:3px solid var(--blue2)}
+.kpi.blue .kpi-value{color:var(--blue2)}
+.kpi.neutral{border-top:3px solid var(--border2)}
+.kpi.hero{border-top:3px solid var(--blue2);background:var(--blue-light)}
+.kpi.hero .kpi-value{color:var(--blue)}
+.badge-up{background:var(--green-light);color:var(--green2);border:1px solid var(--green-mid)}
+.badge-down{background:var(--red-light);color:var(--red2);border:1px solid var(--red-mid)}
+.badge-flat{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
 
-/* PvA */
-.pva-row{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:12px}
-.pva-row:last-child{border-bottom:none}
-.pva-row.header{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3)}
-.pva-label{color:var(--text2)}
-.pva-proj{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)}
-.pva-actual{font-family:'DM Mono',monospace;font-size:12px;font-weight:500}
-.pva-actual.pos{color:var(--green)}.pva-actual.neg{color:var(--red)}
-.pva-var{font-family:'DM Mono',monospace;font-size:11px}
-.pva-var.pos{color:var(--green)}.pva-var.neg{color:var(--red)}.pva-var.flat{color:var(--text3)}
+/* ── AI summary strip ────────────────────────────────────────────────────── */
+.ai-strip{background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 100%);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:20px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.ai-icon{width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ai-content{}
+.ai-label{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:4px}
+.ai-text{font-size:13px;color:#fff;line-height:1.65}
+.ai-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ai-chip{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)}
+.ai-chip.warn{background:rgba(251,191,36,0.2);border-color:rgba(251,191,36,0.4);color:#FCD34D}
+.ai-chip.good{background:rgba(74,222,128,0.15);border-color:rgba(74,222,128,0.3);color:#4ADE80}
+
+/* ── Two-column layout ───────────────────────────────────────────────────── */
+.cols{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-bottom:16px}
+.cols.full{grid-template-columns:1fr}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow)}
+.card+.card{margin-top:14px}
+.card-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.card-title-action{font-size:11px;font-weight:500;color:var(--blue2);cursor:pointer;text-transform:none;letter-spacing:0}
+
+/* ── Waterfall / payout chart ────────────────────────────────────────────── */
+.waterfall{display:flex;flex-direction:column;gap:5px}
+.wf-row{display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;min-height:28px}
+.wf-label{font-size:12px;color:var(--text2);text-align:right}
+.wf-bar-wrap{position:relative;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.wf-bar{height:100%;border-radius:4px;transition:width .5s ease}
+.wf-bar.rev{background:var(--blue-mid)}
+.wf-bar.payout{background:var(--red-mid)}
+.wf-bar.cost{background:var(--amber-mid)}
+.wf-bar.net-pos{background:var(--green-mid)}
+.wf-bar.net-neg{background:var(--red-mid)}
+.wf-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;text-align:right;white-space:nowrap;min-width:72px}
+.wf-val.pos{color:var(--green2)}.wf-val.neg{color:var(--red2)}.wf-val.dim{color:var(--text3)}
+.wf-divider{grid-column:1/-1;height:1px;background:var(--border);margin:3px 0}
+.wf-total .wf-label{font-weight:600;color:var(--text1)}
+.wf-total .wf-val{font-size:14px}
+
+/* ── Bar mix ─────────────────────────────────────────────────────────────── */
+.bar-mix-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:700px){.bar-mix-grid{grid-template-columns:repeat(3,1fr)}}
+.mix-tile{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center}
+.mix-tile-label{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.mix-tile-value{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--text1)}
+.mix-tile-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.mix-tile.spirits{border-top:3px solid var(--blue2)}
+.mix-tile.bottle{border-top:3px solid var(--amber2)}
+.mix-tile.beer{border-top:3px solid var(--gold)}
+.mix-tile.cocktail{border-top:3px solid var(--green2)}
+.mix-tile.na{border-top:3px solid var(--text3)}
 
 /* Item table */
 .item-table{width:100%;border-collapse:collapse;font-size:11.5px}
-.item-table th{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
+.item-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
 .item-table th:first-child{text-align:left}
-.item-table td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right}
-.item-table td:first-child{text-align:left;color:var(--text1)}
-.item-table tr:hover td{background:var(--surface2)}
+.item-table td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;font-family:'DM Mono',monospace;font-size:11px}
+.item-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text1)}
 .item-table tr:last-child td{border-bottom:none}
-.item-cat-badge{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle}
-.cat-bottle{background:var(--amber-light);color:var(--amber)}
-.cat-spirits{background:var(--blue-light);color:var(--blue)}
+.item-table tr:hover td{background:var(--surface2)}
+.cat-badge{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle}
+.cat-spirits{background:var(--blue-light);color:var(--blue2)}
+.cat-bottle{background:var(--amber-light);color:var(--amber2)}
 .cat-beer{background:#FDF8E8;color:var(--gold)}
-.cat-cocktail{background:var(--green-light);color:var(--green)}
-.cat-na{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.cat-cocktail{background:var(--green-light);color:var(--green2)}
+.cat-na{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
 
-/* SR table */
-.sr-table{width:100%;border-collapse:collapse;font-size:12.5px}
-.sr-table th{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
-.sr-table th:first-child{text-align:left}
-.sr-table td{padding:8px 10px;border-bottom:1px solid rgba(0,0,0,0.05);text-align:right;font-family:'DM Mono',monospace}
-.sr-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif;color:var(--text2)}
-.sr-table tr.total-row td{font-weight:600;border-top:2px solid var(--border2);border-bottom:none;color:var(--text1)}
-.sr-table td.var-pos{color:var(--green)}.sr-table td.var-neg{color:var(--red)}.sr-table td.var-flat{color:var(--text3)}
+/* ── Promoter scorecard ──────────────────────────────────────────────────── */
+.rep-header{background:var(--blue);border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.rep-name{font-size:14px;font-weight:600;color:#fff}
+.rep-sub{font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px}
+.rep-score-wrap{text-align:right}
+.rep-score{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;line-height:1}
+.rep-score-lbl{font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-top:2px}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.score-item{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)}
+.score-item-label{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.score-item-value{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
+.score-item-sub{font-size:10px;color:var(--text2);margin-top:2px;line-height:1.3}
+.score-bar{height:3px;border-radius:2px;background:var(--border);margin-top:5px}
+.score-bar-fill{height:3px;border-radius:2px}
+.promoter-history-row{display:grid;grid-template-columns:80px 1fr auto auto auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:11px}
+.promoter-history-row:last-child{border-bottom:none}
+.ph-date{color:var(--text3);font-family:'DM Mono',monospace;font-size:10px}
+.ph-name{color:var(--text2);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-draw{font-family:'DM Mono',monospace;font-size:11px;font-weight:600}
+.ph-sph{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
+.ph-net{font-family:'DM Mono',monospace;font-size:11px}
+.draw-good{color:var(--green2)}.draw-ok{color:var(--amber2)}.draw-bad{color:var(--red2)}
 
-/* Obs box */
-.obs-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px}
-.obs-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
-.obs-body{font-size:12px;color:var(--text2);line-height:1.6}
+/* ── Market context ──────────────────────────────────────────────────────── */
+.demand-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
+.demand-high{background:var(--green-light);color:var(--green2);border:1px solid var(--green-mid)}
+.demand-medium{background:var(--amber-light);color:var(--amber2);border:1px solid var(--amber-mid)}
+.demand-low{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
+.mkt-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
+.mkt-row:last-child{border-bottom:none}
+.mkt-type{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;min-width:64px;padding-top:1px}
+.mkt-name{font-size:12px;color:var(--text2);flex:1}
+.mkt-warn{color:var(--amber2)}
+.mkt-cap{font-size:10px;color:var(--text3);white-space:nowrap}
 
-/* TP */
-.tp-content{font-size:13px;line-height:1.75;color:var(--text1);white-space:pre-wrap}
-.tp-copy-btn{margin-top:16px;padding:9px 16px;background:var(--blue);border:none;border-radius:8px;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-.tp-copy-btn:hover{background:#245178}
-.tp-loading{text-align:center;padding:32px;color:var(--text3)}
+/* ── PvA table ───────────────────────────────────────────────────────────── */
+.pva-table{width:100%;border-collapse:collapse}
+.pva-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
+.pva-table th:first-child{text-align:left}
+.pva-table td{padding:8px 10px;border-bottom:1px solid rgba(0,0,0,0.04);font-size:12px;text-align:right;font-family:'DM Mono',monospace}
+.pva-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif;color:var(--text2)}
+.pva-table tr:last-child td{border-bottom:none}
+.pva-table tr.total td{font-weight:600;border-top:2px solid var(--border2);font-size:13px;color:var(--text1)}
+.pva-table td.pos{color:var(--green2)}.pva-table td.neg{color:var(--red2)}.pva-table td.dim{color:var(--text3)}
+.pva-group{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:8px 10px 4px;background:var(--surface2)}
 
-/* Deal terms chip row */
-.deal-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
-.deal-chip{background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--blue)}
-.deal-chip.amber{background:var(--amber-light);border-color:var(--amber-mid);color:var(--amber)}
-.deal-chip.green{background:var(--green-light);border-color:var(--green-mid);color:var(--green)}
+/* ── Range view charts ───────────────────────────────────────────────────── */
+.chart-wrap{position:relative;height:220px;margin-bottom:4px}
+.range-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:800px){.range-summary-grid{grid-template-columns:repeat(3,1fr)}}
 
-/* Market context */
-.market-narrative{margin-top:8px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.6}
+/* ── Range event table ───────────────────────────────────────────────────── */
+.event-table{width:100%;border-collapse:collapse}
+.event-table th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none;white-space:nowrap}
+.event-table th:first-child{text-align:left}
+.event-table th.sort-asc::after{content:' ↑'}
+.event-table th.sort-desc::after{content:' ↓'}
+.event-table td{padding:9px 12px;border-bottom:1px solid rgba(0,0,0,0.05);font-size:12px;text-align:right;font-family:'DM Mono',monospace}
+.event-table td:first-child{text-align:left;font-family:'DM Sans',sans-serif}
+.event-table tbody tr{cursor:pointer;transition:background .1s}
+.event-table tbody tr:hover td{background:var(--blue-light)}
+.event-table tbody tr:last-child td{border-bottom:none}
+.event-table .ev-name{font-weight:500;color:var(--text1);font-size:12px}
+.event-table .ev-meta{font-size:10px;color:var(--text3);font-family:'DM Sans',sans-serif}
+.event-table td.pos{color:var(--green2)}.event-table td.neg{color:var(--red2)}
+.event-table tr.total-row td{font-weight:600;border-top:2px solid var(--border2);background:var(--surface2);font-size:13px}
 
-/* Bottom action bar */
-.action-bar{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
-.action-bar-left{font-size:13px;color:var(--text2)}
-.action-bar-right{display:flex;gap:10px}
-.btn-secondary{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
-.btn-secondary:hover{border-color:var(--blue);color:var(--blue)}
-.btn-primary{padding:8px 16px;border:none;border-radius:8px;background:var(--blue);font-size:13px;font-weight:600;color:white;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
-.btn-primary:hover{background:#245178}
+/* ── Export modal ────────────────────────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:400px;box-shadow:var(--shadow-lg)}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:18px}
+.export-opt{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:8px;transition:border-color .15s}
+.export-opt:hover,.export-opt.selected{border-color:var(--blue2);background:var(--blue-light)}
+.export-opt-icon{font-size:20px;margin-top:1px}
+.export-opt-title{font-size:13px;font-weight:600;color:var(--text1);margin-bottom:2px}
+.export-opt-desc{font-size:11px;color:var(--text3)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.btn-cancel{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-export{padding:8px 20px;border:none;border-radius:8px;background:var(--blue2);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
 
-/* Loading / error */
-.page-loading{text-align:center;padding:80px 24px;color:var(--text3);font-size:15px}
-.page-error{text-align:center;padding:60px 24px}
-.page-error-title{font-size:16px;font-weight:600;color:var(--red);margin-bottom:8px}
-.page-error-sub{font-size:13px;color:var(--text2)}
+/* ── Misc ────────────────────────────────────────────────────────────────── */
+.loading-state{text-align:center;padding:80px 24px;color:var(--text3);font-size:15px}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-state-icon{font-size:32px;margin-bottom:8px}
+.empty-state-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.section-toggle{font-size:11px;color:var(--blue2);cursor:pointer;font-weight:500}
+.expand-icon{display:inline-block;transition:transform .2s}
+.expand-icon.open{transform:rotate(180deg)}
+.collapsible{overflow:hidden;transition:max-height .3s ease}
 
-/* Draw indicators */
-.draw-good{color:var(--green);font-weight:600}
-.draw-ok{color:var(--amber);font-weight:600}
-.draw-bad{color:var(--red);font-weight:600}
-
+/* ── Print ───────────────────────────────────────────────────────────────── */
 @media print{
-  .hdr,.tabs,.action-bar,.hdr-nav,.back-btn,.new-event-btn,.tp-copy-btn{display:none!important}
-  .tab-panel{display:block!important}
-  .page{max-width:100%;padding:0}
-  .event-hero,.detail-section,.detail-stat{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .nav,.mode-bar,.search-bar,.nav-right,.modal-overlay{display:none!important}
+  .page{padding:0;max-width:100%}
+  .card,.kpi,.ai-strip{box-shadow:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff}
 }
 </style>
 </head>
 <body>
 
-<div class="hdr">
-  <div style="display:flex;align-items:center">
-    <a href="/api/calendar" style="text-decoration:none"><div class="logo">Venue<span>OS</span></div></a>
-    <div class="hdr-badge">Event Recap</div>
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-left">
+    <a class="logo" href="/api/calendar">Venue<em>OS</em></a>
+    <div class="nav-sep"></div>
+    <span class="nav-title">Performance Dashboard</span>
   </div>
-  <div class="hdr-nav">
-    <a class="back-btn" href="/api/calendar">← Calendar</a>
-    <button class="new-event-btn" onclick="window.location.href='/api/calculator'">+ New Event</button>
+  <div class="nav-right">
+    <a class="nav-btn" href="/api/calendar">← Calendar</a>
+    <button class="nav-btn" onclick="window.location.href='/api/calculator'">+ New Event</button>
+    <button class="nav-btn primary" onclick="openExportModal()">↓ Export</button>
   </div>
+</nav>
+
+<!-- Mode bar -->
+<div class="mode-bar">
+  <div class="mode-tab active" id="mode-single" onclick="setMode('single')">Single Event</div>
+  <div class="mode-tab" id="mode-range" onclick="setMode('range')">Date Range</div>
+  <div class="mode-sep"></div>
 </div>
 
+<!-- Search bar (single mode) -->
+<div class="search-bar" id="search-bar-single">
+  <div class="search-field">
+    <div class="search-label">Artist</div>
+    <input class="search-input sm" id="s-artist" placeholder="e.g. Steve Aoki" oninput="runSearch()" autocomplete="off">
+  </div>
+  <div class="search-field">
+    <div class="search-label">Promoter</div>
+    <input class="search-input sm" id="s-promoter" placeholder="e.g. Collectiv" oninput="runSearch()" autocomplete="off">
+  </div>
+  <div class="search-field">
+    <div class="search-label">Event Name</div>
+    <input class="search-input" id="s-name" placeholder="e.g. Latin Saturday" oninput="runSearch()" autocomplete="off">
+  </div>
+  <div class="search-field">
+    <div class="search-label">Event Type</div>
+    <select class="search-input sm" id="s-type" onchange="runSearch()">
+      <option value="">All types</option>
+      <option value="Latin">Latin</option>
+      <option value="Electronic">Electronic</option>
+      <option value="Hip Hop and R&B">Hip Hop / R&B</option>
+      <option value="hip_hop_rnb">Hip Hop / R&B (alt)</option>
+      <option value="Open Format">Open Format</option>
+      <option value="Live Performance">Live</option>
+      <option value="Corporate and Private">Corporate</option>
+      <option value="Cover Band">Cover Band</option>
+      <option value="Sports and Viewing">Sports</option>
+      <option value="college_university">College</option>
+    </select>
+  </div>
+  <div id="search-results-bar" style="flex:1;display:none"></div>
+</div>
+
+<!-- Search bar (range mode) -->
+<div class="search-bar" id="search-bar-range" style="display:none">
+  <div class="search-field">
+    <div class="search-label">From</div>
+    <input class="search-input sm" type="date" id="r-start">
+  </div>
+  <div class="search-field">
+    <div class="search-label">To</div>
+    <input class="search-input sm" type="date" id="r-end">
+  </div>
+  <div class="range-presets">
+    <button class="range-btn" onclick="setRange('week')">This Week</button>
+    <button class="range-btn" onclick="setRange('month')">This Month</button>
+    <button class="range-btn" onclick="setRange('quarter')">This Quarter</button>
+    <button class="range-btn" onclick="setRange('ytd')">YTD</button>
+  </div>
+  <button class="search-go" onclick="loadRange()">View Range →</button>
+</div>
+
+<!-- Main content -->
 <div class="page" id="page-root">
-  <div class="page-loading" id="loading-state">Loading event data…</div>
+  <div class="loading-state">Loading…</div>
+</div>
+
+<!-- Export modal -->
+<div class="modal-overlay" id="export-modal" onclick="if(event.target===this)closeExportModal()">
+  <div class="modal-box">
+    <div class="modal-title">Export Report</div>
+    <div class="modal-sub">Choose the level of detail to include</div>
+    <div class="export-opt selected" id="exp-full" onclick="selectExport('full')">
+      <div class="export-opt-icon">📊</div>
+      <div><div class="export-opt-title">Full Detail</div><div class="export-opt-desc">All KPIs, deal structure, costs, bar mix, promoter scorecard</div></div>
+    </div>
+    <div class="export-opt" id="exp-promoter" onclick="selectExport('promoter')">
+      <div class="export-opt-icon">🤝</div>
+      <div><div class="export-opt-title">Promoter Summary</div><div class="export-opt-desc">Revenue and draw data only — costs and net hidden</div></div>
+    </div>
+    <div class="export-opt" id="exp-investor" onclick="selectExport('investor')">
+      <div class="export-opt-icon">📈</div>
+      <div><div class="export-opt-title">Investor Summary</div><div class="export-opt-desc">Top-line revenue, margin trend, key stats only</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeExportModal()">Cancel</button>
+      <button class="btn-export" onclick="doExport()">Print / Save PDF</button>
+    </div>
+  </div>
 </div>
 
 <script>
-const WORKSHOP_URL = window.location.origin;
-const marketNarrativeCache = {};
+const BASE = window.location.origin;
+let currentMode = 'single';
+let currentEventId = null;
+let currentEventData = null;
+let allEvents = null;
+let exportMode = 'full';
+let searchTimer = null;
+let rangeChart = null;
+let itemsExpanded = false;
 
-const ATLANTA_MARKET_EVENTS = [
-  {date:'2026-01-02',name:'ATL NYE Hangover Night @ Believe',type:'edm',demo:'EDM 21-32',cap:1500,competitor:true},
-  {date:'2026-01-03',name:'Hawks vs Cavaliers @ State Farm Arena',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
-  {date:'2026-01-10',name:'Braves Winter Warm-Up',type:'sports',demo:'Sports 28-55',cap:5000,competitor:false},
-  {date:'2026-01-16',name:'MLK Day',type:'holiday',demo:null,cap:null,competitor:false},
+// ── Helpers ───────────────────────────────────────────────────────────────
+function g(id){return document.getElementById(id)}
+function fmt(n,decimals=0){
+  if(n===null||n===undefined||isNaN(parseFloat(n))) return '—';
+  const v=parseFloat(n);
+  if(Math.abs(v)>=1000000) return '$'+(v/1000000).toFixed(1)+'M';
+  if(Math.abs(v)>=1000) return '$'+(v/1000).toFixed(1)+'K';
+  return '$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+}
+function fmtFull(n){
+  if(n===null||n===undefined) return '—';
+  const v=parseFloat(n)||0;
+  return '$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtPct(n,dec=1){if(n===null||n===undefined||isNaN(parseFloat(n)))return '—';return parseFloat(n).toFixed(dec)+'%'}
+function varPct(actual,proj){
+  if(!actual||!proj) return null;
+  return Math.round((parseFloat(actual)-parseFloat(proj))/Math.abs(parseFloat(proj))*100);
+}
+function badgeHtml(pct, label=''){
+  if(pct===null||pct===undefined) return '';
+  const cls = pct>=0?'badge-up':'badge-down';
+  const arrow = pct>=0?'▲':'▼';
+  return `<span class="kpi-badge ${cls}">${arrow} ${Math.abs(pct)}%${label?' vs '+label:''}</span>`;
+}
+function colorClass(n, thresholds={good:null,bad:null}, higherBetter=true){
+  if(n===null||n===undefined) return 'neutral';
+  const v=parseFloat(n);
+  if(higherBetter){
+    if(thresholds.good!==null&&v>=thresholds.good) return 'green';
+    if(thresholds.bad!==null&&v<=thresholds.bad) return 'red';
+    return 'amber';
+  } else {
+    if(thresholds.good!==null&&v<=thresholds.good) return 'green';
+    if(thresholds.bad!==null&&v>=thresholds.bad) return 'red';
+    return 'amber';
+  }
+}
+function varClass(a,p){if(!a||!p)return 'dim';return parseFloat(a)>=parseFloat(p)?'pos':'neg'}
+function varStr(a,p){
+  if(!a&&!p) return '—';
+  if(!p||parseFloat(p)===0) return '—';
+  const d=parseFloat(a||0)-parseFloat(p);
+  const pct=Math.round(Math.abs(d)/Math.abs(parseFloat(p))*100);
+  return (d>=0?'+':'-')+pct+'%';
+}
+
+// ── Mode toggle ───────────────────────────────────────────────────────────
+function setMode(mode){
+  currentMode=mode;
+  g('mode-single').classList.toggle('active',mode==='single');
+  g('mode-range').classList.toggle('active',mode==='range');
+  g('search-bar-single').style.display=mode==='single'?'':'none';
+  g('search-bar-range').style.display=mode==='range'?'':'none';
+  if(mode==='range') renderRangePlaceholder();
+  else if(currentEventId) loadEvent(currentEventId);
+  else renderSearchPrompt();
+}
+
+// ── Search ────────────────────────────────────────────────────────────────
+async function getEvents(){
+  if(allEvents) return allEvents;
+  const res=await fetch(`${BASE}/api/events`);
+  allEvents=await res.json();
+  return allEvents;
+}
+
+let _searchDebounce=null;
+function runSearch(){
+  clearTimeout(_searchDebounce);
+  _searchDebounce=setTimeout(_doSearch,280);
+}
+
+async function _doSearch(){
+  const artist=(g('s-artist').value||'').trim().toLowerCase();
+  const promoter=(g('s-promoter').value||'').trim().toLowerCase();
+  const name=(g('s-name').value||'').trim().toLowerCase();
+  const type=(g('s-type').value||'');
+  const rBar=g('search-results-bar');
+  if(!artist&&!promoter&&!name&&!type){
+    rBar.style.display='none';
+    if(!currentEventId) renderSearchPrompt();
+    return;
+  }
+  const events=await getEvents();
+  const matches=events.filter(e=>{
+    if(artist&&!(e.artist_name||'').toLowerCase().includes(artist)) return false;
+    if(promoter&&!(e.promoter_name||'').toLowerCase().includes(promoter)) return false;
+    if(name&&!(e.event_name||'').toLowerCase().includes(name)) return false;
+    if(type&&e.tier1_category!==type) return false;
+    return true;
+  }).slice(0,8);
+  if(matches.length===0){
+    rBar.style.display='flex';rBar.style.alignItems='center';
+    rBar.innerHTML='<span style="font-size:12px;color:var(--text3)">No events found</span>';
+    return;
+  }
+  rBar.style.display='flex';rBar.style.gap='6px';rBar.style.flexWrap='wrap';rBar.style.alignItems='center';
+  rBar.innerHTML=`<span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);white-space:nowrap">${matches.length} found:</span>`+
+    matches.map(e=>`<button onclick="loadEvent(${e.id});clearSearch()" style="padding:4px 10px;border:1px solid var(--border);border-radius:20px;background:var(--surface);font-size:11px;font-weight:500;cursor:pointer;color:var(--text1);white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='var(--blue2)';this.style.color='var(--blue2)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text1)'">
+      <span style="color:var(--text3)">${e.event_date?e.event_date.substring(5,10):''}</span> ${e.event_name||'—'}${e.artist_name?' · '+e.artist_name:''}
+    </button>`).join('');
+}
+
+function clearSearch(){
+  ['s-artist','s-promoter','s-name','s-type'].forEach(id=>{
+    const el=g(id);if(el)el.value='';
+  });
+  const rBar=g('search-results-bar');
+  if(rBar) rBar.style.display='none';
+}
+
+// ── Single event ──────────────────────────────────────────────────────────
+async function loadEvent(id){
+  currentEventId=id;
+  g('page-root').innerHTML='<div class="loading-state">Loading event data…</div>';
+  try{
+    const res=await fetch(`${BASE}/api/event-detail/${id}`);
+    currentEventData=await res.json();
+    renderDashboard(currentEventData);
+  }catch(e){
+    g('page-root').innerHTML=`<div class="loading-state">Could not load event — <a href="/api/calendar" style="color:var(--blue2)">back to calendar</a></div>`;
+  }
+}
+
+function renderSearchPrompt(){
+  g('page-root').innerHTML=`
+    <div class="empty-state">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-title">Search for an event above</div>
+      <div style="font-size:12px;color:var(--text3)">Use any combination of artist, promoter, event name, or type</div>
+    </div>`;
+}
+
+function renderRangePlaceholder(){
+  g('page-root').innerHTML=`
+    <div class="empty-state">
+      <div class="empty-state-icon">📅</div>
+      <div class="empty-state-title">Select a date range above</div>
+      <div style="font-size:12px;color:var(--text3)">Choose preset or enter custom start and end dates</div>
+    </div>`;
+}
+
+// ── MAIN DASHBOARD RENDER ─────────────────────────────────────────────────
+function renderDashboard(data){
+  const e=data.event, s=data.summary, items=data.items||[], cats=data.categories||{};
+  const barActual=parseFloat(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue??0);
+  const doorActual=parseFloat(e.actual_door_revenue??0);
+  const tableActual=parseFloat(e.actual_table_revenue??e.table_bottle_service??0);
+  const totalRev=barActual+doorActual+tableActual;
+  const netActual=parseFloat(e.net_revenue_actual??0);
+  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
+  const margin=totalRev>0?netActual/totalRev*100:0;
+  const sph=parseFloat(e.spend_per_head_actual??0);
+  const cogs=(barActual>0&&s.total_cost>0)?s.total_cost/barActual*100:parseFloat(e.bar_cogs_percentage??16.1);
+
+  // KPI color classes
+  const netCls=netActual>0?'green':netActual<0?'red':'neutral';
+  const marginCls=colorClass(margin,{good:20,bad:10});
+  const drawCls=colorClass(drawPct,{good:90,bad:70});
+  const sphCls=colorClass(sph,{good:35,bad:20});
+  const cogsCls=colorClass(cogs,{good:18,bad:25},false);
+
+  // Variance badges vs projected
+  const barVar=varPct(barActual,e.projected_bar_revenue);
+  const drawVar=varPct(e.actual_attendance,e.expected_attendance);
+  const netVar=varPct(netActual,(parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0))*0.8);
+
+  let html=`
+  <!-- Scorecard -->
+  <div class="scorecard" id="scorecard">
+    <div class="kpi hero">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value">${fmt(totalRev)}</div>
+      <div class="kpi-sub">Bar ${fmt(barActual)} · Door ${fmt(doorActual)}</div>
+      ${badgeHtml(barVar,'proj')}
+    </div>
+    <div class="kpi ${netCls}">
+      <div class="kpi-label">Net to Venue</div>
+      <div class="kpi-value">${fmt(netActual)}</div>
+      <div class="kpi-sub">${fmtPct(e.actual_effective_split||e.effective_split_percentage)} promoter take</div>
+      ${badgeHtml(netVar,'proj')}
+    </div>
+    <div class="kpi ${marginCls}">
+      <div class="kpi-label">Margin</div>
+      <div class="kpi-value">${fmtPct(margin)}</div>
+      <div class="kpi-sub">District avg ~22%</div>
+    </div>
+    <div class="kpi ${drawCls}">
+      <div class="kpi-label">Draw</div>
+      <div class="kpi-value">${e.actual_attendance||'—'}</div>
+      <div class="kpi-sub">of ${e.expected_attendance||'—'} · ${drawPct?drawPct+'%':'—'}</div>
+      ${badgeHtml(drawVar,'proj')}
+    </div>
+    <div class="kpi ${sphCls}">
+      <div class="kpi-label">Bar / Head</div>
+      <div class="kpi-value">${sph?'$'+sph.toFixed(2):'—'}</div>
+      <div class="kpi-sub">District avg ~$35</div>
+    </div>
+    <div class="kpi ${cogsCls}">
+      <div class="kpi-label">Pour Cost %</div>
+      <div class="kpi-value">${fmtPct(cogs)}</div>
+      <div class="kpi-sub">Target &lt;18%</div>
+    </div>
+    <div class="kpi neutral">
+      <div class="kpi-label">Bottle Service</div>
+      <div class="kpi-value">${s.bottle_count||0}</div>
+      <div class="kpi-sub">${fmtFull(s.bottle_service_revenue)} · ${barActual>0?Math.round((s.bottle_service_revenue||0)/barActual*100)+'% of bar':'—'}</div>
+    </div>
+  </div>
+
+  <!-- AI Summary -->
+  <div class="ai-strip" id="ai-strip">
+    <div class="ai-icon">✦</div>
+    <div class="ai-content">
+      <div class="ai-label">Night Intelligence</div>
+      <div class="ai-text" id="ai-text"><span style="opacity:0.6;font-style:italic">Generating summary…</span></div>
+      <div class="ai-chips" id="ai-chips"></div>
+    </div>
+  </div>
+
+  <!-- Main two-column -->
+  <div class="cols">
+    <div>
+      <!-- P&L Waterfall -->
+      <div class="card">
+        <div class="card-title">Revenue & Payout Waterfall</div>
+        ${renderWaterfall(e,s,barActual,doorActual,tableActual,totalRev,netActual)}
+      </div>
+
+      <!-- Projected vs Actual -->
+      <div class="card">
+        <div class="card-title">Projected vs. Actual</div>
+        ${renderPvA(e,barActual,doorActual,tableActual,totalRev,netActual)}
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div>
+      <!-- Event header card -->
+      <div class="card">
+        <div class="card-title">${e.event_name||'Event'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+          ${infoRow('Date',e.event_date?e.event_date.substring(0,10)+' · '+(e.day_of_week||''):'')}
+          ${infoRow('Type',e.tier1_category||'—')}
+          ${infoRow('Promoter',`<button onclick="loadEvent(${e.id})" style="all:unset;color:var(--blue2);cursor:pointer;font-weight:500;font-size:12px">${e.promoter_name||'—'}</button>`)}
+          ${infoRow('Artist',e.artist_name||'—')}
+          ${infoRow('Doors',e.doors_open_time?e.doors_open_time+' – '+(e.event_close_time||'close'):e.event_close_time||'—')}
+          ${infoRow('Status',`<span style="font-weight:600;color:${e.status==='completed'?'var(--green2)':'var(--blue2)'}">${e.status||'—'}</span>`)}
+        </div>
+        ${e.notes?`<div style="margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--text2);border-left:2px solid var(--border2)">${e.notes}</div>`:''}
+      </div>
+
+      <!-- Market context -->
+      <div class="card" id="market-card">
+        <div class="card-title">
+          Market Context
+          <span id="demand-pill"></span>
+        </div>
+        <div id="market-events-body"></div>
+        <div id="market-narrative" style="margin-top:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.65">
+          <span style="color:var(--text3);font-style:italic">Generating narrative…</span>
+        </div>
+      </div>
+
+      <!-- Deal structure -->
+      <div class="card">
+        <div class="card-title">Deal Structure</div>
+        ${renderDealStructure(e)}
+      </div>
+    </div>
+  </div>
+
+  <!-- Bar Mix — full width -->
+  <div class="card">
+    <div class="card-title">
+      Bar Mix — Category Breakdown
+      <span class="card-title-action section-toggle" onclick="toggleItems()"><span id="items-toggle-icon" class="expand-icon">▾</span> ${items.length} items</span>
+    </div>
+    ${renderBarMix(s,items,barActual)}
+  </div>
+
+  <!-- Promoter Scorecard — full width -->
+  <div class="card" id="promoter-card">
+    <div class="card-title">Promoter Scorecard — ${e.promoter_name||'—'}</div>
+    <div id="promoter-body"><div style="color:var(--text3);font-size:12px">Loading promoter data…</div></div>
+  </div>
+
+  ${(e.crowd_demographic_observations||e.promoter_performance_notes||e.what_to_replicate||e.what_to_change)?`
+  <!-- Post-event notes -->
+  <div class="card">
+    <div class="card-title">Post-Event Notes</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${e.crowd_demographic_observations?obsBox('Crowd Demographics',e.crowd_demographic_observations):''}
+      ${e.promoter_performance_notes?obsBox('Promoter Performance',e.promoter_performance_notes):''}
+      ${e.what_to_replicate?obsBox('Replicate Next Time',e.what_to_replicate,'var(--green-light)','var(--green-mid)'):''}
+      ${e.what_to_change?obsBox('What to Change',e.what_to_change,'var(--amber-light)','var(--amber-mid)'):''}
+    </div>
+  </div>`:''}
+  `;
+
+  g('page-root').innerHTML=html;
+
+  // Async loads
+  renderMarketContext(e,data);
+  loadAISummary(e,s,data);
+  loadPromoterScorecard(e.promoter_name,e.tier1_category,e);
+}
+
+function infoRow(label,value){
+  return `<div><div style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:2px">${label}</div><div style="font-size:12px;color:var(--text2)">${value||'—'}</div></div>`;
+}
+function obsBox(label,text,bg='var(--surface2)',border='var(--border)'){
+  return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:12px 14px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px">${label}</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6">${text}</div>
+  </div>`;
+}
+
+// ── Waterfall ─────────────────────────────────────────────────────────────
+function renderWaterfall(e,s,barActual,doorActual,tableActual,totalRev,netActual){
+  const cogsAmt=(s.total_cost>0)?s.total_cost:barActual*0.161;
+  const doorPayout=parseFloat(e.promoter_door_payout??doorActual*(e.door_split_promoter||0)/100);
+  const barPayout=parseFloat(e.promoter_bar_payout??barActual*(e.bar_split_promoter||0)/100);
+  const tablePayout=parseFloat(e.promoter_table_payout??tableActual*(e.table_split_promoter||0)/100);
+  const artFee=parseFloat(e.artist_fee_landed??0)+parseFloat(e.artist_fee_travel??0);
+  const totalPayouts=doorPayout+barPayout+tablePayout+artFee;
+  const npc=totalRev-totalPayouts-cogsAmt;
+  const staffCost=parseFloat(e.staffing_cost_actual??0);
+  const maxVal=totalRev||1;
+
+  const rows=[
+    {label:'Gross Bar Revenue',val:barActual,cls:'rev'},
+    {label:'Gross Door Revenue',val:doorActual,cls:'rev'},
+    {label:'Table / Bottle',val:tableActual,cls:'rev'},
+    {label:'Total Revenue',val:totalRev,cls:'rev',total:true},
+    {divider:true},
+    {label:'Bar COGS',val:-cogsAmt,cls:'payout'},
+    {label:'Door Payout',val:-doorPayout,cls:'payout'},
+    {label:'Bar Payout',val:-barPayout,cls:'payout'},
+    {label:'Artist Fee',val:-artFee,cls:'payout'},
+    {label:'Net Pre-Cost',val:npc,cls:npc>=0?'net-pos':'net-neg',total:true},
+    {divider:true},
+    {label:'Staffing & Ops',val:-staffCost,cls:'cost'},
+    {label:'Net to Venue',val:netActual,cls:netActual>=0?'net-pos':'net-neg',total:true},
+  ];
+
+  return '<div class="waterfall">'+rows.map(r=>{
+    if(r.divider) return '<div class="wf-divider"></div>';
+    const absVal=Math.abs(r.val||0);
+    const pct=Math.min(100,Math.round(absVal/maxVal*100));
+    const displayVal=(r.val>=0)?'+'+fmtFull(r.val):(r.val===0?'—':'-'+fmtFull(Math.abs(r.val)));
+    const valCls=r.val>0?'pos':r.val<0?'neg':'dim';
+    const rowCls=r.total?'wf-total':'';
+    return `<div class="wf-row ${rowCls}">
+      <div class="wf-label">${r.label}</div>
+      <div class="wf-bar-wrap"><div class="wf-bar ${r.cls}" style="width:${pct}%"></div></div>
+      <div class="wf-val ${valCls}">${displayVal}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+// ── PvA table ─────────────────────────────────────────────────────────────
+function renderPvA(e,barActual,doorActual,tableActual,totalRev,netActual){
+  const rows=[
+    {label:'Attendance',proj:e.expected_attendance,actual:e.actual_attendance,fmt:'n'},
+    {label:'Bar Revenue',proj:e.projected_bar_revenue,actual:barActual},
+    {label:'Door Revenue',proj:e.projected_door_revenue,actual:doorActual},
+    {label:'Table Revenue',proj:e.projected_table_revenue,actual:tableActual},
+    {label:'Total Revenue',proj:(parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0)),actual:totalRev,total:true},
+    {label:'Net to Venue',proj:null,actual:netActual,total:true},
+  ];
+  return `<table class="pva-table">
+    <thead><tr><th style="text-align:left">Line</th><th>Projected</th><th>Actual</th><th>Variance</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const pv=r.proj?parseFloat(r.proj):null;
+      const av=r.actual?parseFloat(r.actual):null;
+      const pfmt=pv?(r.fmt==='n'?Math.round(pv).toLocaleString():fmtFull(pv)):'—';
+      const afmt=av!==null?(r.fmt==='n'?Math.round(av).toLocaleString():fmtFull(av)):'—';
+      const vs=varStr(av,pv);
+      const vc=varClass(av,pv);
+      return `<tr${r.total?' class="total"':''}>
+        <td>${r.label}</td>
+        <td class="dim">${pfmt}</td>
+        <td class="${vc}">${afmt}</td>
+        <td class="${vc}">${vs}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+// ── Deal structure ────────────────────────────────────────────────────────
+function renderDealStructure(e){
+  const ds=[
+    {label:'Door Split',val:`Venue ${100-(e.door_split_promoter||0)}% · Pro ${e.door_split_promoter||0}%`},
+    {label:'Bar Split',val:`Venue ${100-(e.bar_split_promoter||0)}% · Pro ${e.bar_split_promoter||0}%`},
+    {label:'Effective Take',val:e.actual_effective_split?fmtPct(e.actual_effective_split)+' promoter':fmtPct(e.effective_split_percentage)+' promoter'},
+    {label:'Artist Fee',val:e.artist_fee_landed?fmtFull(e.artist_fee_landed)+(e.artist_fee_travel?' + '+fmtFull(e.artist_fee_travel)+' travel':''):'—'},
+    {label:'Table Split',val:`Venue ${100-(e.table_split_promoter||0)}% · Pro ${e.table_split_promoter||0}%`},
+  ];
+  return `<div style="display:flex;flex-direction:column;gap:0">${ds.map(r=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:12px">
+      <span style="color:var(--text3);font-size:11px;font-weight:500">${r.label}</span>
+      <span style="font-weight:500;color:var(--text1)">${r.val}</span>
+    </div>`).join('')}</div>`;
+}
+
+// ── Bar Mix ───────────────────────────────────────────────────────────────
+function renderBarMix(s,items,barActual){
+  const cats=[
+    {key:'spirits',label:'Spirits',cls:'spirits'},
+    {key:'bottle',label:'Bottle Svc',cls:'bottle'},
+    {key:'beer',label:'Beer',cls:'beer'},
+    {key:'cocktail',label:'Cocktails',cls:'cocktail'},
+    {key:'na',label:'Non-Alc',cls:'na'},
+  ];
+  const catRevMap={'Spirits':'spirits','Bottle Service':'bottle','Beer':'beer','Cocktails':'cocktail','Non-Alcoholic':'na'};
+  const catRevTotals={};
+  items.forEach(it=>{
+    const c=catRevMap[it.item_category]||'na';
+    catRevTotals[c]=(catRevTotals[c]||0)+parseFloat(it.total_revenue||0);
+  });
+  // Fallback to summary fields
+  if(!catRevTotals.bottle&&s.bottle_service_revenue) catRevTotals.bottle=s.bottle_service_revenue;
+
+  const tilesHtml=cats.map(c=>{
+    const rev=catRevTotals[c.key]||0;
+    const pct=barActual>0?Math.round(rev/barActual*100):0;
+    return `<div class="mix-tile ${c.cls}">
+      <div class="mix-tile-label">${c.label}</div>
+      <div class="mix-tile-value">${rev?fmtFull(rev):'—'}</div>
+      <div class="mix-tile-sub">${pct>0?pct+'% of bar':'—'}</div>
+    </div>`;
+  }).join('');
+
+  const itemRows=items.length>0?`
+    <div class="collapsible" id="items-table-wrap" style="max-height:0;overflow:hidden">
+      <div style="overflow-x:auto;margin-top:14px">
+        <table class="item-table">
+          <thead><tr><th>Item</th><th>Qty</th><th>Revenue</th><th>COGS</th><th>GM%</th></tr></thead>
+          <tbody>${items.map(it=>{
+            const catCls={Spirits:'spirits','Bottle Service':'bottle',Beer:'beer',Cocktails:'cocktail','Non-Alcoholic':'na'}[it.item_category]||'na';
+            const gm=it.total_revenue>0?Math.round((1-it.total_cost/it.total_revenue)*100):0;
+            const gmCls=gm>=85?'color:var(--green2)':gm>=70?'color:var(--amber2)':'color:var(--red2)';
+            return `<tr>
+              <td>${it.item_name}<span class="cat-badge cat-${catCls}">${it.item_category}</span></td>
+              <td>${it.quantity_sold||'—'}</td>
+              <td>${fmtFull(it.total_revenue)}</td>
+              <td style="color:var(--text3)">${fmtFull(it.total_cost)}</td>
+              <td style="${gmCls}">${gm}%</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`:'';
+
+  return `<div class="bar-mix-grid">${tilesHtml}</div>${itemRows}`;
+}
+
+function toggleItems(){
+  itemsExpanded=!itemsExpanded;
+  const wrap=g('items-table-wrap');
+  if(wrap){
+    wrap.style.maxHeight=itemsExpanded?wrap.scrollHeight+'px':'0';
+    wrap.style.overflow=itemsExpanded?'visible':'hidden';
+  }
+  const icon=g('items-toggle-icon');
+  if(icon) icon.classList.toggle('open',itemsExpanded);
+}
+
+// ── Market context ────────────────────────────────────────────────────────
+const MARKET_EVENTS = [
+  {date:'2026-01-02',name:'NYE Hangover Night @ Believe',type:'edm',demo:'EDM 21-32',cap:1500,competitor:true},
   {date:'2026-01-17',name:'Metro Boomin @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-30',cap:21000,competitor:false},
   {date:'2026-01-23',name:'Chris Brown @ State Farm Arena',type:'liveration',demo:'R&B 22-38',cap:21000,competitor:false},
   {date:'2026-01-24',name:'John Summit @ Believe Music Hall',type:'edm',demo:'House 22-35',cap:1500,competitor:true},
   {date:'2026-01-30',name:'Hawks vs Celtics',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
   {date:'2026-01-31',name:'ATL Latin Fest @ The Loft',type:'liveration',demo:'Latin 21-40',cap:1000,competitor:true},
-  {date:'2026-02-06',name:'Atlanta United Preseason',type:'sports',demo:'Soccer 20-40',cap:15000,competitor:false},
   {date:'2026-02-07',name:'Bad Bunny @ State Farm Arena',type:'liveration',demo:'Latin 18-35',cap:21000,competitor:false},
   {date:'2026-02-13',name:'Drake @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-32',cap:21000,competitor:false},
   {date:'2026-02-14',name:"Valentine's Day",type:'holiday',demo:null,cap:null,competitor:false},
   {date:'2026-02-20',name:'Trap Music Museum Late Night',type:'hip_hop',demo:'Hip Hop 21-35',cap:400,competitor:true},
-  {date:'2026-02-21',name:'Hawks vs Knicks',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
-  {date:'2026-02-27',name:'Future & Metro Boomin @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-30',cap:21000,competitor:false},
-  {date:'2026-02-28',name:'A3C Hip Hop Conference',type:'liveration',demo:'Hip Hop 25-45',cap:5000,competitor:false},
-  {date:'2026-03-06',name:'Diplo @ Believe Music Hall',type:'edm',demo:'EDM/Open Format 22-35',cap:1500,competitor:true},
-  {date:'2026-03-07',name:'Braves Opening Day Practice',type:'sports',demo:'Sports 28-55',cap:2000,competitor:false},
+  {date:'2026-02-27',name:'Future & Metro Boomin @ SFA',type:'liveration',demo:'Hip Hop 18-30',cap:21000,competitor:false},
+  {date:'2026-03-06',name:'Diplo @ Believe Music Hall',type:'edm',demo:'EDM 22-35',cap:1500,competitor:true},
   {date:'2026-03-13',name:'SZA @ State Farm Arena',type:'liveration',demo:'R&B/Pop 20-35',cap:21000,competitor:false},
-  {date:'2026-03-14',name:'ATL Tequila Fest',type:'liveration',demo:'Latin/Mixed 25-45',cap:3000,competitor:false},
   {date:'2026-03-20',name:'Cardi B @ State Farm Arena',type:'liveration',demo:'Hip Hop 20-35',cap:21000,competitor:false},
   {date:'2026-03-21',name:'Braves Opening Day',type:'sports',demo:'Sports 28-55',cap:41000,competitor:false},
   {date:'2026-03-27',name:'Hardwell @ Believe Music Hall',type:'edm',demo:'EDM 21-32',cap:1500,competitor:true},
-  {date:'2026-03-28',name:'Hawks Playoff Push Game',type:'sports',demo:'Sports 25-55',cap:21000,competitor:false},
-  {date:'2026-04-03',name:'Braves Home Opener',type:'sports',demo:'Sports 28-55',cap:41000,competitor:false},
-  {date:'2026-04-04',name:'SweetWater 420 Fest — Warm-Up',type:'festival',demo:'Indie/Rock 22-45',cap:10000,competitor:false},
   {date:'2026-04-10',name:'Dreamville Festival — Day 1',type:'festival',demo:'Hip Hop 20-35',cap:40000,competitor:false},
   {date:'2026-04-11',name:'Dreamville Festival — Day 2',type:'festival',demo:'Hip Hop 20-35',cap:40000,competitor:false},
-  {date:'2026-04-17',name:'SweetWater 420 Festival — Day 1',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
-  {date:'2026-04-18',name:'SweetWater 420 Festival — Day 2',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
-  {date:'2026-04-19',name:'SweetWater 420 Festival — Day 3',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
+  {date:'2026-04-17',name:'SweetWater 420 Festival',type:'festival',demo:'Indie/Rock 22-45',cap:20000,competitor:false},
   {date:'2026-04-24',name:'Dogwood Festival',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
-  {date:'2026-04-25',name:'Dogwood Festival (closing)',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
-  {date:'2026-04-25',name:'Braves vs Mets',type:'sports',demo:'Sports 28-55',cap:41000,competitor:false},
+  {date:'2026-04-25',name:'Dogwood Festival (closing) + Braves vs Mets',type:'festival',demo:'Mixed 25-55',cap:15000,competitor:false},
   {date:'2026-05-01',name:'Morgan Wallen @ State Farm Arena',type:'liveration',demo:'Country 25-45',cap:21000,competitor:false},
-  {date:'2026-05-03',name:'Kendrick Lamar @ State Farm Arena',type:'liveration',demo:'Hip Hop 18-35',cap:21000,competitor:false},
-  {date:'2026-05-08',name:'Dead & Company @ Ameris',type:'liveration',demo:'Classic Rock 35-55',cap:12000,competitor:false},
   {date:'2026-05-10',name:'Zedd @ Believe Music Hall',type:'edm',demo:'EDM 21-30',cap:1500,competitor:true},
   {date:'2026-05-15',name:'Bad Bunny @ State Farm Arena',type:'liveration',demo:'Latin 18-35',cap:21000,competitor:false},
 ];
+const DEMO_OVERLAP={
+  'Latin':['Latin','latin','Reggaeton'],
+  'Electronic':['EDM','House','Techno','Bass'],
+  'Hip Hop and R&B':['Hip Hop','Trap','R&B'],
+  'hip_hop_rnb':['Hip Hop','Trap','R&B'],
+  'Open Format':[],
+};
 
-function getMarketContext(dateStr, eventType) {
-  if (!dateStr) return {events:[],competitors:[],overlapEvents:[],hasHoliday:false,hasFestival:false,demandLevel:'low'};
-  const d = dateStr.substring(0,10);
-  const events = ATLANTA_MARKET_EVENTS.filter(e => e.date === d);
-  const hasHoliday = events.some(e => e.type === 'holiday');
-  const hasFestival = events.some(e => e.type === 'festival');
-  const DEMO_OVERLAP = {
-    'Latin':['Latin','Reggaeton','Latin 18-35','Latin 21-40'],
-    'Electronic':['EDM','House','Techno','Bass','EDM 21-30','EDM 21-32','House 22-35','House 25-38'],
-    'Hip Hop and R&B':['Hip Hop','Trap','R&B','Hip Hop 18-35','Hip Hop 20-35','R&B 22-38'],
-    'hip_hop_rnb':['Hip Hop','Trap','R&B','Hip Hop 18-35','Hip Hop 20-35'],
-    'Open Format':[],
-    'Cover Band':[],
-    'Corporate and Private':[],
-    'college_university':[],
-  };
-  const internalDemos = DEMO_OVERLAP[eventType] || [];
-  const overlapEvents = events.filter(e => e.demo && internalDemos.some(d => e.demo.toLowerCase().includes(d.toLowerCase())));
-  const directCompetitors = events.filter(e => e.competitor);
-  const highOverlap = overlapEvents.length > 0;
-  const hasLargeShow = events.some(e => e.cap && e.cap >= 10000);
-  let demandLevel;
-  if (hasHoliday || hasFestival) demandLevel = 'high';
-  else if (directCompetitors.length > 0 || highOverlap) demandLevel = 'high';
-  else if (events.length > 0 && hasLargeShow) demandLevel = 'medium';
-  else if (events.length > 0) demandLevel = 'low';
-  else demandLevel = 'low';
-  return {events, competitors:directCompetitors, overlapEvents, hasHoliday, hasFestival, demandLevel};
+function renderMarketContext(e, data){
+  const dk=e.event_date?e.event_date.substring(0,10):null;
+  if(!dk){g('market-events-body').innerHTML='<div style="font-size:12px;color:var(--text3)">No date recorded.</div>';return;}
+  const mevts=MARKET_EVENTS.filter(m=>m.date===dk);
+  const internalDemos=DEMO_OVERLAP[e.tier1_category]||[];
+  const competitors=mevts.filter(m=>m.competitor);
+  const overlap=mevts.filter(m=>m.demo&&internalDemos.some(d=>m.demo.toLowerCase().includes(d.toLowerCase())));
+  const hasFestival=mevts.some(m=>m.type==='festival');
+  const hasHoliday=mevts.some(m=>m.type==='holiday');
+  let demand='low';
+  if(hasHoliday||hasFestival||competitors.length>0||overlap.length>0) demand='high';
+  else if(mevts.length>0&&mevts.some(m=>m.cap>=10000)) demand='medium';
+
+  const demandCls={high:'demand-high',medium:'demand-medium',low:'demand-low'}[demand];
+  const demandLabel={high:'High Demand',medium:'Medium Demand',low:'Low Demand'}[demand];
+  const dpEl=g('demand-pill');
+  if(dpEl) dpEl.innerHTML=`<span class="demand-pill ${demandCls}">● ${demandLabel}</span>`;
+
+  const typeColor={liveration:'var(--blue2)',edm:'var(--purple)',sports:'#3B82F6',festival:'#8B5CF6',holiday:'var(--green2)',hip_hop:'var(--blue2)'};
+  const typeLabel={liveration:'Concert',edm:'EDM',sports:'Sports',festival:'Festival',holiday:'Holiday',hip_hop:'Hip Hop'};
+
+  if(mevts.length===0){
+    g('market-events-body').innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0">No major market events on record for this date.</div>';
+  } else {
+    g('market-events-body').innerHTML=mevts.map(m=>`
+      <div class="mkt-row">
+        <div class="mkt-type" style="color:${typeColor[m.type]||'var(--text3)'}">${typeLabel[m.type]||m.type}</div>
+        <div class="mkt-name ${m.competitor?'mkt-warn':''}">${m.competitor?'⚠ ':''}<strong style="font-weight:500">${m.name}</strong>${m.demo?`<span style="font-size:10px;color:var(--text3)"> · ${m.demo}</span>`:''}</div>
+        ${m.cap?`<div class="mkt-cap">${m.cap>=1000?(m.cap/1000).toFixed(0)+'K':m.cap} cap</div>`:''}
+      </div>`).join('');
+  }
+
+  // AI market narrative
+  const ctx={mevts,competitors,overlap,demand};
+  loadMarketNarrative(e,data,ctx);
 }
 
-function g(id){return document.getElementById(id)}
-function fmt2(n){
-  if(n===null||n===undefined||parseFloat(n)===0) return '$0';
-  return '$'+Math.abs(parseFloat(n)).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
-}
-function fmtPct(n){return n!==null&&n!==undefined?parseFloat(n).toFixed(1)+'%':'—'}
-function varClass(actual,proj){if(!actual||!proj)return 'flat';return actual>=proj?'pos':'neg'}
-function varStr(actual,proj){
-  if(!actual||!proj)return '—';
-  const diff=actual-proj; const pct=Math.round(Math.abs(diff)/proj*100);
-  return (diff>=0?'+':'-')+pct+'%';
-}
+async function loadMarketNarrative(e,data,ctx){
+  const el=g('market-narrative');
+  if(!el) return;
+  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
+  const barActual=parseFloat(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue??0);
+  const prompt=`Venue performance analyst. 2-3 sentences on how Atlanta market conditions on ${e.event_date?e.event_date.substring(0,10):'this date'} influenced performance. Factual, specific, past tense, under 55 words.
 
-let eventData = null;
-let currentTab = 'pl';
-
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+tab));
-  if (tab === 'tp' && eventData) renderTPPanel();
-}
-
-async function loadEvent(eventId) {
-  try {
-    const res = await fetch(`${WORKSHOP_URL}/api/event-detail/${eventId}`);
-    if (!res.ok) throw new Error('Not found');
-    eventData = await res.json();
-    renderPage(eventData);
-  } catch(err) {
-    g('page-root').innerHTML = `<div class="page-error">
-      <div class="page-error-title">Event not found</div>
-      <div class="page-error-sub">Could not load event #${eventId}. <a href="/api/calendar" style="color:var(--blue)">Back to calendar</a></div>
-    </div>`;
+Event: ${e.event_name}, ${e.tier1_category}, Promoter: ${e.promoter_name}
+Draw: ${e.actual_attendance||'—'} of ${e.expected_attendance||'—'}${drawPct?' ('+drawPct+'%)':''}
+Bar: $${barActual.toLocaleString()} vs projected $${parseFloat(e.projected_bar_revenue||0).toLocaleString()}
+Market: ${ctx.mevts.length>0?ctx.mevts.map(m=>m.name).join(', '):'No major events'}
+Competitors: ${ctx.competitors.length>0?ctx.competitors.map(m=>m.name).join(', '):'none'}`;
+  try{
+    const res=await fetch(`${BASE}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const r=await res.json();
+    el.innerHTML=`<span style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Market Narrative</span>${r.text||''}`;
+  }catch(err){
+    el.innerHTML='<span style="color:var(--text3);font-style:italic;font-size:11px">Could not generate narrative.</span>';
   }
 }
 
-function renderPage(data) {
-  const e = data.event;
-  const s = data.summary;
-  const drawPct = e.actual_attendance && e.expected_attendance
-    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
-  const drawCls = !drawPct ? '' : drawPct >= 95 ? 'pos' : drawPct >= 80 ? 'amber' : 'neg';
-  const barActual = parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.net_bar_revenue || 0);
-  const netActual = parseFloat(e.net_revenue_actual || 0);
-  const totalActual = barActual + parseFloat(e.actual_door_revenue||0) + parseFloat(e.actual_table_revenue||e.table_bottle_service||0);
+async function loadAISummary(e,s,data){
+  const el=g('ai-text');const chips=g('ai-chips');
+  if(!el) return;
+  const barActual=parseFloat(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue??0);
+  const netActual=parseFloat(e.net_revenue_actual??0);
+  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
+  const margin=(barActual+parseFloat(e.actual_door_revenue??0))>0?netActual/(barActual+parseFloat(e.actual_door_revenue??0))*100:0;
+  const prompt=`You are the GM's right hand. Write one sharp, direct paragraph (3-4 sentences) summarizing last night's event performance for an owner/GM morning briefing. Lead with the headline result. Include attendance draw accuracy, bar performance, and net outcome. Highlight the single most important improvement opportunity. Under 70 words. No fluff.
 
-  const heroNetCls = netActual > 0 ? 'pos' : netActual < 0 ? 'neg' : '';
+Event: ${e.event_name}, ${e.event_date?e.event_date.substring(0,10):''}
+Type: ${e.tier1_category}, Promoter: ${e.promoter_name}
+Draw: ${e.actual_attendance||'—'} of ${e.expected_attendance||'—'}${drawPct?' ('+drawPct+'%)':''}
+Bar: $${barActual.toLocaleString()} (proj $${parseFloat(e.projected_bar_revenue||0).toLocaleString()})
+SPH: $${parseFloat(e.spend_per_head_actual||0).toFixed(2)}, Net: $${netActual.toLocaleString()}, Margin: ${margin.toFixed(1)}%
+Bottle service: ${s.bottle_count||0} bottles ($${(s.bottle_service_revenue||0).toLocaleString()})`;
 
-  g('page-root').innerHTML = `
-    <!-- Hero -->
-    <div class="event-hero">
-      <div class="event-hero-name">${e.event_name || 'Event Recap'}</div>
-      <div class="event-hero-meta">${e.event_date ? e.event_date.substring(0,10) : ''} · ${e.day_of_week||''} · ${e.tier1_category||''} · ${e.promoter_name||''}</div>
-      <div class="hero-stats">
-        <div class="hero-stat ${drawCls}">
-          <div class="hero-stat-label">Attendance</div>
-          <div class="hero-stat-value">${e.actual_attendance || '—'}</div>
-          <div class="hero-stat-sub">of ${e.expected_attendance||'—'} expected${drawPct?' · '+drawPct+'% draw':''}</div>
-        </div>
-        <div class="hero-stat">
-          <div class="hero-stat-label">Total Revenue</div>
-          <div class="hero-stat-value">${fmt2(totalActual)}</div>
-          <div class="hero-stat-sub">bar ${fmt2(barActual)}</div>
-        </div>
-        <div class="hero-stat ${heroNetCls}">
-          <div class="hero-stat-label">Net to Venue</div>
-          <div class="hero-stat-value">${fmt2(netActual)}</div>
-          <div class="hero-stat-sub">${fmtPct(e.actual_effective_split)} effective split</div>
-        </div>
-        <div class="hero-stat">
-          <div class="hero-stat-label">Bar Spend / Head</div>
-          <div class="hero-stat-value">${e.spend_per_head_actual ? '$'+parseFloat(e.spend_per_head_actual).toFixed(2) : '—'}</div>
-          <div class="hero-stat-sub">actual</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="tabs">
-      <div class="tab active" data-tab="pl" onclick="switchTab('pl')">Full P&amp;L</div>
-      <div class="tab" data-tab="night" onclick="switchTab('night')">Night Summary</div>
-      <div class="tab" data-tab="report" onclick="switchTab('report')">Settlement Report</div>
-      <div class="tab" data-tab="tp" onclick="switchTab('tp')">Talking Points</div>
-    </div>
-
-    <!-- Tab panels -->
-    <div id="panel-pl" class="tab-panel active">${renderPLPanel(data)}</div>
-    <div id="panel-night" class="tab-panel">${renderNightPanel(data)}</div>
-    <div id="panel-report" class="tab-panel">${renderReportPanel(data)}</div>
-    <div id="panel-tp" class="tab-panel"><div class="detail-section"><div class="tp-loading" id="tp-loading-msg">Click the "Talking Points" tab to generate your pre-meeting brief.</div></div></div>
-
-    <div class="action-bar">
-      <div class="action-bar-left">Event ID #${e.id} · ${e.status || 'completed'}</div>
-      <div class="action-bar-right">
-        <button class="btn-secondary" onclick="window.print()">🖨 Print / PDF</button>
-        <button class="btn-primary" onclick="window.location.href='/api/calculator?promoter=${encodeURIComponent(e.promoter_name||'')}'" >+ Book Similar Event</button>
-      </div>
-    </div>
-  `;
-
-  // Load market narrative for night tab after render
-  setTimeout(() => loadMarketNarratives(data), 100);
+  try{
+    const res=await fetch(`${BASE}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const r=await res.json();
+    el.innerHTML=r.text||'';
+    // Build signal chips
+    const signals=[];
+    if(drawPct!==null){
+      if(drawPct>=95) signals.push({text:'Strong draw',good:true});
+      else if(drawPct<75) signals.push({text:'Draw shortfall',good:false});
+    }
+    const sph=parseFloat(e.spend_per_head_actual||0);
+    if(sph>=40) signals.push({text:'High SPH',good:true});
+    else if(sph<25&&sph>0) signals.push({text:'Low bar spend',good:false});
+    if(margin>=22) signals.push({text:'Strong margin',good:true});
+    else if(margin<12&&margin!==0) signals.push({text:'Thin margin',good:false});
+    if(s.bottle_count>=8) signals.push({text:`${s.bottle_count} bottles sold`,good:true});
+    if(chips) chips.innerHTML=signals.map(sig=>`<span class="ai-chip ${sig.good?'good':'warn'}">${sig.text}</span>`).join('');
+  }catch(err){
+    el.innerHTML='<span style="opacity:0.6">Summary unavailable.</span>';
+  }
 }
 
-function renderPLPanel(data) {
-  const e = data.event;
-  const s = data.summary;
-  const items = data.items || [];
-  const drawPct = e.actual_attendance && e.expected_attendance
-    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
-  const drawCls = !drawPct ? '' : drawPct >= 95 ? 'green' : drawPct >= 80 ? 'amber' : 'red';
-  const barActual = parseFloat(e.actual_bar_revenue || e.total_bar_sales || e.net_bar_revenue || 0);
-  const doorActual = parseFloat(e.actual_door_revenue || 0);
-  const tableActual = parseFloat(e.actual_table_revenue || e.table_bottle_service || 0);
-  const totalActualRev = barActual + doorActual + tableActual;
-  const totalProjRev = parseFloat(e.projected_bar_revenue||0) + parseFloat(e.projected_door_revenue||0) + parseFloat(e.projected_table_revenue||0);
+async function loadPromoterScorecard(promoterName,evType,e){
+  if(!promoterName){g('promoter-body').innerHTML='<div style="color:var(--text3);font-size:12px">No promoter recorded.</div>';return;}
+  try{
+    const params=new URLSearchParams({promoter:promoterName});
+    if(evType) params.append('event_type',evType);
+    const res=await fetch(`${BASE}/api/promoter-intelligence?${params}`);
+    const data=await res.json();
+    if(!data.found){
+      g('promoter-body').innerHTML=`<div style="color:var(--text3);font-size:12px">No history found for ${promoterName}.</div>`;
+      return;
+    }
+    const score=data.reputation_score;
+    const scoreCls=score>=7?'green':score>=5?'amber':'red';
+    const comps=data.score_components||{};
+    const compDefs=[
+      {key:'draw_accuracy',label:'Draw Accuracy',weight:'35%'},
+      {key:'bar_yield',label:'Bar Yield',weight:'30%'},
+      {key:'deal_profitability',label:'Deal Profit',weight:'25%'},
+      {key:'consistency',label:'Consistency',weight:'10%'},
+    ];
+    const rec=data.recommendations||{};
+    const hist=data.history||[];
+    g('promoter-body').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="rep-header">
+            <div>
+              <div class="rep-name">${data.promoter}</div>
+              <div class="rep-sub">${data.total_events} events total · ${data.type_events} matching type</div>
+            </div>
+            <div class="rep-score-wrap">
+              <div class="rep-score" style="color:${score>=7?'#4ADE80':score>=5?'#FCD34D':'#F87171'}">${score!==null?score.toFixed(1):'—'}</div>
+              <div class="rep-score-lbl">/ 10</div>
+            </div>
+          </div>
+          <div class="score-grid">
+            ${compDefs.map(cd=>{
+              const c=comps[cd.key];const v=c?.score;
+              const col=v>=7?'var(--green2)':v>=5?'var(--amber2)':v!==null&&v!==undefined?'var(--red2)':'var(--text3)';
+              const barW=v!==null&&v!==undefined?(v/10*100)+'%':'0%';
+              const barCol=v>=7?'var(--green2)':v>=5?'var(--amber2)':'var(--red2)';
+              return `<div class="score-item">
+                <div class="score-item-label">${cd.label} <span style="font-size:9px;color:var(--text3)">${cd.weight}</span></div>
+                <div class="score-item-value" style="color:${col}">${v!==null&&v!==undefined?v.toFixed(1):'—'}</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:${barW};background:${barCol}"></div></div>
+                <div class="score-item-sub">${c?.label||'No data'}</div>
+              </div>`;
+            }).join('')}
+          </div>
+          <!-- Benchmark vs this event -->
+          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">This Night vs Historical Avg</div>
+            ${benchRow('Attendance',e.actual_attendance,rec.attendance?.suggested,'guests')}
+            ${benchRow('Bar Spend/Head',e.spend_per_head_actual,rec.spend_per_head?.suggested,'$',true)}
+            ${benchRow('Net to Venue',e.net_revenue_actual,rec.avg_net_to_venue,'$',true)}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Event History — ${promoterName}</div>
+          ${hist.length===0?'<div style="font-size:12px;color:var(--text3)">No completed events yet.</div>':
+            hist.map(h=>{
+              const drawCls=!h.draw_pct?'':h.draw_pct>=95?'draw-good':h.draw_pct>=80?'draw-ok':'draw-bad';
+              const netCls=h.net_revenue_actual>0?'pos':'neg';
+              return `<div class="promoter-history-row" style="cursor:pointer" onclick="loadEvent(${h.event_id})">
+                <div class="ph-date">${h.event_date?h.event_date.substring(0,10):''}</div>
+                <div class="ph-name">${h.event_name||'—'}</div>
+                <div class="ph-draw ${drawCls}">${h.draw_pct?h.draw_pct+'%':'—'}</div>
+                <div class="ph-sph">${h.spend_per_head_actual?'$'+h.spend_per_head_actual:'—'}</div>
+                <div class="ph-net ${netCls}">${h.net_revenue_actual?'$'+Math.round(h.net_revenue_actual).toLocaleString():'—'}</div>
+              </div>`;
+            }).join('')}
+        </div>
+      </div>`;
+  }catch(err){
+    g('promoter-body').innerHTML='<div style="color:var(--text3);font-size:12px">Could not load promoter data.</div>';
+  }
+}
 
-  let html = `<div class="detail-section">
-    <div class="detail-section-title">Night Summary</div>
-    <div class="detail-grid-3">
-      <div class="detail-stat ${drawCls}">
-        <div class="detail-stat-label">Draw</div>
-        <div class="detail-stat-value">${e.actual_attendance || '—'}</div>
-        <div class="detail-stat-sub">of ${e.expected_attendance||'—'} expected · ${drawPct?drawPct+'%':'—'}</div>
-      </div>
-      <div class="detail-stat highlight">
-        <div class="detail-stat-label">Total Revenue</div>
-        <div class="detail-stat-value">${fmt2(totalActualRev)}</div>
-        <div class="detail-stat-sub">proj. ${fmt2(totalProjRev)}</div>
-      </div>
-      <div class="detail-stat ${parseFloat(e.net_revenue_actual)>0?'green':'red'}">
-        <div class="detail-stat-label">Net to Venue</div>
-        <div class="detail-stat-value">${fmt2(e.net_revenue_actual)}</div>
-        <div class="detail-stat-sub">${fmtPct(e.actual_effective_split)} effective split</div>
-      </div>
-      <div class="detail-stat">
-        <div class="detail-stat-label">Bar Spend / Head</div>
-        <div class="detail-stat-value">${e.spend_per_head_actual?'$'+parseFloat(e.spend_per_head_actual).toFixed(2):'—'}</div>
-        <div class="detail-stat-sub">actual</div>
-      </div>
-      <div class="detail-stat">
-        <div class="detail-stat-label">Tips</div>
-        <div class="detail-stat-value">${fmt2(e.tips)}</div>
-        <div class="detail-stat-sub">${barActual?(parseFloat(e.tips||0)/barActual*100).toFixed(1)+'% of bar':''}</div>
-      </div>
-      <div class="detail-stat">
-        <div class="detail-stat-label">Bottle Service</div>
-        <div class="detail-stat-value">${fmt2(s.bottle_service_revenue)}</div>
-        <div class="detail-stat-sub">${s.bottle_count} bottles · ${s.total_item_revenue>0?Math.round(s.bottle_service_revenue/s.total_item_revenue*100)+'% of bar':''}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-section-title">Projected vs. Actual</div>
-    <div class="pva-row header"><div>Line</div><div>Projected</div><div>Actual</div><div>Variance</div></div>
-    <div class="pva-row"><div class="pva-label">Attendance</div><div class="pva-proj">${e.expected_attendance||'—'}</div><div class="pva-actual ${varClass(e.actual_attendance,e.expected_attendance)}">${e.actual_attendance||'—'}</div><div class="pva-var ${varClass(e.actual_attendance,e.expected_attendance)}">${varStr(e.actual_attendance,e.expected_attendance)}</div></div>
-    <div class="pva-row"><div class="pva-label">Bar Revenue</div><div class="pva-proj">${fmt2(e.projected_bar_revenue)}</div><div class="pva-actual ${varClass(barActual,e.projected_bar_revenue)}">${fmt2(barActual)}</div><div class="pva-var ${varClass(barActual,e.projected_bar_revenue)}">${varStr(barActual,e.projected_bar_revenue)}</div></div>
-    <div class="pva-row"><div class="pva-label">Door Revenue</div><div class="pva-proj">${fmt2(e.projected_door_revenue)}</div><div class="pva-actual ${varClass(e.actual_door_revenue,e.projected_door_revenue)}">${fmt2(e.actual_door_revenue)}</div><div class="pva-var ${varClass(e.actual_door_revenue,e.projected_door_revenue)}">${varStr(e.actual_door_revenue,e.projected_door_revenue)}</div></div>
-    <div class="pva-row"><div class="pva-label">Table Revenue</div><div class="pva-proj">${fmt2(e.projected_table_revenue)}</div><div class="pva-actual ${varClass(tableActual,e.projected_table_revenue)}">${fmt2(tableActual)}</div><div class="pva-var ${varClass(tableActual,e.projected_table_revenue)}">${varStr(tableActual,e.projected_table_revenue)}</div></div>
-    <div class="pva-row"><div class="pva-label">Net to Venue</div><div class="pva-proj">—</div><div class="pva-actual ${parseFloat(e.net_revenue_actual)>0?'pos':'neg'}">${fmt2(e.net_revenue_actual)}</div><div class="pva-var flat">—</div></div>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-section-title">Deal Terms Used</div>
-    <div class="deal-chips">
-      <div class="deal-chip">Door: Venue ${100-(e.door_split_promoter||0)}% / Pro ${e.door_split_promoter||0}%</div>
-      <div class="deal-chip">Bar: Venue ${100-(e.bar_split_promoter||0)}% / Pro ${e.bar_split_promoter||0}%</div>
-      ${e.artist_fee_landed?`<div class="deal-chip amber">Artist Fee: ${fmt2(e.artist_fee_landed)}</div>`:''}
-      ${e.actual_effective_split?`<div class="deal-chip green">Effective Split: ${fmtPct(e.actual_effective_split)}</div>`:''}
+function benchRow(label,actual,hist,unit,isDollar=false){
+  if(!hist&&!actual) return '';
+  const a=parseFloat(actual||0);const h=parseFloat(hist||0);
+  const diff=h>0?Math.round((a-h)/h*100):null;
+  const diffCls=diff===null?'dim':diff>=0?'pos':'neg';
+  const diffStr=diff===null?'—':(diff>=0?'+':'')+diff+'%';
+  const fmtVal=(v)=>isDollar?'$'+Math.round(v).toLocaleString():Math.round(v).toLocaleString()+' '+unit;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:11px">
+    <span style="color:var(--text2)">${label}</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="color:var(--text3)">avg ${h?fmtVal(h):'—'}</span>
+      <span style="font-weight:600;color:var(--text1)">${a?fmtVal(a):'—'}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:11px" class="${diffCls}">${diffStr}</span>
     </div>
   </div>`;
+}
 
-  if (items.length > 0) {
-    html += `<div class="detail-section">
-      <div class="detail-section-title">Bar Item Mix</div>
+// ── RANGE VIEW ────────────────────────────────────────────────────────────
+function setRange(preset){
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  const now=new Date();
+  let start,end;
+  end=now.toISOString().split('T')[0];
+  if(preset==='week'){
+    const d=new Date(now);d.setDate(d.getDate()-d.getDay());
+    start=d.toISOString().split('T')[0];
+  } else if(preset==='month'){
+    start=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  } else if(preset==='quarter'){
+    const q=Math.floor(now.getMonth()/3);
+    start=new Date(now.getFullYear(),q*3,1).toISOString().split('T')[0];
+  } else if(preset==='ytd'){
+    start=new Date(now.getFullYear(),0,1).toISOString().split('T')[0];
+  }
+  g('r-start').value=start;
+  g('r-end').value=end;
+  loadRange();
+}
+
+async function loadRange(){
+  const start=g('r-start').value;const end=g('r-end').value;
+  if(!start||!end){return;}
+  g('page-root').innerHTML='<div class="loading-state">Loading range data…</div>';
+  try{
+    const res=await fetch(`${BASE}/api/events-by-date?start=${start}&end=${end}`);
+    const events=await res.json();
+    renderRangeDashboard(events,start,end);
+  }catch(err){
+    g('page-root').innerHTML='<div class="loading-state">Could not load range data.</div>';
+  }
+}
+
+// ── sort state
+let sortCol='event_date',sortDir=1;
+
+function renderRangeDashboard(events,start,end){
+  const completed=events.filter(e=>e.status==='completed'||e.revel_bar_gross||e.net_bar_revenue);
+  if(events.length===0){
+    g('page-root').innerHTML=`<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">No events in this range</div></div>`;
+    return;
+  }
+
+  // Aggregate KPIs
+  const totalBar=completed.reduce((a,e)=>a+parseFloat(e.net_bar_revenue||e.revel_bar_gross||0),0);
+  const totalNet=completed.reduce((a,e)=>a+parseFloat(e.net_revenue_actual||0),0);
+  const totalDoor=completed.reduce((a,e)=>a+parseFloat(e.actual_door_revenue||0),0);
+  const totalRev=totalBar+totalDoor;
+  const avgMargin=totalRev>0?totalNet/totalRev*100:0;
+  const avgDraw=completed.filter(e=>e.actual_attendance&&e.expected_attendance).reduce((a,e,_,arr)=>a+parseFloat(e.actual_attendance)/parseFloat(e.expected_attendance)/arr.length,0)*100;
+  const avgSph=completed.filter(e=>e.spend_per_head_actual).reduce((a,e,_,arr)=>a+parseFloat(e.spend_per_head_actual)/arr.length,0);
+
+  // Build chart data
+  const sorted=[...completed].sort((a,b)=>a.event_date.localeCompare(b.event_date));
+  const labels=sorted.map(e=>{const d=e.event_date.substring(5,10);return e.event_name?e.event_name.substring(0,12):d});
+  const barData=sorted.map(e=>parseFloat(e.net_bar_revenue||e.revel_bar_gross||0));
+  const netData=sorted.map(e=>parseFloat(e.net_revenue_actual||0));
+
+  g('page-root').innerHTML=`
+    <!-- Summary KPIs -->
+    <div class="range-summary-grid">
+      <div class="kpi hero"><div class="kpi-label">Total Revenue</div><div class="kpi-value">${fmt(totalRev)}</div><div class="kpi-sub">${completed.length} events · ${start} to ${end}</div></div>
+      <div class="kpi ${totalNet>0?'green':'red'}"><div class="kpi-label">Total Net</div><div class="kpi-value">${fmt(totalNet)}</div><div class="kpi-sub">across all events</div></div>
+      <div class="kpi ${colorClass(avgMargin,{good:20,bad:10})}"><div class="kpi-label">Avg Margin</div><div class="kpi-value">${fmtPct(avgMargin)}</div><div class="kpi-sub">target ≥22%</div></div>
+      <div class="kpi ${colorClass(avgDraw,{good:85,bad:70})}"><div class="kpi-label">Avg Draw %</div><div class="kpi-value">${avgDraw?fmtPct(avgDraw):'—'}</div><div class="kpi-sub">expected vs actual</div></div>
+      <div class="kpi ${colorClass(avgSph,{good:35,bad:20})}"><div class="kpi-label">Avg Bar/Head</div><div class="kpi-value">${avgSph?'$'+avgSph.toFixed(2):'—'}</div><div class="kpi-sub">per guest</div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">Revenue & Net by Event</div>
+      <div class="chart-wrap"><canvas id="range-chart"></canvas></div>
+    </div>
+
+    <!-- Event table -->
+    <div class="card">
+      <div class="card-title">All Events — ${start} to ${end} <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">(click column to sort · click row to drill in)</span></div>
       <div style="overflow-x:auto">
-        <table class="item-table">
-          <thead><tr><th>Item</th><th>Qty</th><th>Revenue</th><th>COGS</th><th>GM%</th></tr></thead>
-          <tbody>${items.map(item => {
-            const catMap={'Bottle Service':'bottle','Spirits':'spirits','Beer':'beer','Cocktails':'cocktail','Non-Alcoholic':'na'};
-            const catCls=catMap[item.item_category]||'';
-            const gm=item.total_revenue>0?Math.round((1-item.total_cost/item.total_revenue)*100):0;
-            const gmCls=gm>=85?'color:var(--green)':gm>=70?'color:var(--amber)':'color:var(--red)';
-            return `<tr><td>${item.item_name}<span class="item-cat-badge cat-${catCls}">${item.item_subcategory||item.item_category}</span></td><td style="font-family:'DM Mono',monospace">${item.quantity_sold}</td><td style="font-family:'DM Mono',monospace">${fmt2(item.total_revenue)}</td><td style="font-family:'DM Mono',monospace;color:var(--text3)">${fmt2(item.total_cost)}</td><td style="font-family:'DM Mono',monospace;${gmCls}">${gm}%</td></tr>`;
-          }).join('')}</tbody>
+        <table class="event-table" id="range-table">
+          <thead><tr>
+            <th style="text-align:left" onclick="sortRange(events,'event_date')" id="th-date">Date ↑</th>
+            <th style="text-align:left" onclick="sortRange(events,'event_name')" id="th-name">Event</th>
+            <th onclick="sortRange(events,'net_bar_revenue')" id="th-bar">Bar Rev</th>
+            <th onclick="sortRange(events,'actual_door_revenue')" id="th-door">Door Rev</th>
+            <th onclick="sortRange(events,'net_revenue_actual')" id="th-net">Net</th>
+            <th onclick="sortRange(events,'spend_per_head_actual')" id="th-sph">SPH</th>
+            <th onclick="sortRange(events,'actual_attendance')" id="th-draw">Draw</th>
+            <th id="th-type">Type</th>
+          </tr></thead>
+          <tbody id="range-tbody"></tbody>
         </table>
       </div>
     </div>`;
-  }
 
-  if (e.crowd_demographic_observations || e.promoter_performance_notes || e.what_to_replicate || e.what_to_change) {
-    html += `<div class="detail-section">
-      <div class="detail-section-title">Post-Event Notes</div>
-      ${e.crowd_demographic_observations?`<div class="obs-box"><div class="obs-label">Crowd</div><div class="obs-body">${e.crowd_demographic_observations}</div></div>`:''}
-      ${e.promoter_performance_notes?`<div class="obs-box"><div class="obs-label">Promoter Performance</div><div class="obs-body">${e.promoter_performance_notes}</div></div>`:''}
-      ${e.what_to_replicate?`<div class="obs-box"><div class="obs-label">What to Replicate</div><div class="obs-body">${e.what_to_replicate}</div></div>`:''}
-      ${e.what_to_change?`<div class="obs-box"><div class="obs-label">What to Change</div><div class="obs-body">${e.what_to_change}</div></div>`:''}
-    </div>`;
-  }
+  renderRangeTable(events);
 
-  return html;
+  // Chart
+  setTimeout(()=>{
+    const ctx2=g('range-chart')?.getContext('2d');
+    if(!ctx2) return;
+    if(rangeChart) rangeChart.destroy();
+    rangeChart=new Chart(ctx2,{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {label:'Bar Revenue',data:barData,backgroundColor:'rgba(44,95,138,0.5)',borderColor:'rgba(44,95,138,0.8)',borderWidth:1,borderRadius:4},
+          {label:'Net to Venue',data:netData,backgroundColor:netData.map(v=>v>=0?'rgba(42,122,75,0.6)':'rgba(184,50,50,0.5)'),borderColor:netData.map(v=>v>=0?'rgba(42,122,75,0.8)':'rgba(184,50,50,0.8)'),borderWidth:1,borderRadius:4,type:'bar'},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{family:'DM Sans'},boxWidth:12,padding:16}},tooltip:{callbacks:{label:(c)=>'$'+Math.round(c.raw||0).toLocaleString()}}},
+        scales:{x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:11},maxRotation:30}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'DM Sans',size:11},callback:(v)=>'$'+(v>=1000?(v/1000).toFixed(0)+'K':v)}}}
+      }
+    });
+  },100);
 }
 
-function renderNightPanel(data) {
-  const e = data.event;
-  const s = data.summary;
-  const drawPct = e.actual_attendance && e.expected_attendance
-    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
-  const drawCls = !drawPct ? '' : drawPct >= 95 ? 'green' : drawPct >= 80 ? 'amber' : 'red';
-  const barActual = parseFloat(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue||0);
-  const doorActual = parseFloat(e.actual_door_revenue||0);
-  const tableActual = parseFloat(e.actual_table_revenue||e.table_bottle_service||0);
-  const totalActual = barActual + doorActual + tableActual;
-  const ctx = getMarketContext(e.event_date, e.tier1_category);
-  const demandColor = ctx.demandLevel==='high'?'var(--green)':ctx.demandLevel==='medium'?'var(--amber)':'var(--text3)';
-  const typeLabel = {liveration:'Live Nation',sports:'Sports',festival:'Festival',holiday:'Holiday',edm:'EDM',hip_hop:'Hip Hop'};
-  const typeColor = {liveration:'var(--blue)',sports:'#60A5FA',festival:'#A78BFA',holiday:'#34D399',edm:'#7C3AED',hip_hop:'var(--blue)'};
-
-  const marketEvRows = ctx.events.map(ev => {
-    const isComp = ev.competitor;
-    const label = typeLabel[ev.type] || ev.type;
-    const color = typeColor[ev.type] || 'var(--text2)';
-    const capStr = ev.cap ? ` · cap ${ev.cap.toLocaleString()}` : '';
-    const demoStr = ev.demo ? ` · ${ev.demo}` : '';
-    if (isComp) {
-      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;margin-bottom:4px">
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#FBBF24;min-width:60px;padding-top:1px">⚠ Competitor</span>
-        <span style="font-size:12px;color:#FBBF24;font-weight:500">${ev.name}<span style="color:var(--text3);font-weight:400">${demoStr}${capStr}</span></span>
-      </div>`;
-    }
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;margin-bottom:2px">
-      <span style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${color};min-width:60px;padding-top:1px">${label}</span>
-      <span style="font-size:12px;color:var(--text2)">${ev.name}${demoStr?`<span style="color:var(--text3)"> · ${ev.demo}</span>`:''}${capStr?`<span style="color:var(--text3)">${capStr}</span>`:''}</span>
-    </div>`;
-  }).join('');
-
-  return `<div class="detail-section">
-    <div class="detail-section-title">Event Details</div>
-    <div class="detail-grid-3">
-      <div class="detail-stat"><div class="detail-stat-label">Event</div><div class="detail-stat-value" style="font-size:13px">${e.event_name||'—'}</div><div class="detail-stat-sub">${e.event_date?e.event_date.substring(0,10):'—'} · ${e.day_of_week||''}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Type</div><div class="detail-stat-value" style="font-size:13px">${e.tier1_category||'—'}</div><div class="detail-stat-sub">${e.tier2_subcategory||''}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Promoter</div><div class="detail-stat-value" style="font-size:13px">${e.promoter_name||'—'}</div><div class="detail-stat-sub">${e.artist_name||''}</div></div>
-      <div class="detail-stat ${drawCls}"><div class="detail-stat-label">Attendance</div><div class="detail-stat-value">${e.actual_attendance||'—'}</div><div class="detail-stat-sub">of ${e.expected_attendance||'—'} · ${drawPct?drawPct+'% draw':'—'}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Doors Open</div><div class="detail-stat-value" style="font-size:13px">${e.doors_open_time||'—'}</div><div class="detail-stat-sub">close: ${e.event_close_time||'—'}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Artist Genre</div><div class="detail-stat-value" style="font-size:13px">${e.artist_genre||'—'}</div></div>
-    </div>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-section-title">
-      <span>Market Context — Atlanta</span>
-      <span style="font-size:11px;font-weight:600;color:${demandColor};letter-spacing:0.05em;text-transform:uppercase">● ${ctx.demandLevel.charAt(0).toUpperCase()+ctx.demandLevel.slice(1)} Demand Night</span>
-    </div>
-    ${ctx.events.length>0?`<div style="margin-bottom:10px">${marketEvRows}</div>`:'<div style="font-size:12px;color:var(--text3);padding:4px 0">No major market events on record for this date.</div>'}
-    <div id="market-narrative-night" class="market-narrative"><span style="color:var(--text3);font-style:italic">Loading market narrative…</span></div>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-section-title">Revenue Overview</div>
-    <div class="detail-grid-3">
-      <div class="detail-stat highlight"><div class="detail-stat-label">Total Revenue</div><div class="detail-stat-value">${fmt2(totalActual)}</div><div class="detail-stat-sub">proj. ${fmt2(parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0))}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Bar Revenue</div><div class="detail-stat-value">${fmt2(barActual)}</div><div class="detail-stat-sub">proj. ${fmt2(e.projected_bar_revenue)}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Door Revenue</div><div class="detail-stat-value">${fmt2(doorActual)}</div><div class="detail-stat-sub">proj. ${fmt2(e.projected_door_revenue)}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Table / Bottle</div><div class="detail-stat-value">${fmt2(tableActual)}</div><div class="detail-stat-sub">proj. ${fmt2(e.projected_table_revenue)}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Bar Spend / Head</div><div class="detail-stat-value">${e.spend_per_head_actual?'$'+parseFloat(e.spend_per_head_actual).toFixed(2):'—'}</div><div class="detail-stat-sub">actual</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Tips</div><div class="detail-stat-value">${fmt2(e.tips)}</div><div class="detail-stat-sub">${barActual?(parseFloat(e.tips||0)/barActual*100).toFixed(1)+'% of bar':''}</div></div>
-    </div>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-section-title">Settlement</div>
-    <div class="detail-grid-3">
-      <div class="detail-stat ${parseFloat(e.net_revenue_actual)>=0?'green':'red'}"><div class="detail-stat-label">Net to Venue</div><div class="detail-stat-value">${fmt2(e.net_revenue_actual)}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Effective Split</div><div class="detail-stat-value">${fmtPct(e.actual_effective_split||e.effective_split_percentage)}</div><div class="detail-stat-sub">promoter's total take</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Bottle Service</div><div class="detail-stat-value">${fmt2(s.bottle_service_revenue)}</div><div class="detail-stat-sub">${s.bottle_count} bottles · ${barActual>0?Math.round(s.bottle_service_revenue/barActual*100)+'% of bar':''}</div></div>
-    </div>
-  </div>
-  ${e.settlement_notes?`<div class="detail-section"><div class="detail-section-title">Settlement Notes</div><div class="obs-box"><div class="obs-body">${e.settlement_notes}</div></div></div>`:''}`;
+function renderRangeTable(events){
+  const sorted=[...events].sort((a,b)=>{
+    const av=a[sortCol]||0,bv=b[sortCol]||0;
+    if(typeof av==='string') return av.localeCompare(bv)*sortDir;
+    return (parseFloat(av||0)-parseFloat(bv||0))*sortDir;
+  });
+  const tbody=g('range-tbody');
+  if(!tbody) return;
+  const totalBar=sorted.reduce((a,e)=>a+parseFloat(e.net_bar_revenue||e.revel_bar_gross||0),0);
+  const totalNet=sorted.reduce((a,e)=>a+parseFloat(e.net_revenue_actual||0),0);
+  const totalDoor=sorted.reduce((a,e)=>a+parseFloat(e.actual_door_revenue||0),0);
+  tbody.innerHTML=sorted.map(e=>{
+    const bar=parseFloat(e.net_bar_revenue||e.revel_bar_gross||0);
+    const door=parseFloat(e.actual_door_revenue||0);
+    const net=parseFloat(e.net_revenue_actual||0);
+    const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
+    const drawCls=drawPct?drawPct>=90?'pos':drawPct<70?'neg':'':'dim';
+    const netCls=net>0?'pos':net<0?'neg':'dim';
+    const link=`onclick="setMode('single');loadEvent(${e.id})"`;
+    return `<tr ${e.id?link:'style="cursor:default"'}>
+      <td style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text3)">${e.event_date?e.event_date.substring(0,10):''}</td>
+      <td><div class="ev-name">${e.event_name||'—'}</div><div class="ev-meta">${e.promoter_name||''}${e.artist_name?' · '+e.artist_name:''}</div></td>
+      <td>${bar?fmtFull(bar):'—'}</td>
+      <td>${door?fmtFull(door):'—'}</td>
+      <td class="${netCls}">${net?fmtFull(net):'—'}</td>
+      <td>${e.spend_per_head_actual?'$'+parseFloat(e.spend_per_head_actual).toFixed(2):'—'}</td>
+      <td class="${drawCls}">${drawPct?drawPct+'%':'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${e.tier1_category||'—'}</td>
+    </tr>`;
+  }).join('')+`<tr class="total-row">
+    <td style="font-family:'DM Sans',sans-serif">Totals</td>
+    <td style="font-family:'DM Sans',sans-serif">${sorted.length} events</td>
+    <td>${fmtFull(totalBar)}</td>
+    <td>${fmtFull(totalDoor)}</td>
+    <td class="${totalNet>=0?'pos':'neg'}">${fmtFull(totalNet)}</td>
+    <td>—</td><td>—</td><td>—</td>
+  </tr>`;
 }
 
-function renderReportPanel(data) {
-  const e = data.event;
-  const s = data.summary;
-  const n = v => parseFloat(v)||0;
-  const na = v => (v===null||v===undefined||v==='')?null:parseFloat(v);
-  function d(v){return(v!==null&&v!==undefined&&parseFloat(v)!==0)?'$'+Math.round(Math.abs(parseFloat(v))).toLocaleString():'—';}
-  function vr(actual,proj,costLine){
-    if(actual===null||actual===undefined||proj===null||proj===undefined) return {t:'—',c:'var-flat'};
-    const a=parseFloat(actual)||0;const p=parseFloat(proj)||0;
-    if(!p&&!a)return{t:'—',c:'var-flat'};if(!p||!a)return{t:'—',c:'var-flat'};
-    const diff=a-p;if(Math.abs(diff)<0.01)return{t:'±$0',c:'var-flat'};
-    const sign=diff>=0?'+':'-';const abs='$'+Math.round(Math.abs(diff)).toLocaleString();
-    const cls=costLine?(diff>0?'var-neg':'var-pos'):(diff>0?'var-pos':'var-neg');
-    return{t:sign+abs,c:cls};
-  }
-  function row(label,proj,actual,costLine,opts={}){
-    const pv=(proj!==null&&proj!==undefined)?parseFloat(proj):null;
-    const av=(actual!==null&&actual!==undefined)?parseFloat(actual):null;
-    if(!opts.total&&(pv===null||pv===0)&&(av===null||av===0))return '';
-    const v=vr(av,pv,costLine);
-    const projFmt=(pv!==null&&pv!==0)?'$'+Math.round(Math.abs(pv)).toLocaleString():'—';
-    const actFmt=(av!==null&&av!==0)?'$'+Math.round(Math.abs(av)).toLocaleString():'—';
-    const isTotal=opts.total?' class="total-row"':'';
-    return `<tr${isTotal}><td>${label}</td><td>${projFmt}</td><td>${actFmt}</td><td class="${v.c}">${v.t}</td></tr>`;
-  }
-  function ph(label){return `<tr><td colspan="4" style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:10px 10px 4px;background:var(--surface2)">${label}</td></tr>`;}
-  function divider(){return `<tr><td colspan="4" style="padding:0;height:1px;background:var(--border)"></td></tr>`;}
-  const drawPct=e.actual_attendance&&e.expected_attendance?Math.round(e.actual_attendance/e.expected_attendance*100):null;
-  const doorProj=n(e.projected_door_revenue);const barProj=n(e.projected_bar_revenue);const tableProj=n(e.projected_table_revenue);
-  const doorActual=na(e.actual_door_revenue);
-  const barActual=na(e.actual_bar_revenue??e.total_bar_sales??e.net_bar_revenue);
-  const cogsActual=barActual>0?barActual*(n(e.bar_cogs_percentage)||16.1)/100:0;
-  const cogsProj=barProj>0?barProj*(n(e.bar_cogs_percentage)||16.1)/100:0;
-  const tableActual=na(e.actual_table_revenue??e.table_bottle_service);
-  const grossRevProj=doorProj+barProj+tableProj;
-  const grossRevActual=n(doorActual)+n(barActual)+n(tableActual);
-  const doorPayoutProj=doorProj*(n(e.door_split_promoter)/100);
-  const barPayoutProj=barProj*(n(e.bar_split_promoter)/100);
-  const tablePayoutProj=tableProj*(n(e.table_split_promoter||0)/100);
-  const artFeeProj=n(e.artist_fee_landed)+n(e.artist_fee_travel);
-  const houseFeeProj=n(e.house_fee_amount);
-  const doorPayoutActual=na(e.promoter_door_payout);
-  const barPayoutActual=na(e.promoter_bar_payout);
-  const tablePayoutActual=na(e.promoter_table_payout);
-  const artFeeActualVal=na(e.artist_cost_actual??e.artist_cost_paid_by_venue);
-  const totalPayoutsProj=doorPayoutProj+barPayoutProj+tablePayoutProj+artFeeProj-houseFeeProj;
-  const totalPayoutsActual=n(doorPayoutActual)+n(barPayoutActual)+n(tablePayoutActual)+n(artFeeActualVal);
-  const npcProj=grossRevProj-totalPayoutsProj-cogsProj;
-  const npcActual=grossRevActual-totalPayoutsActual-cogsActual;
-  const staffActual=na(e.staffing_cost_actual);
-  const netActual=na(e.net_revenue_actual);
-  const netProj=null;
-  const marginActual=grossRevActual>0?(n(netActual)/grossRevActual*100):0;
-  const effectiveSplit=n(e.actual_effective_split||e.effective_split_percentage);
-  const sph=n(e.spend_per_head_actual);const tips=n(e.tips);
-  const bottlePct=n(barActual)>0?(s.bottle_service_revenue/n(barActual)*100):0;
-
-  return `<div class="detail-section">
-    <div class="detail-section-title">Event Header</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
-      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Event Name</span><span style="font-weight:600">${e.event_name||'—'}</span></div>
-      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Date</span>${e.event_date?e.event_date.substring(0,10):'—'} · ${e.day_of_week||''}</div>
-      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Event Type</span>${e.tier1_category||'—'}${e.tier2_subcategory?' · '+e.tier2_subcategory:''}</div>
-      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Promoter</span>${e.promoter_name||'—'}</div>
-      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Artist</span>${e.artist_name||'—'}</div>
-      <div><span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:2px">Attendance</span>${e.actual_attendance||'—'} actual / ${e.expected_attendance||'—'} expected${drawPct?' ('+drawPct+'% draw)':''}</div>
-    </div>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-section-title">Full P&amp;L — Projected vs. Actual</div>
-    <table class="sr-table">
-      <thead><tr><th style="text-align:left">Line Item</th><th>Projected</th><th>Actual</th><th>Variance</th></tr></thead>
-      <tbody>
-        ${ph('Revenue')}
-        ${row('Gross ticket revenue',doorProj,doorActual,false)}
-        ${row('Gross bar revenue',barProj,barActual,false)}
-        ${row('Less COGS',cogsProj>0?-cogsProj:0,cogsActual>0?-cogsActual:0,true)}
-        ${row('Table & bottle service',tableProj,tableActual,false)}
-        ${row('Total Gross Revenue',grossRevProj,grossRevActual,false,{total:true})}
-        ${divider()}
-        ${ph('Promoter & Artist Payouts')}
-        ${row('Door payout',doorPayoutProj,doorPayoutActual,true)}
-        ${row('Bar payout',barPayoutProj,barPayoutActual,true)}
-        ${row('Table payout',tablePayoutProj,tablePayoutActual,true)}
-        ${row('Artist fee',artFeeProj,artFeeActualVal,true)}
-        ${row('House fee',houseFeeProj,null,false)}
-        ${row('Net to Venue (pre-cost)',npcProj,npcActual,false,{total:true})}
-        ${divider()}
-        ${ph('Operating Costs')}
-        ${row('Staffing (actual total)',null,staffActual,true)}
-        ${row('Total Costs',null,staffActual,true,{total:true})}
-        ${divider()}
-        ${ph('Bottom Line')}
-        <tr class="total-row">
-          <td>Net to Venue</td>
-          <td>—</td>
-          <td style="color:${netActual>=0?'var(--green)':'var(--red)'};font-weight:600">${netActual?'$'+Math.round(netActual).toLocaleString():'—'}</td>
-          <td class="var-flat">—</td>
-        </tr>
-        <tr>
-          <td>Margin %</td>
-          <td>—</td>
-          <td>${marginActual?marginActual.toFixed(1)+'%':'—'}</td>
-          <td class="var-flat">—</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-section-title">Net to Venue Summary</div>
-    <div class="detail-grid-3">
-      <div class="detail-stat highlight"><div class="detail-stat-label">Total Revenue</div><div class="detail-stat-value">${fmt2(grossRevActual||grossRevProj)}</div><div class="detail-stat-sub">actual</div></div>
-      <div class="detail-stat ${netActual>=0?'green':'red'}"><div class="detail-stat-label">Net to Venue</div><div class="detail-stat-value">${fmt2(netActual)}</div><div class="detail-stat-sub">actual</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Effective Split %</div><div class="detail-stat-value">${effectiveSplit?fmtPct(effectiveSplit):'—'}</div><div class="detail-stat-sub">promoter's share</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Bar Spend / Head</div><div class="detail-stat-value">${sph?'$'+sph.toFixed(2):'—'}</div><div class="detail-stat-sub">actual</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Tips</div><div class="detail-stat-value">${fmt2(tips)}</div><div class="detail-stat-sub">${barActual>0?(tips/barActual*100).toFixed(1)+'% of bar':''}</div></div>
-      <div class="detail-stat"><div class="detail-stat-label">Bottle Svc % of Bar</div><div class="detail-stat-value">${bottlePct>0?bottlePct.toFixed(1)+'%':'—'}</div><div class="detail-stat-sub">${fmt2(s.bottle_service_revenue)} · ${s.bottle_count} bottles</div></div>
-    </div>
-  </div>
-  ${e.settlement_notes?`<div class="detail-section"><div class="detail-section-title">Settlement Notes</div><div class="obs-box"><div class="obs-body">${e.settlement_notes}</div></div></div>`:''}`;
+let _rangeEvents=null;
+function sortRange(events,col){
+  _rangeEvents=events;
+  if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=-1;}
+  renderRangeTable(events);
 }
 
-async function renderTPPanel() {
-  const panel = g('panel-tp');
-  if (!eventData) return;
-  const e = eventData.event;
-  const s = eventData.summary;
-  panel.innerHTML = `<div class="detail-section"><div class="tp-loading">Generating pre-meeting brief…</div></div>`;
-  const drawPct = e.actual_attendance && e.expected_attendance
-    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
-  const prompt = `You are a venue operator preparing for a deal conversation with a promoter. Based on the following event data, write a concise, professional pre-meeting brief with talking points. Be direct and data-driven. Structure it clearly with sections. Do not use bullet points — use short paragraphs. Tone: professional, constructive, focused on future deal terms.
-
-EVENT: ${e.event_name||'Event'}
-DATE: ${e.event_date?e.event_date.substring(0,10):''}
-PROMOTER: ${e.promoter_name||''}
-ARTIST: ${e.artist_name||'N/A'}
-PERFORMANCE:
-- Expected attendance: ${e.expected_attendance||'N/A'} | Actual: ${e.actual_attendance||'N/A'} (${drawPct?drawPct+'% of promise':'N/A'})
-- Bar revenue: projected $${parseFloat(e.projected_bar_revenue||0).toLocaleString()} | actual $${parseFloat(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue||0).toLocaleString()}
-- Door revenue: projected $${parseFloat(e.projected_door_revenue||0).toLocaleString()} | actual $${parseFloat(e.actual_door_revenue||0).toLocaleString()}
-- Bar spend per head: $${parseFloat(e.spend_per_head_actual||0).toFixed(2)}
-- Net to venue: $${parseFloat(e.net_revenue_actual||0).toLocaleString()}
-- Effective split: ${parseFloat(e.actual_effective_split||e.effective_split_percentage||0).toFixed(1)}%
-DEAL TERMS: Door Venue ${100-(e.door_split_promoter||0)}% / Pro ${e.door_split_promoter||0}%, Bar Venue ${100-(e.bar_split_promoter||0)}% / Pro ${e.bar_split_promoter||0}%, Artist fee $${parseFloat(e.artist_fee_landed||0).toLocaleString()}
-BOTTLE SERVICE: $${s.bottle_service_revenue?.toLocaleString()||0} (${s.bottle_count} bottles)
-NOTES: ${e.promoter_performance_notes||'None'}${e.what_to_change?'\nWhat to change: '+e.what_to_change:''}
-
-Write: (1) one-paragraph event overview, (2) what the data says about this promoter on this night, (3) specific talking points for the next deal negotiation, (4) recommended deal terms for the next similar event.`;
-
-  try {
-    const res = await fetch(`${WORKSHOP_URL}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    const result = await res.json();
-    panel.innerHTML = `<div class="detail-section">
-      <div class="detail-section-title">Pre-Meeting Brief — ${e.promoter_name||'Promoter'}</div>
-      <div class="tp-content">${result.text||'Could not generate.'}</div>
-      <button class="tp-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(()=>{this.textContent='✓ Copied';setTimeout(()=>this.textContent='Copy to Clipboard',2000)})">Copy to Clipboard</button>
-    </div>`;
-  } catch(err) {
-    panel.innerHTML = `<div class="detail-section"><div class="tp-loading">Could not generate — check connection.</div></div>`;
-  }
+// ── Export ────────────────────────────────────────────────────────────────
+function openExportModal(){g('export-modal').classList.add('open')}
+function closeExportModal(){g('export-modal').classList.remove('open')}
+function selectExport(mode){
+  exportMode=mode;
+  ['full','promoter','investor'].forEach(m=>{
+    g('exp-'+m).classList.toggle('selected',m===mode);
+  });
+}
+function doExport(){
+  closeExportModal();
+  document.body.setAttribute('data-export',exportMode);
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>document.body.removeAttribute('data-export'),500);
+  },100);
 }
 
-async function loadMarketNarratives(data) {
-  const e = data.event;
-  const ctx = getMarketContext(e.event_date, e.tier1_category);
-  const drawPct = e.actual_attendance && e.expected_attendance
-    ? Math.round(e.actual_attendance / e.expected_attendance * 100) : null;
-  const projNet = parseFloat(e.projected_bar_revenue||0)+parseFloat(e.projected_door_revenue||0)+parseFloat(e.projected_table_revenue||0);
-  const marketList = ctx.events.length>0 ? ctx.events.map(ev=>`- ${ev.name} (${ev.type}${ev.demo?', '+ev.demo:''})`).join('\n') : '- No major market events recorded';
-  const compList = ctx.competitors.length>0 ? ctx.competitors.map(ev=>ev.name).join(', ') : 'none';
-  const overlapList = ctx.overlapEvents.length>0 ? ctx.overlapEvents.map(ev=>ev.name).join(', ') : 'none';
-
-  const prompt = `You are a venue performance analyst. Write 2-3 sentences interpreting how Atlanta market conditions on ${e.event_date?e.event_date.substring(0,10):'this date'} may have influenced this event's performance. Be specific and factual.
-
-Event: ${e.event_name||'—'}, ${e.tier1_category||'—'}, Promoter: ${e.promoter_name||'—'}
-Attendance: ${e.actual_attendance||'—'} actual vs ${e.expected_attendance||'—'} projected${drawPct?' ('+drawPct+'% draw)':''}
-Revenue: $${parseFloat(e.actual_bar_revenue||e.total_bar_sales||e.net_bar_revenue||0).toLocaleString()} bar vs $${parseFloat(e.projected_bar_revenue||0).toLocaleString()} projected
-Net to Venue: $${parseFloat(e.net_revenue_actual||0).toLocaleString()}
-Market conditions: ${marketList}
-Direct competitors: ${compList}
-Demographic overlap events: ${overlapList}
-
-Under 60 words. Past tense. Focus on whether market conditions helped, hurt, or were neutral.`;
-
-  try {
-    const res = await fetch(`${WORKSHOP_URL}/api/talking-points`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    const result = await res.json();
-    const text = result.text||'';
-    const html = `<span style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Market Narrative</span>${text}`;
-    const el = g('market-narrative-night');
-    if (el) el.innerHTML = html;
-  } catch(err) {
-    const el = g('market-narrative-night');
-    if (el) el.innerHTML = '<span style="color:var(--text3);font-style:italic">Could not generate narrative.</span>';
-  }
-}
-
-// Init
-document.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  const eventId = params.get('event_id');
-  if (eventId) {
-    loadEvent(parseInt(eventId, 10));
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  const params=new URLSearchParams(window.location.search);
+  const eventId=params.get('event_id');
+  if(eventId){
+    loadEvent(parseInt(eventId,10));
   } else {
-    g('page-root').innerHTML = `<div class="page-error">
-      <div class="page-error-title">No event specified</div>
-      <div class="page-error-sub">Open an event from the <a href="/api/calendar" style="color:var(--blue)">calendar</a> to see its recap.</div>
-    </div>`;
+    renderSearchPrompt();
   }
 });
 </script>
