@@ -262,6 +262,8 @@
   .pill-convention { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
   .pill-holiday { background: var(--red-light); color: var(--red); font-style: italic; }
   .pill-competitor { background: var(--coral-light); color: var(--coral); }
+  .pill-edm { background: #F0EAF8; color: #5A3A8A; }
+  .weather-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--text2); background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:2px 8px; margin-bottom:10px; }
   .pill-college_university { background: #5B2D8E; color: #FFFFFF; font-weight: 500; }
 
   .more-events {
@@ -728,7 +730,7 @@ const BASE_URL = window.location.origin;
 
 let currentMonth = 0; // 0-indexed: January=0
 let currentYear = 2026;
-let activeFilters = new Set(['internal','liveration','sports','festival','convention','holiday','college_university']);
+let activeFilters = new Set(['internal','liveration','sports','festival','convention','holiday','college_university','edm']);
 let selectedDate = null;
 let newEventDate = null;
 
@@ -781,77 +783,271 @@ async function loadInternalEvents() {
 }
 
 // ── Market events ──
+// Sources: State Farm Arena (Live Nation), Coca-Cola Roxy (Live Nation), Ameris Amphitheater (Live Nation),
+//          Tabernacle (AEG), Believe Music Hall (AEG), Buckhead Theatre (AEG), Center Stage (AEG),
+//          Fox Theatre, Variety Playhouse, Mercedes-Benz Stadium, Truist Park,
+//          ATL EDM Events (atledmevents.com), EDMTrain, Songkick, Discover Atlanta
 const marketEvents = [
-  // Live Nation / major shows
-  { date: '2026-05-01', name: 'Morgan Wallen @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Country 25-45' },
-  { date: '2026-05-03', name: 'Kendrick Lamar @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-35' },
-  { date: '2026-05-08', name: 'Dead & Company @ Ameris', type: 'liveration', venue: 'Ameris Amphitheater', cap: 12000, demo: 'Classic Rock 35-55' },
-  { date: '2026-05-10', name: 'Zedd @ Believe Music Hall', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-30', competitor: true },
-  { date: '2026-05-15', name: 'Bad Bunny @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Latin 18-35' },
-  { date: '2026-05-17', name: 'Eric Church @ Ameris', type: 'liveration', venue: 'Ameris Amphitheater', cap: 12000, demo: 'Country 30-50' },
-  { date: '2026-05-22', name: 'SZA @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'R&B/Soul 20-35' },
+
+  // ── JAN 2026 ──
+  { date: '2026-01-02', name: 'Therapy Sessions @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-01-09', name: 'Steve Aoki @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-01-09', name: 'Innelia @ Believe Music Hall', type: 'edm', venue: 'Believe Music Hall', cap: 1500, demo: 'House/EDM 21-35', competitor: true },
+  { date: '2026-01-16', name: 'Therapy Sessions (Innelia) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-01-18', name: 'Chris Tomlin — Neon Night Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Christian/Gospel 25-50' },
+  { date: '2026-01-21', name: 'Fortune Feimster @ Buckhead Theatre', type: 'liveration', venue: 'Buckhead Theatre', cap: 1000, demo: 'Comedy 25-45' },
+  { date: '2026-01-21', name: 'Zubah @ Believe Music Hall', type: 'edm', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-32', competitor: true },
+  { date: '2026-01-23', name: 'Therapy Sessions (Riordan) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-01-30', name: 'Therapy Sessions (YDG) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-01-31', name: 'Therapy Sessions (Lavern) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+
+  // ── FEB 2026 ──
+  { date: '2026-02-06', name: 'Timmy Trumpet @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-02-13', name: 'Sidepiece @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'House 21-35' },
+  { date: '2026-02-14', name: 'Valentine\'s Weekend — multiple venues', type: 'holiday', venue: 'Citywide' },
+  { date: '2026-02-19', name: 'Lunar New Year Events — multiple venues', type: 'convention', venue: 'Citywide', att_est: 5000 },
+  { date: '2026-02-20', name: 'Bolo @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-02-21', name: 'Kream @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'House 21-35' },
+  { date: '2026-02-27', name: 'What So Not @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Bass/Electronic 21-35' },
+  { date: '2026-02-27', name: 'TWICE — This Is For You Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'K-Pop 18-28' },
+
+  // ── MAR 2026 ──
+  { date: '2026-03-04', name: 'Lady Gaga — Mayhem Ball @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 20-40' },
+  { date: '2026-03-05', name: 'Lady Gaga — Mayhem Ball @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 20-40' },
+  { date: '2026-03-05', name: 'Sabrina Claudio @ Buckhead Theatre', type: 'liveration', venue: 'Buckhead Theatre', cap: 1000, demo: 'R&B 20-35' },
+  { date: '2026-03-06', name: 'First We Dance @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-03-06', name: 'Conan Gray — Wishbone Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop/Alt 16-28' },
+  { date: '2026-03-07', name: 'Atlanta United Home Opener vs Real Salt Lake', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-03-07', name: 'First We Dance @ District (2nd night)', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-03-08', name: 'Atlanta United vs Philadelphia Union', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-03-13', name: 'Oppidan @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-03-14', name: 'Atlanta United — Home', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-03-17', name: 'St. Patrick\'s Day — citywide bar surge', type: 'holiday', venue: 'Citywide' },
+  { date: '2026-03-20', name: 'Eric Church — Free the Machine @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Country 30-50' },
+  { date: '2026-03-20', name: 'Odd Mob @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Techno/House 21-35' },
+  { date: '2026-03-21', name: 'Deorro @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-03-26', name: 'Kybba @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-03-26', name: 'Braves Home Opener vs Kansas City Royals', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-03-27', name: 'Sultan & Sheppard @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-03-27', name: 'Hayley Williams @ Tabernacle', type: 'liveration', venue: 'Tabernacle', cap: 2500, demo: 'Alt/Rock 22-38' },
+  { date: '2026-03-29', name: 'New Edition & Boyz II Men ft. Toni Braxton @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'R&B 30-50' },
+
+  // ── APR 2026 ──
+  { date: '2026-04-01', name: 'Braves vs Athletics @ Truist Park', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-04-02', name: 'Braves vs Athletics @ Truist Park', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-04-03', name: 'MANÁ — VIVIR SIN AIRE Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Latin Rock 28-50' },
+  { date: '2026-04-04', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-04-06', name: 'Atlanta Hawks vs NY Knicks @ State Farm Arena', type: 'sports', venue: 'State Farm Arena', cap: 21000 },
+  { date: '2026-04-10', name: 'Tobiahs @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-04-10', name: 'Atlanta Hawks vs Cleveland Cavaliers @ State Farm Arena', type: 'sports', venue: 'State Farm Arena', cap: 21000 },
+  { date: '2026-04-10', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-04-10', name: 'Atlanta Dogwood Festival — Day 1', type: 'festival', venue: 'Piedmont Park', multi: true },
+  { date: '2026-04-11', name: 'Ricardo Arjona @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Latin 30-55' },
+  { date: '2026-04-11', name: 'Candela (DJ EU) @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Latin/EDM 21-35' },
+  { date: '2026-04-11', name: 'Atlanta Dogwood Festival — Day 2', type: 'festival', venue: 'Piedmont Park', multi: true },
+  { date: '2026-04-12', name: 'Demi Lovato @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 18-32' },
+  { date: '2026-04-12', name: 'BLESSD @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Latin/Urban 20-35' },
+  { date: '2026-04-12', name: 'Atlanta Dogwood Festival — Day 3', type: 'festival', venue: 'Piedmont Park', multi: true },
+  { date: '2026-04-17', name: 'SweetWater 420 Fest — Day 1', type: 'festival', venue: 'Westside Park', multi: true, att_est: 25000 },
+  { date: '2026-04-17', name: 'BEAUZ @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-04-18', name: 'SweetWater 420 Fest — Day 2', type: 'festival', venue: 'Westside Park', multi: true, att_est: 25000 },
+  { date: '2026-04-19', name: 'Baby Keem @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Hip Hop 18-28' },
+  { date: '2026-04-20', name: 'Baby Keem @ Coca-Cola Roxy (2nd night)', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Hip Hop 18-28' },
+  { date: '2026-04-22', name: 'Atlanta United vs New England Revolution', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-04-24', name: 'Patrick Topping @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'Tech House 21-35' },
+  { date: '2026-04-30', name: 'PinkPantheress @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Alt/Pop/R&B 18-28' },
+
+  // ── MAY 2026 (forward) ──
+  { date: '2026-05-01', name: 'PinkPantheress @ Coca-Cola Roxy (2nd night)', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Alt/Pop 18-28' },
+  { date: '2026-05-08', name: 'Vintage Culture @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'House 22-35' },
+  { date: '2026-05-09', name: 'Iris Presents: Deathpact @ Believe Music Hall', type: 'edm', venue: 'Believe Music Hall', cap: 1500, demo: 'Techno 21-35', competitor: true },
+  { date: '2026-05-09', name: 'Atlanta United vs LA Galaxy', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-05-12', name: 'Braves vs Chicago Cubs', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-05-13', name: 'Braves vs Chicago Cubs', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-05-14', name: 'Braves vs Chicago Cubs', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-05-15', name: 'Breakaway Atlanta — Day 1 (Fisher, John Summit, Kaskade)', type: 'festival', venue: 'Various', multi: true, att_est: 20000 },
+  { date: '2026-05-15', name: 'Braves vs Boston Red Sox', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-05-16', name: 'Breakaway Atlanta — Day 2', type: 'festival', venue: 'Various', multi: true, att_est: 20000 },
+  { date: '2026-05-16', name: 'Porchfest Virginia-Highland', type: 'festival', venue: 'Virginia-Highland', att_est: 10000 },
+  { date: '2026-05-17', name: 'Braves vs Boston Red Sox', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-05-19', name: 'Don Toliver — Octane Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-30' },
+  { date: '2026-05-22', name: 'Josh Baker @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-05-22', name: 'Diljit Dosanjh — Aura World Tour @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'South Asian Pop 22-40' },
+  { date: '2026-05-22', name: 'Braves vs Washington Nationals', type: 'sports', venue: 'Truist Park', cap: 41000 },
+  { date: '2026-05-23', name: 'Atlanta Jazz Festival — Day 1', type: 'festival', venue: 'Piedmont Park', multi: true, att_est: 30000 },
+  { date: '2026-05-23', name: 'Reggae Fest Massive @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Reggae 25-50' },
+  { date: '2026-05-24', name: 'Atlanta Jazz Festival — Day 2', type: 'festival', venue: 'Piedmont Park', multi: true, att_est: 30000 },
+  { date: '2026-05-24', name: 'Birthday Bash ATL 2026 — 30th Anniversary @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop/R&B 25-45' },
   { date: '2026-05-24', name: 'Fisher @ Tabernacle', type: 'liveration', venue: 'Tabernacle', cap: 2500, demo: 'House 25-38', competitor: true },
-  { date: '2026-05-29', name: 'Luke Bryan @ Ameris', type: 'liveration', venue: 'Ameris Amphitheater', cap: 12000, demo: 'Country 28-48' },
-  { date: '2026-05-31', name: 'Post Malone @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop/Hip Hop 18-30' },
+  { date: '2026-05-25', name: 'Memorial Day', type: 'holiday' },
+  { date: '2026-05-25', name: 'Atlanta Jazz Festival — Day 3', type: 'festival', venue: 'Piedmont Park', multi: true, att_est: 30000 },
+  { date: '2026-05-29', name: 'RØZ @ District', type: 'edm', venue: 'District Atlanta', cap: 800, demo: 'EDM 21-35' },
+  { date: '2026-05-30', name: 'Braves vs Tampa Bay Rays', type: 'sports', venue: 'Truist Park', cap: 41000 },
+
+  // ── JUN 2026 ──
+  { date: '2026-06-05', name: 'Braves vs Pittsburgh Pirates', type: 'sports', venue: 'Truist Park', cap: 41000 },
   { date: '2026-06-05', name: 'Dua Lipa @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 20-34' },
-  { date: '2026-06-07', name: 'John Summit @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-35', competitor: true },
+  { date: '2026-06-07', name: 'John Summit @ Believe Music Hall', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'House 22-35', competitor: true },
+  { date: '2026-06-10', name: 'CA7RIEL & Paco Amoroso @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Latin 22-38' },
   { date: '2026-06-12', name: 'Drake @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 20-35' },
   { date: '2026-06-14', name: 'Metallica @ Truist Park', type: 'liveration', venue: 'Truist Park', cap: 41000, demo: 'Metal/Rock 28-50' },
+  { date: '2026-06-19', name: 'Juneteenth', type: 'holiday' },
   { date: '2026-06-19', name: 'Chris Brown @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'R&B 22-38' },
   { date: '2026-06-26', name: 'Ariana Grande @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Pop 18-30' },
-  { date: '2026-06-28', name: 'Skrillex @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-32', competitor: true },
-  { date: '2026-07-03', name: 'Luke Combs @ Ameris', type: 'liveration', venue: 'Ameris Amphitheater', cap: 12000, demo: 'Country 25-45' },
-  { date: '2026-07-10', name: 'Billie Eilish @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Alt/Pop 16-28' },
-  { date: '2026-07-17', name: 'Travis Scott @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-30' },
-  { date: '2026-07-24', name: 'DJ Snake @ Believe', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-32', competitor: true },
-  { date: '2026-07-31', name: 'Usher @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'R&B 25-42' },
-
-  // Sports
-  { date: '2026-05-01', name: 'Braves vs Dodgers', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-05-02', name: 'Braves vs Dodgers', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-05-03', name: 'Braves vs Dodgers', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-05-07', name: 'Atlanta United vs NYCFC', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
-  { date: '2026-05-10', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-05-14', name: 'Atlanta United — Home', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
-  { date: '2026-05-17', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-05-20', name: 'Atlanta FC — Home', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
-  { date: '2026-05-24', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-05-28', name: 'Braves vs Mets', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-06-04', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-06-11', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-06-18', name: 'Braves vs Cubs', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-06-25', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-07-04', name: 'Braves 4th of July Special', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-07-09', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-07-16', name: 'Braves Home Series', type: 'sports', venue: 'Truist Park', cap: 41000 },
-  { date: '2026-07-23', name: 'Braves vs Phillies', type: 'sports', venue: 'Truist Park', cap: 41000 },
-
-  // Festivals
-  { date: '2026-05-22', name: 'Music Midtown — Preview Day', type: 'festival', venue: 'Piedmont Park', multi: true },
-  { date: '2026-05-23', name: 'Music Midtown — Day 1', type: 'festival', venue: 'Piedmont Park', multi: true },
-  { date: '2026-05-24', name: 'Music Midtown — Day 2', type: 'festival', venue: 'Piedmont Park', multi: true },
   { date: '2026-06-27', name: 'ONE Music Fest — Day 1', type: 'festival', venue: 'Various', multi: true },
   { date: '2026-06-28', name: 'ONE Music Fest — Day 2', type: 'festival', venue: 'Various', multi: true },
-  { date: '2026-07-18', name: 'ATLien Fest', type: 'festival', venue: 'Centennial Park', multi: false },
-  { date: '2026-07-25', name: 'Shaky Knees Preview', type: 'festival', venue: 'Central Park', multi: false },
-  { date: '2026-07-26', name: 'Shaky Knees — Day 1', type: 'festival', venue: 'Central Park', multi: true },
-  { date: '2026-07-27', name: 'Shaky Knees — Day 2', type: 'festival', venue: 'Central Park', multi: true },
+  { date: '2026-06-28', name: 'Skrillex @ Believe Music Hall', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-32', competitor: true },
 
-  // Conventions
-  { date: '2026-05-14', name: 'Dragon Con Pre-Reg', type: 'convention', venue: 'GWCC', att_est: 8000 },
-  { date: '2026-05-21', name: 'Atlanta Tech Summit', type: 'convention', venue: 'GWCC', att_est: 3000 },
-  { date: '2026-06-04', name: 'SE Food & Bev Conference', type: 'convention', venue: 'GWCC', att_est: 1500 },
-  { date: '2026-06-11', name: 'Corporate Sales Expo', type: 'convention', venue: 'GWCC', att_est: 2000 },
-  { date: '2026-06-18', name: 'Healthcare Leadership Forum', type: 'convention', venue: 'Marriott Marquis', att_est: 1200 },
-  { date: '2026-07-09', name: 'Real Estate Summit ATL', type: 'convention', venue: 'GWCC', att_est: 2500 },
-  { date: '2026-07-16', name: 'Tech Week Atlanta', type: 'convention', venue: 'Various', att_est: 5000 },
-  { date: '2026-07-23', name: 'SE Hospitality Conference', type: 'convention', venue: 'Marriott Marquis', att_est: 1800 },
-
-  // Holidays
-  { date: '2026-05-25', name: 'Memorial Day', type: 'holiday' },
-  { date: '2026-06-19', name: 'Juneteenth', type: 'holiday' },
+  // ── JUL 2026 ──
+  { date: '2026-07-01', name: 'Now Now @ Coca-Cola Roxy', type: 'liveration', venue: 'Coca-Cola Roxy', cap: 3500, demo: 'Indie/Electronic 22-38' },
+  { date: '2026-07-03', name: 'Luke Combs @ Ameris Amphitheater', type: 'liveration', venue: 'Ameris Amphitheater', cap: 12000, demo: 'Country 25-45' },
   { date: '2026-07-04', name: 'Independence Day', type: 'holiday' },
+  { date: '2026-07-10', name: 'Billie Eilish @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Alt/Pop 16-28' },
+  { date: '2026-07-17', name: 'Travis Scott @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'Hip Hop 18-30' },
+  { date: '2026-07-18', name: 'ATLien Fest @ Centennial Park', type: 'festival', venue: 'Centennial Park' },
+  { date: '2026-07-24', name: 'DJ Snake @ Believe Music Hall', type: 'liveration', venue: 'Believe Music Hall', cap: 1500, demo: 'EDM 21-32', competitor: true },
+  { date: '2026-07-31', name: 'Usher @ State Farm Arena', type: 'liveration', venue: 'State Farm Arena', cap: 21000, demo: 'R&B 25-42' },
+
+  // ── SEP 2026 ──
+  { date: '2026-09-18', name: 'Shaky Knees — Day 1', type: 'festival', venue: 'Central Park', multi: true },
+  { date: '2026-09-19', name: 'Shaky Knees — Day 2', type: 'festival', venue: 'Central Park', multi: true },
+  { date: '2026-09-20', name: 'Shaky Knees — Day 3', type: 'festival', venue: 'Central Park', multi: true },
+
+  // ── AUG–NOV 2026 (Atlanta United home run) ──
+  { date: '2026-08-15', name: 'Atlanta United vs Red Bull NY', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-08-23', name: 'Atlanta United vs Sporting KC', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-08-29', name: 'Atlanta United vs Charlotte FC', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-09-09', name: 'Atlanta United vs Orlando City', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-09-26', name: 'Atlanta United vs NYCFC', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-10-10', name: 'Atlanta United vs FC Cincinnati', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-10-17', name: 'Atlanta United vs Inter Miami CF', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
+  { date: '2026-11-01', name: 'Atlanta United vs Toronto FC', type: 'sports', venue: 'Mercedes-Benz Stadium', cap: 42500 },
 ];
+
+// ── Historical weather data (Jan–Apr 2026) ──
+// Source: world-weather.info — night-time conditions shown on event nights
+const weatherData = {
+  '2026-01-01': { hi: 57, lo: 39, night: 'Clear' },
+  '2026-01-02': { hi: 61, lo: 48, night: 'Cloudy' },
+  '2026-01-03': { hi: 57, lo: 52, night: 'Heavy Rain' },
+  '2026-01-04': { hi: 59, lo: 50, night: 'Clear' },
+  '2026-01-05': { hi: 63, lo: 50, night: 'Cloudy' },
+  '2026-01-06': { hi: 63, lo: 50, night: 'Cloudy' },
+  '2026-01-07': { hi: 68, lo: 59, night: 'Overcast' },
+  '2026-01-08': { hi: 68, lo: 55, night: 'Cloudy' },
+  '2026-01-09': { hi: 70, lo: 61, night: 'Cloudy' },
+  '2026-01-10': { hi: 68, lo: 63, night: 'T-Storm' },
+  '2026-01-11': { hi: 50, lo: 54, night: 'Cloudy' },
+  '2026-01-12': { hi: 46, lo: 34, night: 'Clear' },
+  '2026-01-13': { hi: 55, lo: 39, night: 'Clear' },
+  '2026-01-14': { hi: 50, lo: 45, night: 'Cloudy' },
+  '2026-01-15': { hi: 34, lo: 36, night: 'Clear' },
+  '2026-01-16': { hi: 48, lo: 28, night: 'Clear' },
+  '2026-01-17': { hi: 52, lo: 45, night: 'Partly Cloudy' },
+  '2026-01-18': { hi: 39, lo: 43, night: 'Cloudy' },
+  '2026-01-19': { hi: 43, lo: 32, night: 'Clear' },
+  '2026-01-20': { hi: 43, lo: 34, night: 'Clear' },
+  '2026-01-21': { hi: 50, lo: 32, night: 'Clear' },
+  '2026-01-22': { hi: 50, lo: 46, night: 'Overcast' },
+  '2026-01-23': { hi: 54, lo: 46, night: 'Partly Cloudy' },
+  '2026-01-24': { hi: 48, lo: 43, night: 'Cloudy' },
+  '2026-01-25': { hi: 39, lo: 36, night: 'Drizzle' },
+  '2026-01-26': { hi: 32, lo: 37, night: 'Drizzle' },
+  '2026-01-27': { hi: 36, lo: 21, night: 'Clear' },
+  '2026-01-28': { hi: 43, lo: 32, night: 'Overcast' },
+  '2026-01-29': { hi: 43, lo: 34, night: 'Clear' },
+  '2026-01-30': { hi: 48, lo: 34, night: 'Clear' },
+  '2026-01-31': { hi: 27, lo: 34, night: 'Clear' },
+  '2026-02-01': { hi: 32, lo: 19, night: 'Overcast' },
+  '2026-02-02': { hi: 45, lo: 27, night: 'Clear' },
+  '2026-02-03': { hi: 54, lo: 37, night: 'Clear' },
+  '2026-02-04': { hi: 54, lo: 48, night: 'Drizzle' },
+  '2026-02-05': { hi: 41, lo: 37, night: 'Overcast' },
+  '2026-02-06': { hi: 55, lo: 32, night: 'Cloudy' },
+  '2026-02-07': { hi: 46, lo: 45, night: 'Clear' },
+  '2026-02-08': { hi: 52, lo: 37, night: 'Clear' },
+  '2026-02-09': { hi: 57, lo: 46, night: 'Overcast' },
+  '2026-02-10': { hi: 68, lo: 54, night: 'Clear' },
+  '2026-02-11': { hi: 64, lo: 59, night: 'Overcast' },
+  '2026-02-12': { hi: 59, lo: 48, night: 'Clear' },
+  '2026-02-13': { hi: 57, lo: 48, night: 'Partly Cloudy' },
+  '2026-02-14': { hi: 61, lo: 48, night: 'Clear' },
+  '2026-02-15': { hi: 57, lo: 52, night: 'Overcast' },
+  '2026-02-16': { hi: 63, lo: 52, night: 'Partly Cloudy' },
+  '2026-02-17': { hi: 64, lo: 52, night: 'Clear' },
+  '2026-02-18': { hi: 64, lo: 55, night: 'Partly Cloudy' },
+  '2026-02-19': { hi: 73, lo: 61, night: 'Overcast' },
+  '2026-02-20': { hi: 75, lo: 66, night: 'Partly Cloudy' },
+  '2026-02-21': { hi: 61, lo: 64, night: 'Overcast' },
+  '2026-02-22': { hi: 48, lo: 54, night: 'Drizzle' },
+  '2026-02-23': { hi: 37, lo: 32, night: 'Clear' },
+  '2026-02-24': { hi: 45, lo: 30, night: 'Clear' },
+  '2026-02-25': { hi: 61, lo: 41, night: 'Cloudy' },
+  '2026-02-26': { hi: 63, lo: 57, night: 'Overcast' },
+  '2026-02-27': { hi: 66, lo: 59, night: 'Light Rain' },
+  '2026-02-28': { hi: 64, lo: 55, night: 'Clear' },
+  '2026-03-01': { hi: 72, lo: 55, night: 'Clear' },
+  '2026-03-02': { hi: 70, lo: 61, night: 'Cloudy' },
+  '2026-03-03': { hi: 59, lo: 52, night: 'Overcast' },
+  '2026-03-04': { hi: 70, lo: 54, night: 'Clear' },
+  '2026-03-05': { hi: 75, lo: 63, night: 'Cloudy' },
+  '2026-03-06': { hi: 79, lo: 66, night: 'Cloudy' },
+  '2026-03-07': { hi: 72, lo: 66, night: 'Clear' },
+  '2026-03-08': { hi: 70, lo: 64, night: 'Rain' },
+  '2026-03-09': { hi: 75, lo: 64, night: 'Overcast' },
+  '2026-03-10': { hi: 73, lo: 64, night: 'Cloudy' },
+  '2026-03-11': { hi: 79, lo: 68, night: 'Cloudy' },
+  '2026-03-12': { hi: 55, lo: 63, night: 'T-Storm' },
+  '2026-03-13': { hi: 61, lo: 46, night: 'Clear' },
+  '2026-03-14': { hi: 70, lo: 54, night: 'Clear' },
+  '2026-03-15': { hi: 68, lo: 61, night: 'Clear' },
+  '2026-03-16': { hi: 43, lo: 64, night: 'Clear' },
+  '2026-03-17': { hi: 43, lo: 34, night: 'Cloudy' },
+  '2026-03-18': { hi: 50, lo: 36, night: 'Cloudy' },
+  '2026-03-19': { hi: 61, lo: 45, night: 'Clear' },
+  '2026-03-20': { hi: 72, lo: 54, night: 'Clear' },
+  '2026-03-21': { hi: 79, lo: 61, night: 'Cloudy' },
+  '2026-03-22': { hi: 81, lo: 66, night: 'Clear' },
+  '2026-03-23': { hi: 75, lo: 70, night: 'Clear' },
+  '2026-03-24': { hi: 64, lo: 55, night: 'Clear' },
+  '2026-03-25': { hi: 64, lo: 55, night: 'Clear' },
+  '2026-03-26': { hi: 77, lo: 57, night: 'Clear' },
+  '2026-03-27': { hi: 82, lo: 68, night: 'Clear' },
+  '2026-03-28': { hi: 64, lo: 55, night: 'Cloudy' },
+  '2026-03-29': { hi: 63, lo: 54, night: 'Clear' },
+  '2026-03-30': { hi: 72, lo: 61, night: 'Overcast' },
+  '2026-03-31': { hi: 79, lo: 64, night: 'Clear' },
+  '2026-04-01': { hi: 79, lo: 66, night: 'Clear' },
+  '2026-04-02': { hi: 79, lo: 66, night: 'Clear' },
+  '2026-04-03': { hi: 79, lo: 68, night: 'Cloudy' },
+  '2026-04-04': { hi: 79, lo: 68, night: 'Clear' },
+  '2026-04-05': { hi: 63, lo: 68, night: 'Cloudy' },
+  '2026-04-06': { hi: 64, lo: 57, night: 'Cloudy' },
+  '2026-04-07': { hi: 73, lo: 57, night: 'Cloudy' },
+  '2026-04-08': { hi: 68, lo: 59, night: 'Cloudy' },
+  '2026-04-09': { hi: 68, lo: 54, night: 'Cloudy' },
+  '2026-04-10': { hi: 73, lo: 57, night: 'Clear' },
+  '2026-04-11': { hi: 81, lo: 63, night: 'Clear' },
+  '2026-04-12': { hi: 82, lo: 66, night: 'Clear' },
+  '2026-04-13': { hi: 79, lo: 64, night: 'Cloudy' },
+  '2026-04-14': { hi: 82, lo: 64, night: 'Clear' },
+  '2026-04-15': { hi: 82, lo: 66, night: 'Partly Cloudy' },
+  '2026-04-16': { hi: 82, lo: 68, night: 'Clear' },
+  '2026-04-17': { hi: 86, lo: 68, night: 'Clear' },
+  '2026-04-18': { hi: 82, lo: 72, night: 'Clear' },
+  '2026-04-19': { hi: 64, lo: 68, night: 'Cloudy' },
+  '2026-04-20': { hi: 72, lo: 55, night: 'Clear' },
+  '2026-04-21': { hi: 75, lo: 61, night: 'Clear' },
+  '2026-04-22': { hi: 79, lo: 64, night: 'Cloudy' },
+  '2026-04-23': { hi: 79, lo: 64, night: 'Clear' },
+  '2026-04-24': { hi: 79, lo: 66, night: 'Clear' },
+  '2026-04-25': { hi: 72, lo: 68, night: 'Cloudy' },
+  '2026-04-26': { hi: 79, lo: 64, night: 'Cloudy' },
+  '2026-04-27': { hi: 73, lo: 66, night: 'Clear' },
+  '2026-04-28': { hi: 66, lo: 61, night: 'Cloudy' },
+  '2026-04-29': { hi: 79, lo: 64, night: 'Light Rain' },
+  '2026-04-30': { hi: 72, lo: 68, night: 'Heavy Rain' },
+};
 
 // Demand score calculator
 function getDemandScore(dateStr) {
@@ -861,7 +1057,7 @@ function getDemandScore(dateStr) {
   const marketCount = events.filter(e => e.source === 'market').length;
   const hasHoliday = events.some(e => e.type === 'holiday');
   const hasFestival = events.some(e => e.type === 'festival');
-  const hasCompetitor = events.some(e => e.competitor);
+  const hasCompetitor = events.some(e => e.competitor || e.type === 'edm');
 
   let score = 20;
   if (hasWC) score += 50;
@@ -905,6 +1101,7 @@ function pillClass(type) {
   const map = {
     internal: 'pill-internal',
     liveration: 'pill-liveration',
+    edm: 'pill-edm',
     sports: 'pill-sports',
     festival: 'pill-festival',
     convention: 'pill-convention',
@@ -955,7 +1152,8 @@ function renderMonth(year, month) {
     const allEvents = getEventsForDate(dk);
     const filtered = allEvents.filter(e => {
       if (e.source === 'internal') return activeFilters.has('internal');
-      if (e.competitor) return activeFilters.has('liveration');
+      if (e.competitor) return activeFilters.has('edm');
+      if (e.type === 'edm') return activeFilters.has('edm');
       return activeFilters.has(e.type);
     });
 
@@ -976,6 +1174,13 @@ function renderMonth(year, month) {
 
     if (hasWC) {
       html += `<div class="event-pill" style="background:#E8F4EE; color:#2D6A4F; font-weight:500; font-size:9px;">⚽ WC Match Day</div>`;
+    }
+
+    // Weather chip on tile (historical only)
+    const tileWx = weatherData[dk];
+    if (tileWx) {
+      const tileWxIcon = ({'Clear':'☀️','Partly Cloudy':'⛅','Cloudy':'☁️','Overcast':'☁️','Drizzle':'🌦','Light Rain':'🌧','Rain':'🌧','Heavy Rain':'🌧','T-Storm':'⛈'}[tileWx.night] || '🌡');
+      html += `<div style="font-size:9px; color:var(--text3); margin-bottom:2px; display:flex; align-items:center; gap:2px;">${tileWxIcon} ${tileWx.lo}–${tileWx.hi}°</div>`;
     }
 
     // Demand micro-bar
@@ -1101,9 +1306,13 @@ function renderDetailPanel(dk) {
 
   let html = '';
 
+  // Weather chip (historical only — Jan–Apr 2026)
+  const wx = weatherData[dk];
+  const weatherIcon = wx ? ({'Clear':'☀️','Partly Cloudy':'⛅','Cloudy':'☁️','Overcast':'☁️','Drizzle':'🌦','Light Rain':'🌧','Rain':'🌧','Heavy Rain':'🌧','T-Storm':'⛈'}[wx.night] || '🌡') : null;
+
   // Demand score
   html += `
-    <div style="margin-bottom:16px;">
+    <div style="margin-bottom:${wx ? '8px' : '16px'};">
       <div class="detail-section-title">Demand Score</div>
       <div class="demand-strip">
         <span class="demand-label" style="color:${scoreColor}; font-weight:500;">${score}/100</span>
@@ -1112,6 +1321,9 @@ function renderDetailPanel(dk) {
       </div>
     </div>
   `;
+  if (wx) {
+    html += `<div class="weather-chip">${weatherIcon} ${wx.night} · ${wx.lo}–${wx.hi}°F</div>`;
+  }
 
   // WC flag
   if (wc) {
@@ -1165,23 +1377,54 @@ function renderDetailPanel(dk) {
     });
   }
 
-  // Market events
+  // Market events — grouped by category, collapsible
   if (marketEvs.length > 0) {
-    html += `<div class="detail-separator"></div><div class="detail-section-title">Market Events (${marketEvs.length})</div>`;
+    const groupOrder = ['festival','liveration','edm','sports','convention','holiday'];
+    const groupLabels = { festival:'🎪 Festivals', liveration:'🎵 Live Nation / AEG', edm:'🎛 EDM / Club Nights', sports:'🏟 Sports', convention:'🏢 Conventions', holiday:'🗓 Holidays' };
+    const groups = {};
     marketEvs.forEach(ev => {
-      const typeLabel = { liveration: 'Live Nation', sports: 'Sports', festival: 'Festival', convention: 'Convention / Corp.', holiday: 'Holiday' }[ev.type] || ev.type;
-      const risk = ev.competitor ? '⚠ Direct competitor' : '';
-      html += `
-        <div class="detail-insight" style="${ev.competitor ? 'border: 1px solid #F0D5C8;' : ''}">
-          <div style="display:flex; justify-content:space-between;">
-            <div class="detail-insight-label">${typeLabel}${risk ? ' · <span style="color:#8A3A2C;">'+risk+'</span>' : ''}</div>
-            ${ev.cap ? `<div style="font-size:11px; color:var(--text3);">${(ev.cap/1000).toFixed(0)}K cap</div>` : ''}
-          </div>
-          <div class="detail-insight-value">${ev.name}</div>
-          ${ev.venue ? `<div style="font-size:11px; color:var(--text3); margin-top:2px;">${ev.venue}${ev.demo ? ' · ' + ev.demo : ''}</div>` : ''}
-        </div>
-      `;
+      const g = ev.type || 'other';
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(ev);
     });
+    const hasCompetitors = marketEvs.some(e => e.competitor);
+    html += `<div class="detail-separator"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div class="detail-section-title" style="margin:0;">Market Context (${marketEvs.length})</div>
+        ${hasCompetitors ? '<div style="font-size:11px; color:#8A3A2C; font-weight:500;">⚠ competitor conflict</div>' : ''}
+      </div>`;
+
+    const detailId = 'mkt-' + dk.replace(/-/g,'');
+    html += `<div id="${detailId}">`;
+    groupOrder.forEach(gk => {
+      if (!groups[gk]) return;
+      const evs = groups[gk];
+      const gId = detailId + '-' + gk;
+      const hasComp = evs.some(e => e.competitor);
+      html += `
+        <details style="margin-bottom:4px;" open>
+          <summary style="cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;
+            padding:6px 10px; background:var(--surface2); border-radius:6px; font-size:12px; font-weight:500; color:var(--text1);
+            border: ${hasComp ? '1px solid #F0D5C8' : '1px solid var(--border)'};">
+            <span>${groupLabels[gk] || gk} <span style="font-weight:400; color:var(--text3);">(${evs.length})</span></span>
+            <span style="font-size:10px; color:var(--text3);">▾</span>
+          </summary>
+          <div style="padding:4px 2px 4px 2px;">`;
+      evs.forEach(ev => {
+        const risk = ev.competitor ? ' · <span style="color:#8A3A2C; font-size:10px;">⚠ direct competitor</span>' : '';
+        html += `
+            <div class="detail-insight" style="margin-bottom:4px; ${ev.competitor ? 'border:1px solid #F0D5C8;' : ''}">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div style="font-size:12px; font-weight:500; color:var(--text1); flex:1;">${ev.name}${risk}</div>
+                ${ev.cap ? `<div style="font-size:11px; color:var(--text3); white-space:nowrap; margin-left:8px;">${ev.cap >= 1000 ? (ev.cap/1000).toFixed(0)+'K' : ev.cap} cap</div>` : ''}
+              </div>
+              ${ev.venue ? `<div style="font-size:11px; color:var(--text3); margin-top:2px;">${ev.venue}${ev.demo ? ' · <em>' + ev.demo + '</em>' : ''}</div>` : ''}
+            </div>`;
+      });
+      html += `          </div>
+        </details>`;
+    });
+    html += `</div>`;
   }
 
   // CTA
