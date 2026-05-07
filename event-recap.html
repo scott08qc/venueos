@@ -1365,6 +1365,145 @@ function renderMarginPadCard(m) {
   </div>`;
 }
 
+/* ─── COMPONENT: Deal Slider Card — what-if on splits ───────────────── */
+function renderDealSliderCard(m) {
+  const e = m.e;
+  if (!m.has.netSales) return '';
+  // For Collectiv off-top deals: show House Off-Top slider instead of bar/door
+  if (m.isCollectiv && m.houseThreshold > 0) {
+    const minH = 9000, maxH = 15000, stepH = 500;
+    return `
+    <div class="card">
+      <div class="card-head">
+        <h2>Deal What-If — Collectiv House Off-Top</h2>
+        <span class="meta">Adjust threshold by $500 increments · 50/50 split applies after</span>
+      </div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px">
+        Deal: District takes first <span class="num" style="color:var(--ink-1);font-weight:600">$${m.houseThreshold.toLocaleString()}</span> off-top, then 50/50 split on remainder. Move slider to model renegotiation.
+      </div>
+      <div class="slider-block">
+        <div class="label"><span>House Off-Top</span><span class="pct" id="ht-pct">$${m.houseThreshold.toLocaleString()}</span></div>
+        <input type="range" id="ht-slider" min="${minH}" max="${maxH}" step="${stepH}" value="${m.houseThreshold}" oninput="updateHouseThreshold(${m.e.id || 0})">
+        <div class="axis"><span>$${minH.toLocaleString()}</span><span>Current $${DISTRICT.OP_CARRY_TOTAL.toLocaleString()} avg carry</span><span>$${maxH.toLocaleString()}</span></div>
+      </div>
+      <div class="slider-output" id="slider-output-ht">${renderSliderOutputCollectiv(m, m.houseThreshold)}</div>
+      <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="slider-reset" onclick="resetHouseThreshold(${m.e.id || 0})">Reset to actual</button></div>
+    </div>`;
+  }
+  // Standard split sliders for non-Collectiv events
+  const barDef = num(e.bar_split_promoter);
+  const doorDef = num(e.door_split_promoter);
+  return `
+  <div class="card">
+    <div class="card-head">
+      <h2>Deal What-If — Split Sliders</h2>
+      <span class="meta">Adjust splits in 5% increments to model gain/loss vs actual</span>
+    </div>
+    <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">
+      Current deal: Bar split <span class="num" style="color:var(--ink-1)">${100-barDef}/${barDef}</span> · Door split <span class="num" style="color:var(--ink-1)">${100-doorDef}/${doorDef}</span> (venue/promoter)
+    </div>
+    <div class="deal-slider-grid">
+      <div class="slider-block">
+        <div class="label"><span>Bar Split — Promoter %</span><span class="pct" id="bar-pct">${barDef}%</span></div>
+        <input type="range" id="bar-slider" min="0" max="100" step="5" value="${barDef}" oninput="updateSplits(${m.e.id || 0})">
+        <div class="axis"><span>0%</span><span>50%</span><span>100%</span></div>
+      </div>
+      <div class="slider-block">
+        <div class="label"><span>Door Split — Promoter %</span><span class="pct" id="door-pct">${doorDef}%</span></div>
+        <input type="range" id="door-slider" min="0" max="100" step="5" value="${doorDef}" oninput="updateSplits(${m.e.id || 0})">
+        <div class="axis"><span>0%</span><span>50%</span><span>100%</span></div>
+      </div>
+    </div>
+    <div class="slider-output" id="slider-output">${renderSliderOutput(m, barDef, doorDef)}</div>
+    <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="slider-reset" onclick="resetSplits(${m.e.id || 0}, ${barDef}, ${doorDef})">Reset to actual</button></div>
+  </div>`;
+}
+
+function renderSliderOutput(m, barPct, doorPct) {
+  const newBarPayout  = m.barActual * barPct / 100;
+  const newDoorPayout = m.doorActual * doorPct / 100;
+  const newTablePayout = m.tablePayout;
+  const newTotalPayouts = newBarPayout + newDoorPayout + newTablePayout + m.artistFee;
+  const newNetPreOp = m.grossRev - m.totalPourCost - newTotalPayouts - m.riderActual;
+  const newNet = newNetPreOp - m.opCarryTotal;
+  const delta = newNet - m.netToVenue;
+  const cls = delta >= 0 ? 'pos' : 'neg';
+  const netCls = newNet >= 0 ? 'pos' : 'neg';
+  return `
+    <div class="col">
+      <div class="l">New Bar Payout</div>
+      <div class="v num">${fmtMoney(newBarPayout)}</div>
+      <div class="delta">was ${fmtMoney(m.barPayout)}</div>
+    </div>
+    <div class="col">
+      <div class="l">New Door Payout</div>
+      <div class="v num">${fmtMoney(newDoorPayout)}</div>
+      <div class="delta">was ${fmtMoney(m.doorPayout)}</div>
+    </div>
+    <div class="col">
+      <div class="l">New Net to Venue</div>
+      <div class="v num ${netCls}">${fmtMoneyDelta(newNet)}</div>
+      <div class="delta ${cls}">${delta >= 0 ? '+' : ''}${fmtMoney(delta)} vs actual</div>
+    </div>
+  `;
+}
+
+function renderSliderOutputCollectiv(m, threshold) {
+  const grossProfit = m.grossRev - m.totalPourCost - m.artistFee;
+  const afterHouse = Math.max(0, grossProfit - threshold);
+  const newPromTake = afterHouse * 0.5;
+  const newNetPreOp = grossProfit - newPromTake - m.riderActual;
+  const newNet = newNetPreOp - m.opCarryTotal;
+  const delta = newNet - m.netToVenue;
+  const cls = delta >= 0 ? 'pos' : 'neg';
+  const netCls = newNet >= 0 ? 'pos' : 'neg';
+  return `
+    <div class="col">
+      <div class="l">After House Off-Top</div>
+      <div class="v num">${fmtMoney(afterHouse)}</div>
+      <div class="delta">remaining for split</div>
+    </div>
+    <div class="col">
+      <div class="l">Promoter Take (50%)</div>
+      <div class="v num">${fmtMoney(newPromTake)}</div>
+      <div class="delta">was ${fmtMoney(m.totalPayouts)}</div>
+    </div>
+    <div class="col">
+      <div class="l">New Net to Venue</div>
+      <div class="v num ${netCls}">${fmtMoneyDelta(newNet)}</div>
+      <div class="delta ${cls}">${delta >= 0 ? '+' : ''}${fmtMoney(delta)} vs actual</div>
+    </div>
+  `;
+}
+
+function updateSplits(eventId) {
+  const m = deriveModel(currentEventData, currentComparisons, currentCosts);
+  const barPct = parseInt(g('bar-slider').value);
+  const doorPct = parseInt(g('door-slider').value);
+  g('bar-pct').textContent = barPct + '%';
+  g('door-pct').textContent = doorPct + '%';
+  g('slider-output').innerHTML = renderSliderOutput(m, barPct, doorPct);
+}
+
+function resetSplits(eventId, barDef, doorDef) {
+  g('bar-slider').value = barDef;
+  g('door-slider').value = doorDef;
+  updateSplits(eventId);
+}
+
+function updateHouseThreshold(eventId) {
+  const m = deriveModel(currentEventData, currentComparisons, currentCosts);
+  const ht = parseInt(g('ht-slider').value);
+  g('ht-pct').textContent = '$' + ht.toLocaleString();
+  g('slider-output-ht').innerHTML = renderSliderOutputCollectiv(m, ht);
+}
+
+function resetHouseThreshold(eventId) {
+  const m = deriveModel(currentEventData, currentComparisons, currentCosts);
+  g('ht-slider').value = m.houseThreshold;
+  updateHouseThreshold(eventId);
+}
+
 /* ─── COMPONENT: Deal Structure ──────────────────────────────────────── */
 function renderDealCard(m) {
   const e = m.e;
