@@ -814,8 +814,8 @@ function renderDashboard() {
     <div class="cols">
       <div>
         ${renderCascadeCard(m)}
-        ${renderProjectedActualCard(m)}
         ${renderBarMixCard(m)}
+        ${renderProjectedActualCard(m)}
         ${renderPromoterCard(m)}
       </div>
       <div>
@@ -861,12 +861,15 @@ function renderMasthead(m) {
   </div>`;
 }
 
-/* ─── COMPONENT: Sales Reconciliation (single column) ───────────────── */
+/* ─── COMPONENT: Sales Reconciliation (single column, condensed passthroughs) ── */
+let reconExpanded = false;
 function renderReconciliation(m) {
   if (!m.has.netSales) return '';
   const grossLine = m.has.grossSales ? m.grossItemSales : m.netSales;
   const compsLine = m.has.grossSales ? m.compsApplied : 0;
-  const totalCustomerPaid = m.netSales + m.taxCollected + m.tipsCollected + m.ccProcessingPassThrough;
+  const passThroughTotal = m.taxCollected + m.tipsCollected + m.ccProcessingPassThrough;
+  const totalCustomerPaid = m.netSales + passThroughTotal;
+  const open = reconExpanded;
   return `
   <div class="card">
     <div class="card-head"><h2>Sales Reconciliation</h2><span class="meta">From customer to P&L</span></div>
@@ -875,13 +878,41 @@ function renderReconciliation(m) {
         <tr><td>Gross Sales</td><td class="num">${fmtMoney(grossLine)}</td></tr>
         <tr><td>Item Discounts / Comps</td><td class="num neg">${compsLine > 0 ? '−' + fmtMoney(compsLine) : '$0'}</td></tr>
         <tr class="subtotal"><td>Net Sales (flows into P&L)</td><td class="num">${fmtMoney(m.netSales)}</td></tr>
-        <tr><td>Sales Tax (~12.65%) — passthrough to state</td><td class="num dim">${m.taxCollected > 0 ? '+' + fmtMoney(m.taxCollected) : '— pending Ops Report ingest'}</td></tr>
-        <tr><td>Tips Collected — passthrough to staff</td><td class="num dim">${m.has.tipsCollected ? '+' + fmtMoney(m.tipsCollected) : '— enter post-event'}</td></tr>
-        <tr><td>CC Processing (3.5%) — passthrough to processor</td><td class="num dim">+${fmtMoney(m.ccProcessingPassThrough)} <span class="pct">est. 70% card mix</span></td></tr>
+        <tr class="expandable" onclick="toggleReconPassthroughs()">
+          <td><span class="caret ${open?'open':''}">▶</span>Pass-Throughs (tax, tips, CC processing)</td>
+          <td class="num dim">+${fmtMoney(passThroughTotal)}</td>
+        </tr>
+        ${open ? `<tr class="detail"><td colspan="2">${renderReconPassthroughDetail(m)}</td></tr>` : ''}
         <tr class="grand"><td>Total Customer Paid</td><td class="num">${fmtMoney(totalCustomerPaid)}</td></tr>
       </tbody>
     </table>
   </div>`;
+}
+function renderReconPassthroughDetail(m) {
+  return `
+    <table class="dt" style="background:var(--surface)">
+      <tbody>
+        <tr><td>Sales Tax (~12.65%) — to state</td><td class="num">${m.taxCollected > 0 ? '+' + fmtMoney(m.taxCollected) : '— pending Ops Report ingest'}</td></tr>
+        <tr><td>Tips Collected — to staff</td><td class="num">${m.has.tipsCollected ? '+' + fmtMoney(m.tipsCollected) : '— enter post-event'}</td></tr>
+        <tr><td>CC Processing (3.5%) — to processor</td><td class="num">+${fmtMoney(m.ccProcessingPassThrough)} <span class="pct">est. 70% card mix</span></td></tr>
+      </tbody>
+    </table>`;
+}
+function toggleReconPassthroughs() {
+  reconExpanded = !reconExpanded;
+  // Re-render only the reconciliation card
+  const m = deriveModel(currentEventData, currentComparisons, currentCosts);
+  // Find the card by class and replace its outerHTML
+  const cards = document.querySelectorAll('.card');
+  for (const c of cards) {
+    const h2 = c.querySelector('h2');
+    if (h2 && h2.textContent === 'Sales Reconciliation') {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = renderReconciliation(m);
+      c.replaceWith(wrap.firstElementChild);
+      break;
+    }
+  }
 }
 
 /* ─── COMPONENT: Compact 6-cell KPI strip ───────────────────────────── */
@@ -1078,8 +1109,8 @@ function renderCascadeCard(m) {
   return `
   <div class="card">
     <div class="card-head">
-      <h2>P&L Cascade</h2>
-      <span class="meta">Click any row for source + benchmark detail</span>
+      <h2>P&L Breakdown</h2>
+      <span class="meta">Click any row to drill in</span>
     </div>
     <table class="dt">
       <thead>
@@ -1132,51 +1163,120 @@ function renderCascadeRow(r, m) {
   return html;
 }
 
+function renderItemTable(m, mode) {
+  const all = (m.items || []);
+  let items, label;
+  // Exclude pass-through categories (Tax, Tips, Fees) — those flow through the reconciliation, not P&L line items
+  const skipCats = new Set(['Tax', 'Tips', 'Fees']);
+  if (mode === 'bar_drinks') {
+    items = all.filter(i => i.item_category && !skipCats.has(i.item_category) && i.item_category !== 'Bottle Service');
+    label = 'Bar drink items (excludes bottle service)';
+  } else if (mode === 'table') {
+    items = all.filter(i => i.item_category === 'Bottle Service');
+    label = 'Bottle service items';
+  } else {
+    items = all;
+    label = 'All items';
+  }
+  if (items.length === 0) {
+    return `<div class="no-data">No item-level detail available for this event.</div>`;
+  }
+  // Sort by revenue desc
+  items = [...items].sort((a, b) => num(b.total_revenue) - num(a.total_revenue));
+  const rows = items.map(it => {
+    const catCls = { Spirits:'spirits','Bottle Service':'bottle',Beer:'beer',Cocktails:'cocktail','Non-Alcoholic':'na' }[it.item_category] || 'na';
+    const rev = num(it.total_revenue), cogs = num(it.total_cost);
+    const gm = rev > 0 ? Math.round((1 - cogs/rev) * 100) : 0;
+    const gmCls = gm >= 85 ? 'pos' : gm >= 70 ? 'warn' : 'neg';
+    return `<tr>
+      <td>${it.item_name}<span class="cat-badge cat-${catCls}">${it.item_category}</span></td>
+      <td class="num">${it.quantity_sold || '—'}</td>
+      <td class="num">${it.unit_price ? '$' + parseFloat(it.unit_price).toFixed(2) : '—'}</td>
+      <td class="num">${fmtMoney(rev)}</td>
+      <td class="num dim">${fmtMoney(cogs)}</td>
+      <td class="num ${gmCls}">${gm}%</td>
+    </tr>`;
+  }).join('');
+  const hasRealQty = items.some(i => num(i.quantity_sold) > 0);
+  const legacyNote = !hasRealQty && items.length > 0
+    ? `<div style="font-size:11px;color:var(--ink-4);font-style:italic;margin-bottom:6px">Items loaded via legacy bulk import — quantities and COGS are placeholder zeros. Single-day Revel Product Mix export needed for full detail.</div>`
+    : '';
+  return `
+    <div style="font-weight:600;color:var(--ink-2);margin-bottom:6px">${label} · ${items.length} item${items.length===1?'':'s'}</div>
+    ${legacyNote}
+    <div style="overflow-x:auto">
+      <table class="dt" style="background:var(--surface);border-radius:6px">
+        <thead><tr><th>Item</th><th>Qty</th><th>Avg $</th><th>Revenue</th><th>COGS</th><th>GM%</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
 function renderCascadeDetail(r, m) {
   // Custom drill-down content per row
   if (r.key === 'bar_drinks') {
-    return `
-      <div>Bar drinks (excludes bottle service): <span class="calc">$${fmtMoney(m.barDrinksRevenue)}</span></div>
-      <div style="margin-top:6px">Spirits $${fmtMoney(num(m.s.spirits_revenue))} · Cocktails $${fmtMoney(num(m.s.cocktail_revenue))} · Beer $${fmtMoney(num(m.s.beer_revenue))} · NA $${fmtMoney(num(m.s.na_revenue))}</div>
-      <div style="margin-top:6px">Bottle service revenue ($${fmtMoney(m.bottleRevenue)}) is allocated to <strong>Table Revenue</strong> on the line below — bottle service ties to deal mechanics for table reservations.</div>`;
+    return renderItemTable(m, 'bar_drinks');
   }
   if (r.key === 'table') {
-    return `
-      <div>Table / Bottle Service: <span class="calc">$${fmtMoney(m.tableActual)}</span></div>
-      <div style="margin-top:6px">${m.bottleCount} bottles sold this event (items where unit price ≥ $100 and name contains "Bottle")</div>
-      <div style="margin-top:6px">Avg per bottle: ${m.bottleCount > 0 ? '$' + (m.tableActual / m.bottleCount).toFixed(0) : '—'}</div>`;
+    return renderItemTable(m, 'table');
   }
   if (r.key === 'cogs') {
     return `
-      <div>Total liquor COGS: <span class="calc">$${fmtMoney(m.liquorCogs)}</span> = ${fmtPct(m.liquorPourPct,1)} of $${fmtMoney(m.barActual)} bar</div>
-      <div style="margin-top:6px">District 2025 actual: ${fmtPct(DISTRICT.POUR_COST_LIQUOR,1)} liquor pour. Charged to promoter: ${fmtPct(m.chargedCogsPct,0)} flat.</div>
-      <div style="margin-top:6px">Source: R365 cost file joined to Revel Product Mix at ingest. Item-level breakdown in Bar Mix card below.</div>`;
+      <table class="dt" style="background:var(--surface)">
+        <tbody>
+          <tr><td>Liquor COGS this event</td><td class="num">${fmtMoney(m.liquorCogs)} <span class="pct">${fmtPct(m.liquorPourPct,1)} of bar</span></td></tr>
+          <tr><td>District 2025 average</td><td class="num dim">${fmtPct(DISTRICT.POUR_COST_LIQUOR,1)} liquor pour</td></tr>
+          <tr><td>Charged to promoter (per deal)</td><td class="num dim">${fmtPct(m.chargedCogsPct,0)} flat</td></tr>
+        </tbody>
+      </table>`;
   }
   if (r.key === 'dry') {
     return `
-      <div>Dry goods: <span class="calc">$${fmtMoney(m.barActual)} × ${DISTRICT.DRY_GOODS_DEFAULT}% = $${fmtMoney(m.dryGoodsCost)}</span></div>
-      <div style="margin-top:6px">Default rate; manually adjustable per event when actuals are tracked.</div>`;
+      <table class="dt" style="background:var(--surface)">
+        <tbody>
+          <tr><td>Bar revenue</td><td class="num dim">${fmtMoney(m.barActual)}</td></tr>
+          <tr><td>Dry goods rate</td><td class="num dim">${DISTRICT.DRY_GOODS_DEFAULT}%</td></tr>
+          <tr class="subtotal"><td>Dry goods this event</td><td class="num">${fmtMoney(m.dryGoodsCost)}</td></tr>
+        </tbody>
+      </table>`;
   }
   if (r.key === 'splits') {
     if (m.isCollectiv && m.houseThreshold > 0) {
       const grossProfit = m.grossRev - m.totalPourCost - m.artistFee;
       const afterHouse = Math.max(0, grossProfit - m.houseThreshold);
       return `
-        <div>Collectiv 50/50 deal with $${m.houseThreshold.toLocaleString()} house off-top:</div>
-        <div style="margin-top:6px"><span class="calc">Gross Profit ($${fmtMoney(grossProfit)}) − House $${m.houseThreshold.toLocaleString()} = $${fmtMoney(afterHouse)} remainder × 50% = $${fmtMoney(afterHouse * 0.5)}</span></div>
-        <div style="margin-top:6px">Bar payout: ${fmtMoney(m.barPayout)} · Door: ${fmtMoney(m.doorPayout)} · Table: ${fmtMoney(m.tablePayout)} (allocated proportionally to revenue mix)</div>`;
+        <table class="dt" style="background:var(--surface)">
+          <tbody>
+            <tr><td>Gross Profit (Gross − Pour − Artist)</td><td class="num dim">${fmtMoney(grossProfit)}</td></tr>
+            <tr><td>House Off-Top</td><td class="num dim">−${fmtMoney(m.houseThreshold)}</td></tr>
+            <tr><td>Remainder for 50/50 split</td><td class="num dim">${fmtMoney(afterHouse)}</td></tr>
+            <tr class="subtotal"><td>Promoter Take (50%)</td><td class="num">${fmtMoney(afterHouse * 0.5)}</td></tr>
+            <tr><td>&nbsp;&nbsp;Allocated to Bar</td><td class="num dim">${fmtMoney(m.barPayout)}</td></tr>
+            <tr><td>&nbsp;&nbsp;Allocated to Door</td><td class="num dim">${fmtMoney(m.doorPayout)}</td></tr>
+            <tr><td>&nbsp;&nbsp;Allocated to Table</td><td class="num dim">${fmtMoney(m.tablePayout)}</td></tr>
+          </tbody>
+        </table>`;
     }
     return `
-      <div>Bar split (${num(m.e.bar_split_promoter)}% promoter): <span class="calc">$${fmtMoney(m.barActual)} × ${num(m.e.bar_split_promoter)}% = $${fmtMoney(m.barPayout)}</span></div>
-      <div style="margin-top:4px">Door split (${num(m.e.door_split_promoter)}% promoter): <span class="calc">$${fmtMoney(m.doorActual)} × ${num(m.e.door_split_promoter)}% = $${fmtMoney(m.doorPayout)}</span></div>`;
+      <table class="dt" style="background:var(--surface)">
+        <tbody>
+          <tr><td>Bar split (${num(m.e.bar_split_promoter)}% promoter)</td><td class="num">${fmtMoney(m.barActual)} × ${num(m.e.bar_split_promoter)}% = ${fmtMoney(m.barPayout)}</td></tr>
+          <tr><td>Door split (${num(m.e.door_split_promoter)}% promoter)</td><td class="num">${fmtMoney(m.doorActual)} × ${num(m.e.door_split_promoter)}% = ${fmtMoney(m.doorPayout)}</td></tr>
+          ${m.tablePayout > 0 ? `<tr><td>Table split (${num(m.e.table_split_promoter)}% promoter)</td><td class="num">${fmtMoney(m.tableActual)} × ${num(m.e.table_split_promoter)}% = ${fmtMoney(m.tablePayout)}</td></tr>` : ''}
+          <tr class="subtotal"><td>Total Promoter Splits</td><td class="num">${fmtMoney(m.barPayout + m.doorPayout + m.tablePayout)}</td></tr>
+        </tbody>
+      </table>`;
   }
   if (r.key === 'artist') {
     return `
-      <div>Artist fee landed: <span class="calc">$${fmtMoney(num(m.e.artist_fee_landed))}</span></div>
-      <div style="margin-top:4px">Travel: <span class="calc">$${fmtMoney(num(m.e.artist_fee_travel))}</span></div>
-      <div style="margin-top:4px">Hospitality rider (actual): <span class="calc">$${fmtMoney(m.riderActual)}</span></div>
-      <div style="margin-top:4px">Total artist cost: <span class="calc">$${fmtMoney(m.artistTotal)}</span></div>
-      <div style="margin-top:6px;color:var(--ink-3)">Hospitality rider lives here (not in Variable Costs) because the amount is locked at booking by artist contract, not controlled night-of.</div>`;
+      <table class="dt" style="background:var(--surface)">
+        <tbody>
+          <tr><td>Artist fee landed</td><td class="num">${fmtMoney(num(m.e.artist_fee_landed))}</td></tr>
+          <tr><td>Travel</td><td class="num">${fmtMoney(num(m.e.artist_fee_travel))}</td></tr>
+          <tr><td>Hospitality rider (actual)</td><td class="num">${fmtMoney(m.riderActual)}</td></tr>
+          <tr class="subtotal"><td>Total Artist Cost</td><td class="num">${fmtMoney(m.artistTotal)}</td></tr>
+        </tbody>
+      </table>`;
   }
   if (r.key === 'static') {
     return `
@@ -1609,7 +1709,6 @@ async function loadWeather(date) {
 
 /* ─── COMPONENT: Bar Mix ──────────────────────────────────────────── */
 function renderBarMixCard(m) {
-  const items = (currentEventData.items || []).filter(i => i.item_category !== 'Fees');
   const s = m.s;
   const cats = [
     { key: 'spirits',  label: 'Spirits',    cls: 'spirits',  rev: s.spirits_revenue || 0 },
@@ -1629,41 +1728,13 @@ function renderBarMixCard(m) {
     </div>`;
   }).join('');
 
-  const itemsHtml = items.length === 0 ? '' : `
-    <div class="items-toolbar">
-      <span style="font-size:11.5px;color:var(--ink-3)">${items.length} items · COGS via R365 join</span>
-      <button class="items-toggle" onclick="toggleItems()">
-        <span id="items-toggle-label">Show item detail</span>
-        <span id="items-toggle-icon" class="expand-icon">▾</span>
-      </button>
-    </div>
-    <div class="collapsible" id="items-table-wrap" style="max-height:0">
-      <div style="overflow-x:auto;margin-top:10px">
-        <table class="dt"><thead><tr><th>Item</th><th>Qty</th><th>Avg $</th><th>Revenue</th><th>COGS</th><th>GM%</th></tr></thead>
-          <tbody>${items.map(it => {
-            const catCls = { Spirits:'spirits','Bottle Service':'bottle',Beer:'beer',Cocktails:'cocktail','Non-Alcoholic':'na' }[it.item_category] || 'na';
-            const rev = num(it.total_revenue), cogs = num(it.total_cost);
-            const gm = rev > 0 ? Math.round((1 - cogs/rev) * 100) : 0;
-            const gmCls = gm >= 85 ? 'pos' : gm >= 70 ? 'warn' : 'neg';
-            return `<tr><td>${it.item_name}<span class="cat-badge cat-${catCls}">${it.item_category}</span></td>
-              <td>${it.quantity_sold || '—'}</td>
-              <td>${it.unit_price ? '$' + parseFloat(it.unit_price).toFixed(2) : '—'}</td>
-              <td>${fmtMoney(rev)}</td>
-              <td class="dim">${fmtMoney(cogs)}</td>
-              <td class="${gmCls}">${gm}%</td></tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>
-    </div>`;
-
   return `
   <div class="card">
     <div class="card-head">
       <h2>Bar Mix</h2>
-      <span class="meta">${totalRev > 0 ? fmtMoney(totalRev) + ' across categories' : 'No bar items recorded'}</span>
+      <span class="meta">${totalRev > 0 ? fmtMoney(totalRev) + ' across categories · item detail in P&L drill-downs above' : 'No bar items recorded'}</span>
     </div>
     <div class="bm-grid">${tilesHtml}</div>
-    ${itemsHtml}
   </div>`;
 }
 
