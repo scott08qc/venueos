@@ -814,8 +814,6 @@ function renderDashboard() {
     <div class="cols">
       <div>
         ${renderCascadeCard(m)}
-        ${renderDealSliderCard(m)}
-        ${renderVariableCostsCard(m)}
         ${renderProjectedActualCard(m)}
         ${renderBarMixCard(m)}
         ${renderPromoterCard(m)}
@@ -827,6 +825,7 @@ function renderDashboard() {
       </div>
     </div>
     ${renderNotesCard(m)}
+    ${renderDealSliderCard(m)}
   `;
   g('page-root').innerHTML = html;
 }
@@ -862,33 +861,26 @@ function renderMasthead(m) {
   </div>`;
 }
 
-/* ─── COMPONENT: Gross→Net Reconciliation ──────────────────────────── */
+/* ─── COMPONENT: Sales Reconciliation (single column) ───────────────── */
 function renderReconciliation(m) {
-  // Don't render if we have nothing to show
   if (!m.has.netSales) return '';
-  const grossLine = m.has.grossSales ? m.grossItemSales : m.netSales;  // fall back to net when item totals not loaded
+  const grossLine = m.has.grossSales ? m.grossItemSales : m.netSales;
   const compsLine = m.has.grossSales ? m.compsApplied : 0;
+  const totalCustomerPaid = m.netSales + m.taxCollected + m.tipsCollected + m.ccProcessingPassThrough;
   return `
-  <div class="recon">
-    <div class="recon-card">
-      <div class="h"><h3>Sales Reconciliation</h3><span class="meta">Gross → Net</span></div>
-      <div class="recon-row"><span class="l">Gross Sales (item-level)</span><span class="v">${fmtMoney(grossLine)}</span></div>
-      <div class="recon-row"><span class="l">Item Discounts / Comps</span><span class="v neg">${compsLine > 0 ? '−' + fmtMoney(compsLine) : '$0'}</span></div>
-      <div class="recon-row subtotal"><span class="l">Net Sales</span><span class="v">${fmtMoney(m.netSales)}</span></div>
-      <div class="recon-pass">
-        Net Sales is what flows into the P&L cascade. Gross Sales is reported by Revel before comps. Voids excluded from both.
-      </div>
-    </div>
-    <div class="recon-card">
-      <div class="h"><h3>Pass-Through Disclosures</h3><span class="meta">Customer-paid · Venue collects + remits</span></div>
-      <div class="recon-row"><span class="l">Sales Tax (~12.65%)</span><span class="v dim">${m.taxCollected > 0 ? fmtMoney(m.taxCollected) : '— pending Ops Report ingest'}</span></div>
-      <div class="recon-row"><span class="l">Tips Collected</span><span class="v dim">${m.has.tipsCollected ? fmtMoney(m.tipsCollected) : '— enter post-event'}</span></div>
-      <div class="recon-row"><span class="l">CC Processing (3.5%)</span><span class="v dim">est. ${fmtMoney(m.ccProcessingPassThrough)} (70% card mix assumption)</span></div>
-      <div class="recon-pass">
-        These are <strong>not</strong> venue costs — collected from customers, remitted to state / staff / processor. Shown for transparency.
-        Venue does carry payroll tax on tips (15% employer share) — see Variable Costs.
-      </div>
-    </div>
+  <div class="card">
+    <div class="card-head"><h2>Sales Reconciliation</h2><span class="meta">From customer to P&L</span></div>
+    <table class="dt">
+      <tbody>
+        <tr><td>Gross Sales</td><td class="num">${fmtMoney(grossLine)}</td></tr>
+        <tr><td>Item Discounts / Comps</td><td class="num neg">${compsLine > 0 ? '−' + fmtMoney(compsLine) : '$0'}</td></tr>
+        <tr class="subtotal"><td>Net Sales (flows into P&L)</td><td class="num">${fmtMoney(m.netSales)}</td></tr>
+        <tr><td>Sales Tax (~12.65%) — passthrough to state</td><td class="num dim">${m.taxCollected > 0 ? '+' + fmtMoney(m.taxCollected) : '— pending Ops Report ingest'}</td></tr>
+        <tr><td>Tips Collected — passthrough to staff</td><td class="num dim">${m.has.tipsCollected ? '+' + fmtMoney(m.tipsCollected) : '— enter post-event'}</td></tr>
+        <tr><td>CC Processing (3.5%) — passthrough to processor</td><td class="num dim">+${fmtMoney(m.ccProcessingPassThrough)} <span class="pct">est. 70% card mix</span></td></tr>
+        <tr class="grand"><td>Total Customer Paid</td><td class="num">${fmtMoney(totalCustomerPaid)}</td></tr>
+      </tbody>
+    </table>
   </div>`;
 }
 
@@ -1191,21 +1183,10 @@ function renderCascadeDetail(r, m) {
       <div>$${DISTRICT.OP_CARRY_STATIC.toLocaleString()}/night = $1,204,122/yr ÷ 140 club nights</div>
       <div style="margin-top:6px"><strong>A1 Fixed ($381,509/yr):</strong> Rent · Property Tax · Insurance · Utilities · Waste · Licenses · Dues</div>
       <div style="margin-top:4px"><strong>A2 Static-Variable ($822,614/yr):</strong> Salaries · Salaried Payroll Tax · <strong>Marketing Floor (~$${DISTRICT.MARKETING_FLOOR_ANNUAL.toLocaleString()}/yr · $${DISTRICT.MARKETING_FLOOR_PER_NIGHT}/night)</strong> · Maintenance · Other Operational</div>
-      <div style="margin-top:6px;color:var(--ink-3)">Marketing floor is the always-on baseline. Per-event marketing above the floor → Variable Costs panel below.</div>
-      <div style="margin-top:4px;color:var(--ink-3)"><strong>NOT in Static:</strong> Payroll tax on tipped staff (15% venue side on tips + tipped wages). Those land in Variable Costs (per-night burden).</div>
       <div style="margin-top:6px;color:var(--ink-3)">Source: Ryan's M2 Operating Cost Model 2025 v2 (verified line-by-line vs QB actuals)</div>`;
   }
   if (r.key === 'variable') {
-    if (m.has.costs) {
-      return `
-        <div>Per-night actuals from event close-out: <span class="calc">$${fmtMoney(m.opCarryVariable)}</span></div>
-        <div style="margin-top:6px">vs District average $${DISTRICT.OP_CARRY_VARIABLE.toLocaleString()}/night ($542,240/yr ÷ 140)</div>
-        <div style="margin-top:6px">See <strong>Variable Costs</strong> panel below for line-item breakdown including payroll tax burden.</div>`;
-    }
-    return `
-      <div>Defaulting to district average $${DISTRICT.OP_CARRY_VARIABLE.toLocaleString()}/night until per-night actuals are entered.</div>
-      <div style="margin-top:6px"><strong>Should include:</strong> Cash Out · Hourly Wages Tipped ($2.18/hr base) · Payroll Tax on Tipped Wages (15% venue) · Payroll Tax on Tips (15% venue) · Security · Door Girls · Police · Production Staff · Production Equipment · Marketing — Variable</div>
-      <div style="margin-top:6px;color:var(--ink-3)">Hospitality rider was relocated to Artist Cost above. Cleaning is rolled into Production Staff / Cash Out at District.</div>`;
+    return renderVariableCostsTable(m);
   }
   return `<div>${r.detailLabel || ''}</div>`;
 }
@@ -1220,8 +1201,8 @@ function toggleCascadeRow(key) {
   if (tbody) tbody.innerHTML = rows.map(r => renderCascadeRow(r, m)).join('');
 }
 
-/* ─── COMPONENT: Variable Costs panel ───────────────────────────────── */
-function renderVariableCostsCard(m) {
+/* ─── COMPONENT: Variable Costs table (used as drill-down under Op Carry Variable) ── */
+function renderVariableCostsTable(m) {
   const c = m.costDetail;
   const promAvg = currentComparisons && currentComparisons.promoter_avg ? currentComparisons.promoter_avg : null;
   const typeAvg = currentComparisons && currentComparisons.type_avg ? currentComparisons.type_avg : null;
@@ -1278,17 +1259,12 @@ function renderVariableCostsCard(m) {
     : '';
 
   return `
-  <div class="card">
-    <div class="card-head">
-      <h2>Variable Costs</h2>
-      <span class="meta">Per-event labor + payroll tax + ops + variable marketing</span>
-    </div>
-    <table class="dt">
+    <div style="font-weight:600;color:var(--ink-2);margin-bottom:6px">Per-night actuals — line items, comparisons, payroll tax burden</div>
+    <table class="dt" style="background:var(--surface);border-radius:6px">
       <thead><tr><th></th><th>Actual</th><th class="vs">Promoter Avg</th><th class="vs">Type Avg</th><th class="vs">Calc Default</th></tr></thead>
       <tbody>${tbody}${totalRow}</tbody>
     </table>
-    ${note}
-  </div>`;
+    ${note}`;
 }
 
 /* ─── COMPONENT: Projected vs Actual ─────────────────────────────────── */
