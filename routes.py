@@ -1633,12 +1633,7 @@ def create_app(static_dir: str) -> FastAPI:
     async def get_talking_points(data: dict):
         try:
             import anthropic
-            api_key = os.environ.get("ANTHRO_WORKSHOP_API_KEY")
-            base_url = os.environ.get("ANTHRO_WORKSHOP_BASE_URL")
-            client = anthropic.Anthropic(
-                api_key=api_key,
-                **({"base_url": base_url} if base_url else {})
-            )
+            client = anthropic.Anthropic()  # auto-reads ANTHROPIC_API_KEY from env
             message = client.messages.create(
                 model="claude-sonnet-4-20250514",
                 max_tokens=1000,
