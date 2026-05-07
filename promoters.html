@@ -359,6 +359,58 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #D4CFC9; border-radius: 2px; }
+
+  /* Profile view */
+  .profile-back{font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:5px;margin-bottom:12px;background:none;border:none;padding:0;font-family:'DM Sans',sans-serif}
+  .profile-back:hover{color:var(--blue)}
+  .profile-name{font-family:'Playfair Display',serif;font-size:28px;font-weight:600;letter-spacing:-0.02em;color:var(--text1);line-height:1.1;margin-bottom:6px}
+  .profile-meta{font-size:13px;color:var(--text3);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .profile-header-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .profile-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  @media(max-width:900px){.profile-kpi-row{grid-template-columns:repeat(2,1fr)}}
+  .profile-kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+  .profile-kpi-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+  .profile-kpi-val{font-size:22px;font-weight:600;color:var(--text1);line-height:1;margin-bottom:3px}
+  .profile-kpi-val.hero{color:var(--blue)}.profile-kpi-val.pos{color:#2A7A4B}.profile-kpi-val.neg{color:#C0392B}
+  .profile-kpi-sub{font-size:11px;color:var(--text3)}
+  .profile-cols{display:grid;grid-template-columns:1fr 320px;gap:16px}
+  @media(max-width:1100px){.profile-cols{grid-template-columns:1fr}}
+  .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;margin-bottom:16px}
+  .profile-card-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+  .ph-table{width:100%;border-collapse:collapse;font-size:13px}
+  .ph-table th{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:0 12px 10px 0;text-align:left;border-bottom:1px solid var(--border)}
+  .ph-table td{padding:10px 12px 10px 0;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+  .ph-table tr:last-child td{border-bottom:none}
+  .ph-table tr:hover td{background:var(--bg)}
+  .event-link{color:var(--blue);font-weight:500;cursor:pointer;font-size:13px;text-decoration:none}
+  .event-link:hover{text-decoration:underline}
+  .ph-mono{font-family:'DM Mono',monospace;font-size:12px}
+  .ph-pos{color:#2A7A4B;font-weight:500}.ph-neg{color:#C0392B;font-weight:500}
+  .score-breakdown{display:flex;flex-direction:column;gap:14px}
+  .score-row-header{display:flex;justify-content:space-between;margin-bottom:3px}
+  .score-row-label{font-size:12px;font-weight:500;color:var(--text2)}
+  .score-row-val{font-size:12px;font-family:'DM Mono',monospace;color:var(--text1);font-weight:500}
+  .score-row-sub{font-size:11px;color:var(--text3);margin-bottom:4px}
+  .score-track-sm{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+  .score-fill-sm{height:100%;border-radius:2px;background:var(--blue);transition:width 0.4s}
+  .bw-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .bw-card{border-radius:8px;padding:12px 14px}
+  .bw-card.best{background:#EBF5F0;border:1px solid #B6DFC8}.bw-card.worst{background:#FDF0EE;border:1px solid #F5C6C0}
+  .bw-label{font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:4px}
+  .bw-card.best .bw-label{color:#2A7A4B}.bw-card.worst .bw-label{color:#C0392B}
+  .bw-val{font-size:18px;font-weight:600;color:var(--text1)}.bw-sub{font-size:11px;color:var(--text3);margin-top:2px}
+  .profile-ai-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+  .profile-ai-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .profile-ai-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+  .profile-ai-badge{margin-left:auto;font-size:9.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--blue);background:#EBF2F9;border:1px solid #C5D9EC;border-radius:4px;padding:2px 7px}
+  .profile-ai-body{font-size:13px;color:var(--text2);line-height:1.65}
+  .profile-ai-lever-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:3px;margin-top:10px}
+  .profile-threshold{text-align:center;padding:16px 0}
+  .profile-threshold-label{font-size:13px;color:var(--text3);margin-bottom:8px}
+  .profile-threshold-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin:0 auto 6px;max-width:160px}
+  .profile-threshold-fill{height:100%;background:var(--blue);border-radius:3px}
+  .profile-threshold-sub{font-size:11px;color:var(--text3)}
+
 </style>
 </head>
 <body>
@@ -479,6 +531,11 @@
 
 </div>
 
+  <!-- Profile view -->
+  <div id="profile-view" style="display:none;">
+    <div id="profile-content"></div>
+  </div>
+
 <script>
 const BASE_URL = window.location.origin;
 const CALC_URL = `${BASE_URL}/api/calculator`;
@@ -585,7 +642,7 @@ function renderRoster() {
     for (let j = 0; j < p.nights_below; j++) dots += `<div class="trend-dot dot-below" title="Below projection"></div>`;
 
     return `
-      <div class="roster-row ${isSelected ? 'selected' : ''}" onclick="openInCalc('${p.promoter_name}')">
+      <div class="roster-row ${isSelected ? 'selected' : ''}" onclick="openProfile('${p.promoter_name}')" style="cursor:pointer;">
         <div class="roster-cell">
           <span class="promoter-name">${p.promoter_name}</span>
           <span class="promoter-genre ${genreClass(p.tier1_category)}">${p.tier1_category || '—'}</span>
@@ -765,7 +822,7 @@ function renderCompareContent() {
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;">
       ${selected.map(p => `
-        <button class="btn" onclick="openInCalc('${p.promoter_name}')">Open ${p.promoter_name} in Calculator</button>
+        <button class="btn" onclick="openProfile('${p.promoter_name}')" style="cursor:pointer;">Open ${p.promoter_name} in Calculator</button>
       `).join('')}
     </div>
   `;
@@ -778,6 +835,7 @@ function setMode(mode) {
   });
   document.getElementById('roster-view').style.display = mode === 'roster' ? 'block' : 'none';
   document.getElementById('compare-view').style.display = mode === 'compare' ? 'block' : 'none';
+  document.getElementById('profile-view').style.display = mode === 'profile' ? 'block' : 'none';
   if (mode === 'compare') {
     renderCompareChips();
     renderCompareContent();
@@ -788,6 +846,123 @@ function openInCalc(promoterName) {
   const url = `${CALC_URL}?promoter=${encodeURIComponent(promoterName)}`;
   window.open(url, '_blank');
 }
+
+
+// ── PROFILE VIEW ─────────────────────────────────────────────────────────────
+let currentProfilePromoter = null;
+
+function openProfile(promoterName) {
+  currentProfilePromoter = promoterName;
+  setMode('profile');
+  document.getElementById('profile-content').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;">Loading profile\u2026</div>';
+  loadProfile(promoterName);
+}
+
+async function loadProfile(name) {
+  const BASE = window.location.origin;
+  try {
+    const res = await fetch(BASE + '/api/promoter-intelligence?promoter=' + encodeURIComponent(name));
+    const d = await res.json();
+    renderProfile(name, d);
+  } catch(e) {
+    document.getElementById('profile-content').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);">Could not load profile.</div>';
+  }
+}
+
+function renderProfile(name, d) {
+  const rec = d.recommendations || {};
+  const hist = d.history || [];
+  const comp = d.score_components || {};
+  const eventCount = d.total_events || 0;
+  const fmt = function(v){ return v != null ? '$' + Math.round(v).toLocaleString() : '\u2014'; };
+  const pct = function(v){ return v != null ? v.toFixed(1) + '%' : '\u2014'; };
+  const avgNet = rec.avg_net_to_venue;
+  const bestNet = rec.best_net;
+  const worstNet = rec.worst_net;
+  const netColor = avgNet > 0 ? 'pos' : avgNet < 0 ? 'neg' : '';
+
+  const histRows = hist.slice(0,20).map(function(h) {
+    const net = h.net_revenue_actual;
+    const netCls = net > 0 ? 'ph-pos' : net < 0 ? 'ph-neg' : '';
+    const date = h.event_date ? new Date(h.event_date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '\u2014';
+    const netStr = net != null ? (net >= 0 ? '+' : '') + fmt(net) : '\u2014';
+    return '<tr><td><a class="event-link" href="/api/event-recap?event_id=' + h.event_id + '">' + (h.event_name||'\u2014') + '</a></td><td>' + date + '</td><td>' + (h.artist_name||'\u2014') + '</td><td class="ph-mono">' + fmt(h.actual_bar_revenue) + '</td><td class="ph-mono ' + netCls + '">' + netStr + '</td></tr>';
+  }).join('');
+
+  const scoreRows = Object.entries(comp).map(function(entry) {
+    const key = entry[0]; const c = entry[1];
+    const label = key.replace(/_/g,' ').replace(/\b\w/g, function(l){return l.toUpperCase();});
+    const score = c.score;
+    const fillW = score != null ? Math.min(score/10*100,100) : 0;
+    return '<div class="score-row"><div class="score-row-header"><span class="score-row-label">' + label + ' <span style="font-size:10px;color:var(--text3);">(' + c.weight + ')</span></span><span class="score-row-val">' + (score!=null?score.toFixed(1):'\u2014') + '</span></div><div class="score-row-sub">' + (c.label||'') + '</div><div class="score-track-sm"><div class="score-fill-sm" style="width:' + fillW + '%"></div></div></div>';
+  }).join('');
+
+  const AI_MIN = 3;
+  let aiSection = '';
+  if (eventCount < AI_MIN) {
+    const prog = Math.round(eventCount/AI_MIN*100);
+    aiSection = '<div class="profile-ai-card"><div class="profile-ai-header"><span class="profile-ai-label">Promoter Read</span><span class="profile-ai-badge">AI</span></div><div class="profile-threshold"><div class="profile-threshold-label">Building history to unlock AI analysis</div><div class="profile-threshold-bar"><div class="profile-threshold-fill" style="width:' + prog + '%"></div></div><div class="profile-threshold-sub">' + eventCount + ' of ' + AI_MIN + ' events needed</div></div></div>';
+  } else {
+    aiSection = '<div class="profile-ai-card"><div class="profile-ai-header"><span class="profile-ai-label">Promoter Read</span><span class="profile-ai-badge">AI</span></div><div class="profile-ai-body" id="profile-ai-body"><em style="color:var(--text3);">Analyzing ' + eventCount + ' events\u2026</em></div></div>';
+  }
+
+  const dealCard = rec.avg_artist_fee ? '<div class="profile-card"><div class="profile-card-title">Deal Intelligence</div><div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Avg artist fee: <strong style="color:var(--text1);">' + fmt(rec.avg_artist_fee) + '</strong></div><div class="bw-row"><div class="bw-card best"><div class="bw-label">Best Night</div><div class="bw-val">' + fmt(bestNet) + '</div><div class="bw-sub">net to venue</div></div><div class="bw-card worst"><div class="bw-label">Worst Night</div><div class="bw-val">' + fmt(worstNet) + '</div><div class="bw-sub">net to venue</div></div></div></div>' : '';
+
+  const html = '<button class="profile-back" onclick="setMode(\'roster\')">← Back to Roster</button>'
+    + '<div class="profile-header-row"><div><div class="profile-name">' + name + '</div><div class="profile-meta">'
+    + '<span>' + (d.event_type||'Mixed') + '</span>'
+    + '<span>' + eventCount + ' events</span>'
+    + (rec.door_split_promoter ? '<span>' + pct(rec.door_split_promoter) + ' door split</span>' : '')
+    + '</div></div>'
+    + '<button class="btn btn-primary" onclick="openInCalc(\'' + name + '\')">Open in Calculator \u2192</button></div>'
+    + '<div class="profile-kpi-row">'
+    + '<div class="profile-kpi"><div class="profile-kpi-label">Avg Net to Venue</div><div class="profile-kpi-val ' + netColor + '">' + fmt(avgNet) + '</div><div class="profile-kpi-sub">per event</div></div>'
+    + '<div class="profile-kpi"><div class="profile-kpi-label">Reputation Score</div><div class="profile-kpi-val hero">' + (d.reputation_score!=null?d.reputation_score.toFixed(1):'\u2014') + '<span style="font-size:14px;color:var(--text3);font-weight:400;"> / 10</span></div><div class="profile-kpi-sub">deal profitability weighted</div></div>'
+    + '<div class="profile-kpi"><div class="profile-kpi-label">Best Night</div><div class="profile-kpi-val pos">' + fmt(bestNet) + '</div><div class="profile-kpi-sub">net to venue</div></div>'
+    + '<div class="profile-kpi"><div class="profile-kpi-label">Worst Night</div><div class="profile-kpi-val ' + (worstNet<0?'neg':'') + '">' + fmt(worstNet) + '</div><div class="profile-kpi-sub">net to venue</div></div>'
+    + '</div>'
+    + '<div class="profile-cols"><div>'
+    + aiSection
+    + '<div class="profile-card"><div class="profile-card-title">Event History</div><table class="ph-table"><thead><tr><th>Event</th><th>Date</th><th>Artist</th><th>Bar Revenue</th><th>Net to Venue</th></tr></thead><tbody>'
+    + (histRows || '<tr><td colspan="5" style="color:var(--text3);padding:20px 0;">No completed events</td></tr>')
+    + '</tbody></table></div></div>'
+    + '<div><div class="profile-card"><div class="profile-card-title">Reputation Score</div><div class="score-breakdown">' + scoreRows + '</div></div>'
+    + dealCard + '</div></div>';
+
+  document.getElementById('profile-content').innerHTML = html;
+  if (eventCount >= AI_MIN) { fetchPromoterAI(name, d); }
+}
+
+async function fetchPromoterAI(name, d) {
+  const BASE = window.location.origin;
+  const rec = d.recommendations || {};
+  const hist = d.history || [];
+  const eventCount = d.total_events || 0;
+  const fmt = function(v){ return v != null ? '$' + Math.round(v).toLocaleString() : 'no data'; };
+  const recent5 = hist.slice(0,5).map(function(h){return h.net_revenue_actual;}).filter(function(v){return v!=null;});
+  const recentAvg = recent5.length ? recent5.reduce(function(a,b){return a+b;},0)/recent5.length : null;
+  const confidence = eventCount >= 15 ? 'high' : eventCount >= 8 ? 'medium' : 'low';
+
+  const prompt = 'You are a senior operator analyst for District Atlanta, an 800-cap nightlife venue. Analyze this promoter and provide a Promoter Read in exactly this JSON format:\n{\n  "summary": "2-3 sentences on overall value based on ' + eventCount + ' events. Confidence is ' + confidence + ' - use language accordingly (early signals/consistent pattern). Be specific with dollar amounts.",\n  "lever": "1 concrete recommendation for the next booking to improve net to venue."\n}\nReturn only valid JSON.\n\nPROMOTER: ' + name + '\nEVENTS: ' + eventCount + '\nAvg net: ' + fmt(rec.avg_net_to_venue) + '\nBest: ' + fmt(rec.best_net) + '\nWorst: ' + fmt(rec.worst_net) + '\nAvg artist fee: ' + fmt(rec.avg_artist_fee) + '\nRecent 5-event avg net: ' + (recentAvg!=null?fmt(recentAvg):'insufficient data') + '\nDoor split to promoter: ' + (rec.door_split_promoter!=null?rec.door_split_promoter.toFixed(0)+'%':'varies') + '\nReputation score: ' + (d.reputation_score!=null?d.reputation_score.toFixed(1)+'/10':'insufficient data');
+
+  try {
+    const res = await fetch(BASE + '/api/talking-points', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({prompt: prompt})
+    });
+    const json = await res.json();
+    const raw = (json.text||'').replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(raw);
+    const bodyEl = document.getElementById('profile-ai-body');
+    if (!bodyEl) return;
+    bodyEl.innerHTML = '<div style="margin-bottom:10px;">' + (parsed.summary||'\u2014') + '</div><div style="padding-top:10px;border-top:1px solid var(--border);"><div class="profile-ai-lever-label">Recommendation</div><div style="font-size:13px;color:var(--text1);font-weight:500;">' + (parsed.lever||'\u2014') + '</div></div>';
+  } catch(e) {
+    const bodyEl = document.getElementById('profile-ai-body');
+    if (bodyEl) bodyEl.innerHTML = '<em style="color:var(--text3);">AI analysis unavailable.</em>';
+  }
+}
+
 
 // Init
 loadData();
