@@ -390,7 +390,7 @@ button{font-family:inherit;cursor:pointer}
 .night-read-icon svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .night-read-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4)}
 .night-read-badge{margin-left:auto;font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--brand);background:var(--brand-bg,#EEF3FF);border:1px solid var(--brand-mid,#C5D0F5);border-radius:4px;padding:2px 7px}
-.night-read-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.night-read-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start}
 @media(max-width:900px){.night-read-body{grid-template-columns:1fr}}
 .nr-block{}
 .nr-block-label{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4);margin-bottom:4px}
@@ -1071,6 +1071,7 @@ async function fetchNightRead(m) {
 {
   "what_happened": "1-2 sentences summarizing the night's performance — revenue, profit to venue, and whether it was above/below expectations.",
   "vs_history": "1 sentence comparing this event to this promoter's historical average at the venue, noting whether performance improved or declined and by how much.",
+  "vs_type": "1 sentence comparing this event to the type benchmark for this genre, noting whether bar yield, door revenue, or total revenue was above or below the typical event of this type.",
   "lever": "1 specific, actionable recommendation for what the operator should do differently for the next event with this promoter or in this genre to improve profit, draw, or bar yield."
 }
 
@@ -1129,8 +1130,8 @@ TYPE BENCHMARK (${e.tier1_category || 'this genre'}):
           <div class="nr-block-text">${parsed.vs_history || '—'}</div>
         </div>
         <div class="nr-block">
-          <div class="nr-block-label">Context</div>
-          <div class="nr-block-text">${parsed.vs_history ? '' : '—'}</div>
+          <div class="nr-block-label">vs. Event Type</div>
+          <div class="nr-block-text">${parsed.vs_type || '—'}</div>
         </div>
       </div>
       <div class="nr-lever">
@@ -1139,7 +1140,7 @@ TYPE BENCHMARK (${e.tier1_category || 'this genre'}):
           <div class="nr-lever-label">Top Lever</div>
           <div class="nr-lever-text">${parsed.lever || '—'}</div>
         </div>
-      </div>`;
+      </div>\`;
   } catch(err) {
     const body = document.getElementById('night-read-body');
     if (body) body.innerHTML = '<div class="night-read-error">Night Read unavailable — rule-based analysis above.</div>';
