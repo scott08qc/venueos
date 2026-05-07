@@ -1046,6 +1046,9 @@ def create_app(static_dir: str) -> FastAPI:
             marketing_promoter_contribution NUMERIC DEFAULT 0,
             marketing_notes TEXT,
             artist_fee_total NUMERIC DEFAULT 0,
+            cash_out_total NUMERIC DEFAULT 0,
+            hourly_wages_tipped_total NUMERIC DEFAULT 0,
+            tips_collected_total NUMERIC DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
           )
@@ -1074,14 +1077,14 @@ def create_app(static_dir: str) -> FastAPI:
         data["police_total"] = max(hours * rate, minimum) if hours > 0 else 0
         existing = conn.execute(text("SELECT id FROM event_costs WHERE event_id = :eid"), {"eid": data["event_id"]}).fetchone()
         if existing:
-          fields = ["nightly_operating_cost","security_total","security_notes","door_girls_count","door_girls_total","police_hours","police_rate","police_minimum","police_total","production_staff_count","production_staff_total","production_equipment_total","production_equipment_notes","hospitality_rider_estimate","hospitality_rider_actual","hospitality_rider_notes","marketing_internal","marketing_promoter_contribution","marketing_notes","artist_fee_total"]
+          fields = ["nightly_operating_cost","security_total","security_notes","door_girls_count","door_girls_total","police_hours","police_rate","police_minimum","police_total","production_staff_count","production_staff_total","production_equipment_total","production_equipment_notes","hospitality_rider_estimate","hospitality_rider_actual","hospitality_rider_notes","marketing_internal","marketing_promoter_contribution","marketing_notes","artist_fee_total","cash_out_total","hourly_wages_tipped_total","tips_collected_total"]
           set_clause = ", ".join([f"{f}=:{f}" for f in fields if f in data]) + ", updated_at=NOW()"
           data["id"] = existing.id
           conn.execute(text(f"UPDATE event_costs SET {set_clause} WHERE id=:id"), data)
           conn.commit()
           return {"id": existing.id, "updated": True}
         else:
-          row = conn.execute(text("""INSERT INTO event_costs (event_id,nightly_operating_cost,security_total,security_notes,door_girls_count,door_girls_total,police_hours,police_rate,police_minimum,police_total,production_staff_count,production_staff_total,production_equipment_total,production_equipment_notes,hospitality_rider_estimate,hospitality_rider_actual,hospitality_rider_notes,marketing_internal,marketing_promoter_contribution,marketing_notes,artist_fee_total) VALUES (:event_id,:nightly_operating_cost,:security_total,:security_notes,:door_girls_count,:door_girls_total,:police_hours,:police_rate,:police_minimum,:police_total,:production_staff_count,:production_staff_total,:production_equipment_total,:production_equipment_notes,:hospitality_rider_estimate,:hospitality_rider_actual,:hospitality_rider_notes,:marketing_internal,:marketing_promoter_contribution,:marketing_notes,:artist_fee_total) RETURNING id"""), {"event_id":data.get("event_id"),"nightly_operating_cost":data.get("nightly_operating_cost",0),"security_total":data.get("security_total",0),"security_notes":data.get("security_notes"),"door_girls_count":data.get("door_girls_count",0),"door_girls_total":data.get("door_girls_total",0),"police_hours":data.get("police_hours",0),"police_rate":data.get("police_rate",50),"police_minimum":data.get("police_minimum",200),"police_total":data["police_total"],"production_staff_count":data.get("production_staff_count",0),"production_staff_total":data.get("production_staff_total",0),"production_equipment_total":data.get("production_equipment_total",0),"production_equipment_notes":data.get("production_equipment_notes"),"hospitality_rider_estimate":data.get("hospitality_rider_estimate",0),"hospitality_rider_actual":data.get("hospitality_rider_actual",0),"hospitality_rider_notes":data.get("hospitality_rider_notes"),"marketing_internal":data.get("marketing_internal",0),"marketing_promoter_contribution":data.get("marketing_promoter_contribution",0),"marketing_notes":data.get("marketing_notes"),"artist_fee_total":data.get("artist_fee_total",0)})
+          row = conn.execute(text("""INSERT INTO event_costs (event_id,nightly_operating_cost,security_total,security_notes,door_girls_count,door_girls_total,police_hours,police_rate,police_minimum,police_total,production_staff_count,production_staff_total,production_equipment_total,production_equipment_notes,hospitality_rider_estimate,hospitality_rider_actual,hospitality_rider_notes,marketing_internal,marketing_promoter_contribution,marketing_notes,artist_fee_total,cash_out_total,hourly_wages_tipped_total,tips_collected_total) VALUES (:event_id,:nightly_operating_cost,:security_total,:security_notes,:door_girls_count,:door_girls_total,:police_hours,:police_rate,:police_minimum,:police_total,:production_staff_count,:production_staff_total,:production_equipment_total,:production_equipment_notes,:hospitality_rider_estimate,:hospitality_rider_actual,:hospitality_rider_notes,:marketing_internal,:marketing_promoter_contribution,:marketing_notes,:artist_fee_total,:cash_out_total,:hourly_wages_tipped_total,:tips_collected_total) RETURNING id"""), {"event_id":data.get("event_id"),"nightly_operating_cost":data.get("nightly_operating_cost",0),"security_total":data.get("security_total",0),"security_notes":data.get("security_notes"),"door_girls_count":data.get("door_girls_count",0),"door_girls_total":data.get("door_girls_total",0),"police_hours":data.get("police_hours",0),"police_rate":data.get("police_rate",50),"police_minimum":data.get("police_minimum",200),"police_total":data["police_total"],"production_staff_count":data.get("production_staff_count",0),"production_staff_total":data.get("production_staff_total",0),"production_equipment_total":data.get("production_equipment_total",0),"production_equipment_notes":data.get("production_equipment_notes"),"hospitality_rider_estimate":data.get("hospitality_rider_estimate",0),"hospitality_rider_actual":data.get("hospitality_rider_actual",0),"hospitality_rider_notes":data.get("hospitality_rider_notes"),"marketing_internal":data.get("marketing_internal",0),"marketing_promoter_contribution":data.get("marketing_promoter_contribution",0),"marketing_notes":data.get("marketing_notes"),"artist_fee_total":data.get("artist_fee_total",0),"cash_out_total":data.get("cash_out_total",0),"hourly_wages_tipped_total":data.get("hourly_wages_tipped_total",0),"tips_collected_total":data.get("tips_collected_total",0)})
           conn.commit()
           return {"id": row.fetchone()[0], "updated": False}
 
@@ -2036,7 +2039,10 @@ def create_app(static_dir: str) -> FastAPI:
                       AVG(c.production_staff_total) AS prod_staff_avg,
                       AVG(c.production_equipment_total) AS prod_equip_avg,
                       AVG(c.marketing_internal) AS marketing_avg,
-                      AVG(c.hospitality_rider_actual) AS rider_avg
+                      AVG(c.hospitality_rider_actual) AS rider_avg,
+                      AVG(c.cash_out_total) AS cash_out_avg,
+                      AVG(c.hourly_wages_tipped_total) AS tipped_wages_avg,
+                      AVG(c.tips_collected_total) AS tips_avg
                     FROM events e
                     LEFT JOIN post_event_reviews r ON r.event_id = e.id
                     LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry ILIKE 'close%'
