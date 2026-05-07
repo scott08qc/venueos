@@ -1731,6 +1731,12 @@ def create_app(static_dir: str) -> FastAPI:
         with open(recap_path, "r") as f: content = f.read()
         return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
+    @api.get("/post-event", response_class=HTMLResponse)
+    def serve_post_event():
+        p = os.path.join(os.path.dirname(__file__), "post-event.html")
+        with open(p, "r") as f: content = f.read()
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+
     @api.get("/promoters/summary")
     def get_promoters_summary():
       if not engine:
