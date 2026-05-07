@@ -30,652 +30,929 @@ button{font-family:inherit;cursor:pointer}
 .logo em{color:var(--blue);font-style:normal}
 .sep{width:1px;height:18px;background:var(--border)}
 .nav-label{font-size:12px;font-weight:500;color:var(--ink2);max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nav-right{display:flex;align-items:center;gap:6px}
-.btn{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-weight:500;color:var(--ink2);background:var(--surface);transition:all .12s;text-decoration:none}
-.btn:hover{border-color:var(--blue);color:var(--blue)}
-.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
-.btn.primary:hover{background:var(--blue2)}
+.nav-right{display:flex;align-items:center;gap:10px}
 
-/* Tabs */
-.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;position:sticky;top:50px;z-index:190}
-.tab{height:42px;padding:0 16px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s}
-.tab:hover:not(.active){color:var(--ink1)}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
-.tab-badge{min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);font-size:10px;font-weight:600;color:var(--ink4);display:flex;align-items:center;justify-content:center}
-.tab.active .tab-badge{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
-.tab.complete .tab-badge{background:var(--green-light);border-color:var(--green-mid);color:var(--green)}
-.tab.complete{color:var(--green2)}
+/* Event header strip */
+.event-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.event-name{font-size:15px;font-weight:700;letter-spacing:-0.02em;color:var(--ink1)}
+.event-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:0.01em}
+.badge-blue{background:var(--blue-light);border:1px solid var(--blue-mid);color:var(--blue)}
+.badge-green{background:var(--green-light);border:1px solid var(--green-mid);color:var(--green)}
+.badge-amber{background:var(--amber-light);border:1px solid var(--amber-mid);color:var(--amber)}
+.badge-gray{background:var(--surface2);border:1px solid var(--border);color:var(--ink3)}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--border2)}
 
 /* Layout */
-.layout{display:grid;grid-template-columns:1fr 300px;min-height:calc(100vh - 92px)}
-.main{padding:20px 22px 60px;min-width:0}
-.sidebar{padding:16px 16px 40px;border-left:1px solid var(--border);background:var(--surface);position:sticky;top:92px;height:calc(100vh - 92px);overflow-y:auto}
+.layout{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:start;max-width:1100px;margin:0 auto;padding:24px 24px 60px}
+.main{min-width:0;padding-right:24px}
+.sidebar{position:sticky;top:66px}
 
-/* Event header */
-.event-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;box-shadow:var(--sh)}
-.event-name{font-size:15px;font-weight:700;letter-spacing:-0.02em;margin-bottom:5px}
-.event-meta{display:flex;flex-wrap:wrap;gap:5px}
-.meta-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;color:var(--ink3);background:var(--surface2)}
-.meta-pill b{font-weight:600;color:var(--ink2)}
-.status-badge{padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;flex-shrink:0}
-.status-badge.complete{background:var(--green-light);color:var(--green);border:1px solid var(--green-mid)}
-.status-badge.draft{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-mid)}
-.status-badge.active{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-mid)}
+/* Section divider */
+.section-divider{display:flex;align-items:center;gap:12px;margin:28px 0 16px}
+.section-divider:first-child{margin-top:0}
+.section-title{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink3);white-space:nowrap}
+.section-rule{flex:1;height:1px;background:var(--border)}
 
-/* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:12px;box-shadow:var(--sh)}
-.card-title{font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);padding-bottom:11px;margin-bottom:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
-.section-icon{width:20px;height:20px;border-radius:5px;background:var(--blue-light);border:1px solid var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
+.card-header{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-icon{width:20px;height:20px;border-radius:5px;background:var(--blue-light);border:1px solid var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.card-title{font-size:12px;font-weight:700;letter-spacing:0.01em;color:var(--ink1)}
+.card-body{padding:14px 16px}
 
-/* Grids */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
-.field{display:flex;flex-direction:column;gap:4px}
-.fl{font-size:11px;font-weight:500;color:var(--ink2)}
-.fl .hint{font-size:10px;font-weight:400;color:var(--ink4)}
-.fi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;font-size:12px;font-family:'DM Mono',monospace;color:var(--ink1);width:100%;transition:border-color .12s}
-.fi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-light)}
+/* Sub-section inside card */
+.subsection{margin-bottom:18px}
+.subsection:last-child{margin-bottom:0}
+.subsection-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.subsection-rule{height:1px;background:var(--border);margin:18px 0}
+
+/* Fields */
+.field{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;min-height:32px}
+.fl{font-size:12px;color:var(--ink2);flex-shrink:0;min-width:130px}
+.fl-wide{min-width:160px}
+.iw{position:relative;display:flex;align-items:center}
+.ip{position:absolute;left:9px;font-size:12px;color:var(--ink4);pointer-events:none;z-index:1}
+.fi{height:30px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);color:var(--ink1);font-family:inherit;font-size:12px;padding:0 9px;transition:border-color .12s,background .12s;width:140px}
+.fi:focus{outline:none;border-color:var(--blue);background:var(--surface)}
 .fi.dl{padding-left:22px}
-.fi.pct{padding-right:22px}
-.iw{position:relative}
-.ip{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:12px;color:var(--ink4);pointer-events:none}
-.is{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:12px;color:var(--ink4);pointer-events:none}
-.fi-select{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--ink1);width:100%;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236B6661' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .12s}
-.fi-select:focus{outline:none;border-color:var(--blue)}
-.fi-ta{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--ink1);width:100%;resize:vertical;min-height:68px;line-height:1.5;transition:border-color .12s}
-.fi-ta:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-light)}
-.fi-ro{background:var(--surface2);color:var(--ink3)}
+.fi.fw{width:100%}
+.fi-sm{width:80px}
+textarea.fi{height:72px;padding:7px 9px;resize:vertical;line-height:1.5}
+textarea.fi.tall{height:88px}
+select.fi{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239A9590' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.fi-auto{background:var(--surface2);color:var(--ink3)}
 
-/* Radio */
-.radio-row{display:flex;gap:6px;flex-wrap:wrap}
-.radio-opt{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--ink2);transition:all .12s}
-.radio-opt:hover{border-color:var(--blue);color:var(--blue)}
-.radio-opt input{accent-color:var(--blue);width:13px;height:13px;flex-shrink:0}
-.radio-opt.sel{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+/* Field row (full-width label above) */
+.field-block{margin:10px 0}
+.field-block .fl{margin-bottom:5px;display:block;font-size:12px;color:var(--ink2)}
 
-/* Divider */
-.dv{border:none;border-top:1px solid var(--border);margin:14px 0}
+/* Grid fields */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin:4px 0}
+.field-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 12px;margin:4px 0}
+.fg-item label{font-size:11px;color:var(--ink3);display:block;margin-bottom:3px}
 
-/* Calc strip */
-.calc-strip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-top:8px;font-size:12px;display:flex;align-items:center;justify-content:space-between;display:none}
-.calc-strip .cl{color:var(--ink3)}
-.calc-strip .cv{font-family:'DM Mono',monospace;font-weight:600;color:var(--ink1)}
+/* Cash out table */
+.co-table{width:100%;border-collapse:collapse;margin-top:2px}
+.co-table th{font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink4);text-align:left;padding:0 0 6px 0;border-bottom:1px solid var(--border)}
+.co-table th:nth-child(2){width:130px}
+.co-table th:last-child{width:160px}
+.co-table td{padding:5px 0;border-bottom:1px solid var(--bg);vertical-align:middle}
+.co-table td:first-child{font-size:12px;color:var(--ink2);padding-right:10px}
+.co-table td.subtotal-row{padding:8px 0 0;border-bottom:none}
+.co-total-row td{padding-top:8px;border-top:1px solid var(--border);border-bottom:none}
 
-/* Save row */
-.save-row{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding-top:14px;margin-top:4px;border-top:1px solid var(--border)}
-.save-ts{font-size:11px;color:var(--ink4);font-family:'DM Mono',monospace;margin-right:auto}
+/* Staff expander */
+.expander{margin-top:12px}
+.expander-trigger{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px dashed var(--border2);border-radius:var(--r);cursor:pointer;color:var(--ink3);font-size:12px;font-weight:500;background:none;width:100%;transition:all .12s}
+.expander-trigger:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.expander-trigger .chev{font-size:10px;transition:transform .15s;margin-left:auto}
+.expander-trigger.open .chev{transform:rotate(180deg)}
+.expander-body{display:none;margin-top:10px}
+.expander-body.open{display:block}
+.staff-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px}
+.staff-row .fi{width:100%}
+.btn-remove{width:24px;height:24px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);color:var(--ink4);display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;cursor:pointer;flex-shrink:0;transition:all .12s}
+.btn-remove:hover{border-color:var(--red-mid);color:var(--red);background:var(--red-light)}
+.btn-add-staff{margin-top:4px;padding:5px 10px;border:1px dashed var(--border2);border-radius:var(--r);background:none;color:var(--ink3);font-size:11px;font-weight:500;cursor:pointer;transition:all .12s}
+.btn-add-staff:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
 
-/* Tab panels */
-.tab-panel{display:none}
-.tab-panel.active{display:block}
+/* Variance indicator */
+.variance{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600}
+.variance.pos{color:var(--green2)}
+.variance.neg{color:var(--red2)}
+.variance.zero{color:var(--ink4)}
 
-/* Sidebar P&L */
-.sb-sect{padding:12px 0;border-top:1px solid var(--border)}
-.sb-sect:first-child{padding-top:0;border-top:none}
-.sb-label{font-size:9.5px;font-weight:700;letter-spacing:0.11em;text-transform:uppercase;color:var(--ink4);margin-bottom:7px}
-.tr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11.5px}
-.tr+.tr{border-top:1px solid var(--border)}
-.tr .tl{color:var(--ink3)}
-.tr .tv{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--ink1)}
-.tr.tot{font-weight:600;border-top:2px solid var(--border2) !important;margin-top:3px;padding-top:7px}
-.tr.tot .tl{color:var(--ink1);font-size:12px}
-.tr.tot .tv{font-size:13px}
-.tr.pos .tv{color:var(--green2)}
-.tr.neg .tv{color:var(--red2)}
+/* Buttons */
+.btn{height:34px;padding:0 16px;border-radius:var(--r);font-size:12px;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .12s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue2)}
+.btn-ghost{background:var(--surface2);color:var(--ink2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface3)}
+.btn-success{background:var(--green-light);color:var(--green);border:1px solid var(--green-mid)}
+.btn-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:4px}
+
+/* Save bar */
+.save-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:4px}
+.save-left{display:flex;align-items:center;gap:10px}
+
+/* Sidebar */
+.sb{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
+.sb-section{padding:12px 14px;border-bottom:1px solid var(--border)}
+.sb-section:last-child{border-bottom:none}
+.sb-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink4);margin-bottom:8px}
+.sb-row{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;gap:6px}
+.sb-label{font-size:11px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-val{font-size:12px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:-0.02em;white-space:nowrap;color:var(--ink2)}
+.sb-val.red{color:var(--red2)}
+.sb-rule{height:1px;background:var(--border);margin:6px 0}
+.sb-total-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0 0;gap:6px}
+.sb-total-label{font-size:12px;font-weight:700;color:var(--ink1)}
+.sb-total-val{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:-0.02em;color:var(--red2)}
+.sb-attendance{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.sb-att-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;text-align:center}
+.sb-att-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ink1)}
+.sb-att-label{font-size:10px;color:var(--ink4);margin-top:1px}
+
+/* Saved state */
+.saved-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
+.saved-dot.green{background:var(--green2)}
+.saved-dot.red{background:var(--red2)}
+.saved-text{font-size:11px;color:var(--ink4)}
 
 /* Toast */
-.toast{position:fixed;bottom:22px;right:22px;background:var(--ink1);color:#fff;padding:9px 15px;border-radius:var(--r-md);font-size:12px;font-weight:500;z-index:9999;transform:translateY(16px);opacity:0;transition:all .2s;pointer-events:none}
-.toast.show{transform:translateY(0);opacity:1}
-.toast.err{background:var(--red2)}
-.toast.ok{background:var(--green2)}
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 16px;border-radius:var(--r-md);font-size:12px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.14);pointer-events:all;opacity:0;transform:translateY(8px);transition:all .2s}
+.toast.show{opacity:1;transform:none}
+.toast.ok{background:var(--green-light);border:1px solid var(--green-mid);color:var(--green)}
+.toast.err{background:var(--red-light);border:1px solid var(--red-mid);color:var(--red)}
 
-.loading{text-align:center;padding:60px 24px;color:var(--ink4);font-size:13px}
+/* Loading state */
+.loading-mask{position:fixed;inset:0;background:rgba(247,245,242,.8);z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Rider variance */
+.rider-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.rider-grid .fg-item input{width:100%}
+
+/* Utility */
+.hidden{display:none!important}
+.mt4{margin-top:4px}
+.mt8{margin-top:8px}
 </style>
 </head>
 <body>
 
+<!-- Nav -->
 <nav class="nav">
   <div class="nav-left">
-    <div class="logo">Venue<em>OS</em></div>
-    <div class="sep"></div>
-    <div class="nav-label" id="navLabel">Post-Event Entry</div>
+    <span class="logo">Venue<em>OS</em></span>
+    <span class="sep"></span>
+    <span class="nav-label" id="nav-label">Post-Event Entry</span>
   </div>
   <div class="nav-right">
-    <a href="/api/calendar" class="btn">← Calendar</a>
-    <button class="btn" id="btnRecap" style="display:none" onclick="viewRecap()">View Recap →</button>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="saved-dot" id="saved-dot"></div>
+      <span class="saved-text" id="saved-text">Unsaved</span>
+    </div>
+    <a href="/api/calendar" style="text-decoration:none">
+      <button class="btn btn-ghost" style="height:30px;font-size:11px">← Calendar</button>
+    </a>
   </div>
 </nav>
 
-<div class="tabs">
-  <div class="tab active" data-tab="actuals">Night-of Actuals <span class="tab-badge" id="badge-actuals">1</span></div>
-  <div class="tab" data-tab="costs">Operating Costs <span class="tab-badge" id="badge-costs">2</span></div>
-  <div class="tab" data-tab="review">Post-Event Review <span class="tab-badge" id="badge-review">3</span></div>
+<!-- Event strip -->
+<div class="event-strip" id="event-strip">
+  <span class="event-name" id="event-name">Loading…</span>
+  <div class="event-meta" id="event-meta"></div>
 </div>
 
+<!-- Loading mask -->
+<div class="loading-mask" id="loading">
+  <div class="spinner"></div>
+  <span style="font-size:12px;color:var(--ink3)">Loading event data…</span>
+</div>
+
+<!-- Main layout -->
 <div class="layout">
-<div class="main">
-  <div id="loadingState" class="loading">Loading event…</div>
 
-  <div class="event-header" id="eventHeader" style="display:none">
-    <div>
-      <div class="event-name" id="evName">—</div>
-      <div class="event-meta" id="evMeta"></div>
+  <!-- MAIN COLUMN -->
+  <div class="main">
+
+    <!-- ═══ NIGHT OF ENTRY ═══ -->
+    <div class="section-divider">
+      <span class="section-title">Night of Entry</span>
+      <div class="section-rule"></div>
     </div>
-    <span class="status-badge active" id="evStatus">Active</span>
-  </div>
 
-  <!-- TAB 1: Night-of Actuals -->
-  <div class="tab-panel active" id="tab-actuals">
-
+    <!-- Attendance card -->
     <div class="card">
-      <div class="card-title"><div class="section-icon">⏱</div>Entry Timing</div>
-      <div class="field">
-        <div class="fl">When is this entry being made?</div>
-        <div class="radio-row">
-          <label class="radio-opt" onclick="selTime(this,'open')"><input type="radio" name="toe" value="open">Opening snapshot</label>
-          <label class="radio-opt" onclick="selTime(this,'midnight')"><input type="radio" name="toe" value="midnight">Midnight check</label>
-          <label class="radio-opt sel" onclick="selTime(this,'close')"><input type="radio" name="toe" value="close" checked>Close / Final</label>
+      <div class="card-header">
+        <div class="card-icon">👥</div>
+        <span class="card-title">Attendance</span>
+      </div>
+      <div class="card-body">
+        <div class="field-grid">
+          <div class="fg-item">
+            <label>Advance tickets scanned</label>
+            <input class="fi fw" type="number" id="ticket_scan_count" placeholder="0" oninput="upd()">
+          </div>
+          <div class="fg-item">
+            <label>Walk-ups</label>
+            <input class="fi fw" type="number" id="walk_up_count" placeholder="0" oninput="upd()">
+          </div>
+          <div class="fg-item">
+            <label>Comp admissions</label>
+            <input class="fi fw" type="number" id="comp_admissions" placeholder="0" oninput="upd()">
+          </div>
+          <div class="fg-item">
+            <label>Total headcount</label>
+            <input class="fi fw" type="number" id="total_headcount" placeholder="Auto" oninput="upd()">
+          </div>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <span class="fl fl-wide">Total tables for the night</span>
+          <input class="fi" type="number" id="tables_active" placeholder="0">
         </div>
       </div>
     </div>
 
+    <!-- Operating Costs card -->
     <div class="card">
-      <div class="card-title"><div class="section-icon">$</div>Bar &amp; Door Revenue</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Total Bar Sales <span class="hint">(gross)</span></div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="total_bar_sales" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Liquor / Spirits</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="liquor_sales" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Beer &amp; Wine</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="beer_wine_sales" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Bottle / Table Service</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="table_bottle_service" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Food &amp; NA Sales</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="non_alcoholic_food_sales" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Tips Collected</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="tips" placeholder="0.00"></div></div>
+      <div class="card-header">
+        <div class="card-icon">💰</div>
+        <span class="card-title">Operating Costs</span>
       </div>
-      <hr class="dv">
-      <div class="g3">
-        <div class="field"><div class="fl">Door Revenue — Cash</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="door_revenue_cash" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Door Revenue — Card</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="door_revenue_card" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Tax Collected</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="tax_collected" placeholder="0.00"></div></div>
+      <div class="card-body">
+
+        <!-- Security -->
+        <div class="subsection">
+          <div class="subsection-title">Security</div>
+          <div class="field">
+            <span class="fl">Officer count</span>
+            <input class="fi" type="number" id="security_count" placeholder="0" oninput="upd()">
+          </div>
+          <div class="field">
+            <span class="fl">Security total</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="security_total" placeholder="0.00" oninput="upd()"></div>
+          </div>
+        </div>
+
+        <div class="subsection-rule"></div>
+
+        <!-- Production -->
+        <div class="subsection">
+          <div class="subsection-title">Production</div>
+          <div class="field">
+            <span class="fl">Staff count</span>
+            <input class="fi" type="number" id="production_staff_count" placeholder="0" oninput="upd()">
+          </div>
+          <div class="field">
+            <span class="fl">Staff total</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="production_staff_total" placeholder="0.00" oninput="upd()"></div>
+          </div>
+          <div class="field-block mt8">
+            <span class="fl">Production notes</span>
+            <textarea class="fi fw" id="production_notes" placeholder="Equipment, setup, special notes…"></textarea>
+          </div>
+          <!-- Staff expander -->
+          <div class="expander">
+            <button class="expander-trigger" id="staff-trigger" onclick="toggleStaff()">
+              <span>+ Add staff names &amp; positions</span>
+              <span class="chev">▾</span>
+            </button>
+            <div class="expander-body" id="staff-body">
+              <div id="staff-rows"></div>
+              <button class="btn-add-staff" onclick="addStaffRow()">+ Add row</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection-rule"></div>
+
+        <!-- Cash Out -->
+        <div class="subsection">
+          <div class="subsection-title">Cash Out</div>
+          <table class="co-table">
+            <thead>
+              <tr>
+                <th>Line item</th>
+                <th>Amount</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Police</td>
+                <td><div class="iw"><span class="ip">$</span><input class="fi fi-sm dl" type="number" step="0.01" id="police_total" placeholder="0.00" oninput="upd()"></div></td>
+                <td><input class="fi fw" id="police_notes" placeholder="Officers, hours…"></td>
+              </tr>
+              <tr>
+                <td>Door</td>
+                <td><div class="iw"><span class="ip">$</span><input class="fi fi-sm dl" type="number" step="0.01" id="door_cashout" placeholder="0.00" oninput="upd()"></div></td>
+                <td><input class="fi fw" id="door_notes" placeholder="Door staff…"></td>
+              </tr>
+              <tr>
+                <td>Bathroom attendant</td>
+                <td><div class="iw"><span class="ip">$</span><input class="fi fi-sm dl" type="number" step="0.01" id="restroom_paidout_total" placeholder="0.00" oninput="upd()"></div></td>
+                <td><input class="fi fw" id="restroom_notes" placeholder="Notes…"></td>
+              </tr>
+              <tr>
+                <td>Coat check</td>
+                <td><div class="iw"><span class="ip">$</span><input class="fi fi-sm dl" type="number" step="0.01" id="coat_check_paidout_total" placeholder="0.00" oninput="upd()"></div></td>
+                <td><input class="fi fw" id="coat_check_notes" placeholder="Notes…"></td>
+              </tr>
+              <tr>
+                <td>Miscellaneous</td>
+                <td><div class="iw"><span class="ip">$</span><input class="fi fi-sm dl" type="number" step="0.01" id="cashout_misc" placeholder="0.00" oninput="upd()"></div></td>
+                <td><input class="fi fw" id="misc_notes" placeholder="Notes…"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
 
+    <!-- ═══ POST-EVENT ENTRY ═══ -->
+    <div class="section-divider">
+      <span class="section-title">Post-Event Entry</span>
+      <div class="section-rule"></div>
+    </div>
+
+    <!-- Post-event card -->
     <div class="card">
-      <div class="card-title"><div class="section-icon">−</div>Deductions &amp; Adjustments</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Comps Total</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="comps_total" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Voids</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="voids" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Charge Backs</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="charge_backs" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Bar COGS Deduction</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="bar_cogs_deduction" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">House Fee Deduction</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="house_fee_deduction" placeholder="0.00"></div></div>
+      <div class="card-body" style="padding:18px 16px">
+
+        <!-- Promoter Settlement -->
+        <div class="subsection">
+          <div class="subsection-title">Promoter Settlement</div>
+          <div class="field">
+            <span class="fl">Bar payout</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="promoter_bar_payout" placeholder="0.00" oninput="upd()"></div>
+          </div>
+          <div class="field">
+            <span class="fl">Door payout</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="promoter_door_payout" placeholder="0.00" oninput="upd()"></div>
+          </div>
+          <div class="field">
+            <span class="fl">Table payout</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="promoter_table_payout" placeholder="0.00" oninput="upd()"></div>
+          </div>
+          <div class="field">
+            <span class="fl">Artist cost (venue)</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="artist_cost_paid_by_venue" placeholder="0.00" oninput="upd()"></div>
+          </div>
+          <div class="field">
+            <span class="fl">Effective split %</span>
+            <input class="fi" type="number" step="0.1" id="effective_split_percentage" placeholder="0.0">
+          </div>
+          <div class="field-block mt8">
+            <span class="fl">Settlement notes</span>
+            <textarea class="fi fw" id="settlement_notes" placeholder="Settlement terms, disputes, notes…"></textarea>
+          </div>
+        </div>
+
+        <div class="subsection-rule"></div>
+
+        <!-- Marketing -->
+        <div class="subsection">
+          <div class="subsection-title">Marketing</div>
+          <div class="field">
+            <span class="fl">Internal spend</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="marketing_internal" placeholder="0.00" oninput="upd()"></div>
+          </div>
+          <div class="field">
+            <span class="fl">Promoter contribution</span>
+            <div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="marketing_promoter_contribution" placeholder="0.00" oninput="upd()"></div>
+          </div>
+          <div class="field-block mt8">
+            <span class="fl">Marketing notes</span>
+            <textarea class="fi fw" id="marketing_notes" placeholder="Channels, campaigns, spend breakdown…"></textarea>
+          </div>
+        </div>
+
+        <div class="subsection-rule"></div>
+
+        <!-- Rider (combined hospitality + tech/production) -->
+        <div class="subsection">
+          <div class="subsection-title">Rider</div>
+          <div class="rider-grid">
+            <div class="fg-item">
+              <label>Estimate</label>
+              <div class="iw"><span class="ip">$</span><input class="fi fw dl" type="number" step="0.01" id="rider_estimate" placeholder="0.00" oninput="upd()"></div>
+            </div>
+            <div class="fg-item">
+              <label>Actual</label>
+              <div class="iw"><span class="ip">$</span><input class="fi fw dl" type="number" step="0.01" id="rider_actual" placeholder="0.00" oninput="upd()"></div>
+            </div>
+            <div class="fg-item">
+              <label>Variance</label>
+              <div class="iw"><span class="ip">$</span><input class="fi fw dl fi-auto" type="text" id="rider_variance" placeholder="0.00" readonly tabindex="-1"></div>
+            </div>
+          </div>
+          <div class="field-block mt8">
+            <span class="fl">Rider notes</span>
+            <textarea class="fi fw" id="rider_notes" placeholder="Hospitality, tech, production equipment requests…"></textarea>
+          </div>
+        </div>
+
+        <div class="subsection-rule"></div>
+
+        <!-- Night Debrief -->
+        <div class="subsection">
+          <div class="subsection-title">Night Debrief</div>
+          <div class="field-block">
+            <span class="fl">What worked</span>
+            <textarea class="fi fw" id="what_to_replicate" placeholder="What should we replicate next time?"></textarea>
+          </div>
+          <div class="field-block">
+            <span class="fl">What to change</span>
+            <textarea class="fi fw" id="what_to_change" placeholder="What should we do differently?"></textarea>
+          </div>
+          <div class="field-block">
+            <span class="fl">Operational breakdowns</span>
+            <textarea class="fi fw" id="operational_breakdowns" placeholder="Issues, delays, failures, incidents…"></textarea>
+          </div>
+          <div class="field-block">
+            <span class="fl">Crowd observations</span>
+            <textarea class="fi fw" id="crowd_demographic_observations" placeholder="Demographics, energy, notable patterns…"></textarea>
+          </div>
+          <!-- Optional extras -->
+          <div class="expander mt8">
+            <button class="expander-trigger" id="debrief-trigger" onclick="toggleDebrief()">
+              <span>+ Additional observations</span>
+              <span class="chev">▾</span>
+            </button>
+            <div class="expander-body" id="debrief-body">
+              <div class="field-block mt8">
+                <span class="fl">Customer service</span>
+                <textarea class="fi fw" id="customer_service_observations" placeholder="Staff interactions, complaints, compliments…"></textarea>
+              </div>
+              <div class="field-block">
+                <span class="fl">Inventory</span>
+                <textarea class="fi fw" id="inventory_observations" placeholder="Stockouts, overages, waste…"></textarea>
+              </div>
+              <div class="field-block">
+                <span class="fl">Staffing</span>
+                <textarea class="fi fw" id="staffing_observations" placeholder="Coverage gaps, performance, callouts…"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection-rule"></div>
+
+        <!-- Promoter Scorecard -->
+        <div class="subsection">
+          <div class="subsection-title">Promoter Scorecard</div>
+          <div class="field">
+            <span class="fl">Artwork on time</span>
+            <select class="fi" id="promoter_artwork_on_time">
+              <option value="N/A">N/A</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Late">Late</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="fl">Social media posting</span>
+            <select class="fi" id="promoter_social_posting">
+              <option value="N/A">N/A</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Partial">Partial</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="fl">Attendance vs projection</span>
+            <select class="fi" id="promoter_attendance_vs_projection">
+              <option value="N/A">N/A</option>
+              <option value="Beat">Beat</option>
+              <option value="Met">Met</option>
+              <option value="Missed">Missed</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="fl">Role boundaries</span>
+            <select class="fi" id="promoter_role_boundaries">
+              <option value="N/A">N/A</option>
+              <option value="Good">Good</option>
+              <option value="Issues">Issues</option>
+              <option value="Problems">Problems</option>
+            </select>
+          </div>
+          <div class="field-block mt8">
+            <span class="fl">Promoter performance notes</span>
+            <textarea class="fi fw tall" id="promoter_performance_notes" placeholder="Overall promoter performance, relationship notes…"></textarea>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><div class="section-icon">👥</div>Attendance</div>
-      <div class="g4">
-        <div class="field"><div class="fl">Total Headcount</div><input class="fi" type="number" id="total_headcount" placeholder="0" oninput="upd()"></div>
-        <div class="field"><div class="fl">Ticket Scans</div><input class="fi" type="number" id="ticket_scan_count" placeholder="0"></div>
-        <div class="field"><div class="fl">Walk-ups</div><input class="fi" type="number" id="walk_up_count" placeholder="0"></div>
-        <div class="field"><div class="fl">Comp Admissions</div><input class="fi" type="number" id="comp_admissions" placeholder="0"></div>
+    <!-- Save bar -->
+    <div class="save-bar">
+      <div class="save-left">
+        <label class="fl" style="font-size:12px;font-weight:600;color:var(--ink1);white-space:nowrap">Review status</label>
+        <select class="fi" id="review_status" style="width:140px">
+          <option value="Draft">Draft</option>
+          <option value="In Review">In Review</option>
+          <option value="Complete">Complete</option>
+        </select>
       </div>
-      <hr class="dv">
-      <div class="g4">
-        <div class="field"><div class="fl">Tables Active</div><input class="fi" type="number" id="tables_active" placeholder="0"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🤝</div>Promoter Settlement</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Promoter Bar Payout</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="promoter_bar_payout" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Promoter Door Payout</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="promoter_door_payout" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Promoter Table Payout</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="promoter_table_payout" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Artist Cost Paid by Venue</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="artist_cost_paid_by_venue" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Effective Split %</div><div class="iw"><input class="fi pct" type="number" step="0.1" id="effective_split_percentage" placeholder="0.0"><span class="is">%</span></div></div>
-        <div class="field"><div class="fl">Benchmark Split</div><input class="fi" type="text" id="benchmark_effective_split" placeholder="e.g. 70/30"></div>
-      </div>
-      <hr class="dv">
-      <div class="g3">
-        <div class="field"><div class="fl">Bar Threshold Retained</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="bar_threshold_retained" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Door Threshold Retained</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="door_threshold_retained" placeholder="0.00"></div></div>
-      </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">Settlement Notes</div><textarea class="fi-ta" id="settlement_notes" placeholder="Unusual terms, deductions, disputes…"></textarea></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">📋</div>Incidents &amp; Notes</div>
-      <div class="g2">
-        <div class="field"><div class="fl">Incident Description</div><textarea class="fi-ta" id="incident_description" placeholder="Describe any incidents…"></textarea></div>
-        <div class="field"><div class="fl">Department Involved</div><textarea class="fi-ta" id="incident_department" placeholder="Security, Bar, Door…"></textarea></div>
-      </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">General Notes</div><textarea class="fi-ta" id="actuals_notes" placeholder="Any other observations from the night…"></textarea></div>
-    </div>
-
-    <div class="save-row">
-      <span class="save-ts" id="actualsTs"></span>
-      <button class="btn" onclick="switchTab('costs')">Operating Costs →</button>
-      <button class="btn primary" id="btnSaveActuals" onclick="saveActuals()">Save Night-of Actuals</button>
-    </div>
-  </div>
-
-  <!-- TAB 2: Operating Costs -->
-  <div class="tab-panel" id="tab-costs">
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🏢</div>Fixed Nightly Cost</div>
-      <div class="g2">
-        <div class="field"><div class="fl">Nightly Operating Cost <span class="hint">(from settings)</span></div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="nightly_operating_cost" placeholder="0.00" oninput="upd()"></div></div>
+      <div class="btn-row" style="padding-top:0">
+        <button class="btn btn-primary" id="save-btn" onclick="saveAll()">Save All</button>
+        <button class="btn btn-ghost" id="recap-btn" onclick="goRecap()">View Recap →</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🔒</div>Security &amp; Door Staff</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Security Total</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="security_total" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Door Girls Count</div><input class="fi" type="number" id="door_girls_count" placeholder="0"></div>
-        <div class="field"><div class="fl">Door Girls Total</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="door_girls_total" placeholder="0.00" oninput="upd()"></div></div>
+  </div><!-- end .main -->
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb">
+
+      <div class="sb-section">
+        <div class="sb-title">Night of Entry</div>
+        <div class="sb-row"><span class="sb-label">Security</span><span class="sb-val" id="sb-security">—</span></div>
+        <div class="sb-row"><span class="sb-label">Production</span><span class="sb-val" id="sb-production">—</span></div>
+        <div class="sb-row"><span class="sb-label">Cash out</span><span class="sb-val" id="sb-cashout">—</span></div>
+        <div class="sb-rule"></div>
+        <div class="sb-total-row">
+          <span class="sb-total-label">Night-of total</span>
+          <span class="sb-total-val" id="sb-night-total">$0</span>
+        </div>
       </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">Security Notes</div><input class="fi" type="text" id="security_notes" placeholder="Agency, headcount, unusual charges…"></div>
-      <hr class="dv">
-      <div class="g3">
-        <div class="field"><div class="fl">Police Hours</div><input class="fi" type="number" step="0.5" id="police_hours" placeholder="0" oninput="calcPolice()"></div>
-        <div class="field"><div class="fl">Police Rate ($/hr)</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" id="police_rate" value="50" oninput="calcPolice()"></div></div>
-        <div class="field"><div class="fl">Police Minimum</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" id="police_minimum" value="200" oninput="calcPolice()"></div></div>
+
+      <div class="sb-section">
+        <div class="sb-title">Post-Event</div>
+        <div class="sb-row"><span class="sb-label">Promoter payouts</span><span class="sb-val" id="sb-promoter-payouts">—</span></div>
+        <div class="sb-row"><span class="sb-label">Artist fee</span><span class="sb-val" id="sb-artist">—</span></div>
+        <div class="sb-row"><span class="sb-label">Marketing</span><span class="sb-val" id="sb-marketing">—</span></div>
+        <div class="sb-row"><span class="sb-label">Rider (actual)</span><span class="sb-val" id="sb-rider">—</span></div>
+        <div class="sb-rule"></div>
+        <div class="sb-total-row">
+          <span class="sb-total-label">Post-event total</span>
+          <span class="sb-total-val" id="sb-post-total">$0</span>
+        </div>
       </div>
-      <div class="calc-strip" id="policeStrip">
-        <span class="cl">Police total (calculated)</span><span class="cv" id="policeVal">$0</span>
+
+      <div class="sb-section">
+        <div class="sb-title">Attendance</div>
+        <div class="sb-attendance">
+          <div class="sb-att-box">
+            <div class="sb-att-val" id="sb-headcount">—</div>
+            <div class="sb-att-label">Headcount</div>
+          </div>
+          <div class="sb-att-box">
+            <div class="sb-att-val" id="sb-tables">—</div>
+            <div class="sb-att-label">Tables</div>
+          </div>
+        </div>
       </div>
+
+      <div class="sb-section" style="background:var(--surface2)">
+        <div class="sb-total-row" style="padding-top:0">
+          <span class="sb-total-label" style="font-size:13px">Combined costs</span>
+          <span class="sb-total-val" style="font-size:14px" id="sb-combined">$0</span>
+        </div>
+      </div>
+
     </div>
+  </div><!-- end .sidebar -->
 
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🎛</div>Production</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Staff Count</div><input class="fi" type="number" id="production_staff_count" placeholder="0"></div>
-        <div class="field"><div class="fl">Staff Total</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="production_staff_total" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Equipment / Tech Rider</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="production_equipment_total" placeholder="0.00" oninput="upd()"></div></div>
-      </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">Production Notes</div><input class="fi" type="text" id="production_equipment_notes" placeholder="AV, lighting, backline details…"></div>
-    </div>
+</div><!-- end .layout -->
 
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🥂</div>Hospitality Rider</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Rider Estimate</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="hospitality_rider_estimate" placeholder="0.00" oninput="calcHosp()"></div></div>
-        <div class="field"><div class="fl">Rider Actual</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="hospitality_rider_actual" placeholder="0.00" oninput="calcHosp();upd()"></div></div>
-        <div class="field"><div class="fl">Variance</div><div class="iw"><span class="ip">$</span><input class="fi dl fi-ro" type="number" id="hosp_variance" placeholder="0.00" readonly></div></div>
-      </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">Hospitality Notes</div><input class="fi" type="text" id="hospitality_rider_notes" placeholder="Items purchased, substitutions…"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">📣</div>Marketing</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Internal Marketing</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="marketing_internal" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Promoter Contribution</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="marketing_promoter_contribution" placeholder="0.00" oninput="upd()"></div></div>
-      </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">Marketing Notes</div><input class="fi" type="text" id="marketing_notes" placeholder="Flyer run, social ads, email blast…"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🎤</div>Artist Fee &amp; Cash Out</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Artist Fee Total</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="artist_fee_total" placeholder="0.00" oninput="upd()"></div></div>
-        <div class="field"><div class="fl">Cash Out Total</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="cash_out_total" placeholder="0.00" oninput="upd()"></div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🧑‍🍳</div>Labor Detail</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Tipped Hourly Wages</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="hourly_wages_tipped_total" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Tips Collected (labor)</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="tips_collected_total" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Restroom Attendant</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="restroom_paidout_total" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Coat Check</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="coat_check_paidout_total" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Bartender Wages</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="bartender_wages_total" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Barback Wages</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="barback_wages_total" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Server Wages</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="server_wages_total" placeholder="0.00"></div></div>
-      </div>
-    </div>
-
-    <div class="save-row">
-      <button class="btn" onclick="switchTab('actuals')">← Night-of Actuals</button>
-      <button class="btn" onclick="switchTab('review')">Post-Event Review →</button>
-      <button class="btn primary" id="btnSaveCosts" onclick="saveCosts()">Save Operating Costs</button>
-    </div>
-  </div>
-
-  <!-- TAB 3: Post-Event Review -->
-  <div class="tab-panel" id="tab-review">
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">✅</div>Revenue Reconciliation</div>
-      <div class="g3">
-        <div class="field"><div class="fl">Actual Attendance</div><input class="fi" type="number" id="rev_actual_attendance" placeholder="0"></div>
-        <div class="field"><div class="fl">Actual Door Revenue</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="actual_door_revenue" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Actual Bar Revenue</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="actual_bar_revenue" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Actual Table Revenue</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="actual_table_revenue" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Artist Cost Actual</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="artist_cost_actual" placeholder="0.00"></div></div>
-        <div class="field"><div class="fl">Staffing Cost Actual</div><div class="iw"><span class="ip">$</span><input class="fi dl" type="number" step="0.01" id="staffing_cost_actual" placeholder="0.00"></div></div>
-      </div>
-      <hr class="dv">
-      <div class="g3">
-        <div class="field"><div class="fl">Projected Split %</div><div class="iw"><input class="fi pct" type="number" step="0.1" id="projected_effective_split" placeholder="0.0"><span class="is">%</span></div></div>
-        <div class="field"><div class="fl">Actual Split %</div><div class="iw"><input class="fi pct" type="number" step="0.1" id="actual_effective_split" placeholder="0.0"><span class="is">%</span></div></div>
-        <div class="field"><div class="fl">Settlement Reference</div><input class="fi" type="text" id="settlement_notes_reference" placeholder="Invoice #, receipt…"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">💬</div>Night Debrief</div>
-      <div class="g2">
-        <div class="field"><div class="fl">Crowd &amp; Demographic Observations</div><textarea class="fi-ta" id="crowd_demographic_observations" placeholder="Age range, energy, demographics…"></textarea></div>
-        <div class="field"><div class="fl">Customer Service Observations</div><textarea class="fi-ta" id="customer_service_observations" placeholder="Complaints, wait times, staff responsiveness…"></textarea></div>
-        <div class="field"><div class="fl">Operational Breakdowns</div><textarea class="fi-ta" id="operational_breakdowns" placeholder="Equipment failures, staffing gaps…"></textarea></div>
-        <div class="field"><div class="fl">Inventory Observations</div><textarea class="fi-ta" id="inventory_observations" placeholder="Items that ran out, overstock, waste…"></textarea></div>
-        <div class="field"><div class="fl">What to Replicate</div><textarea class="fi-ta" id="what_to_replicate" placeholder="What worked — do this again…"></textarea></div>
-        <div class="field"><div class="fl">What to Change</div><textarea class="fi-ta" id="what_to_change" placeholder="What didn't work — adjust next time…"></textarea></div>
-      </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">Staffing Observations</div><textarea class="fi-ta" id="staffing_observations" placeholder="Performance notes on key roles…"></textarea></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">📊</div>Promoter Performance</div>
-      <div class="g2">
-        <div class="field"><div class="fl">Artwork delivered on time?</div>
-          <select class="fi-select" id="promoter_artwork_on_time">
-            <option value="N/A">N/A — Not required</option><option value="Yes">Yes — On time</option><option value="Late">Late — Minor delay</option><option value="No">No — Did not deliver</option>
-          </select></div>
-        <div class="field"><div class="fl">Social media met expectations?</div>
-          <select class="fi-select" id="promoter_social_posting">
-            <option value="N/A">N/A</option><option value="Yes">Yes — Met or exceeded</option><option value="Partial">Partial</option><option value="No">No — Did not post</option>
-          </select></div>
-        <div class="field"><div class="fl">Attendance vs. projection?</div>
-          <select class="fi-select" id="promoter_attendance_vs_projection">
-            <option value="N/A">N/A</option><option value="Exceeded">Exceeded projection</option><option value="Met">Met projection (±10%)</option><option value="Under">Under (10–30% below)</option><option value="Significantly Under">Significantly under (30%+)</option>
-          </select></div>
-        <div class="field"><div class="fl">Stayed within role boundaries?</div>
-          <select class="fi-select" id="promoter_role_boundaries">
-            <option value="N/A">N/A</option><option value="Yes">Yes — No issues</option><option value="Minor">Minor overreach</option><option value="No">No — Crossed boundaries</option>
-          </select></div>
-      </div>
-      <hr class="dv">
-      <div class="field"><div class="fl">Promoter Performance Notes</div><textarea class="fi-ta" id="promoter_performance_notes" placeholder="Overall assessment of the promoter's execution…"></textarea></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><div class="section-icon">🏁</div>Review Status</div>
-      <div class="g2">
-        <div class="field"><div class="fl">Status</div>
-          <select class="fi-select" id="review_status">
-            <option value="Draft">Draft — In progress</option><option value="Complete">Complete — Finalized</option><option value="Needs Follow-up">Needs Follow-up</option>
-          </select></div>
-      </div>
-    </div>
-
-    <div class="save-row">
-      <button class="btn" onclick="switchTab('costs')">← Operating Costs</button>
-      <button class="btn" id="btnViewRecap" style="display:none" onclick="viewRecap()">View Recap →</button>
-      <button class="btn primary" id="btnSaveReview" onclick="saveReview()">Save Post-Event Review</button>
-    </div>
-  </div>
-</div>
-
-<!-- Sidebar -->
-<div class="sidebar">
-  <div class="sb-sect">
-    <div class="sb-label">Live P&amp;L</div>
-    <div class="tr"><span class="tl">Bar sales</span><span class="tv" id="sb_bar">—</span></div>
-    <div class="tr"><span class="tl">Door revenue</span><span class="tv" id="sb_door">—</span></div>
-    <div class="tr tot"><span class="tl">Gross</span><span class="tv" id="sb_gross">—</span></div>
-  </div>
-  <div class="sb-sect">
-    <div class="sb-label">Costs</div>
-    <div class="tr"><span class="tl">Operating</span><span class="tv" id="sb_op">—</span></div>
-    <div class="tr"><span class="tl">Security</span><span class="tv" id="sb_sec">—</span></div>
-    <div class="tr"><span class="tl">Production</span><span class="tv" id="sb_prod">—</span></div>
-    <div class="tr"><span class="tl">Hospitality</span><span class="tv" id="sb_hosp">—</span></div>
-    <div class="tr"><span class="tl">Marketing</span><span class="tv" id="sb_mkt">—</span></div>
-    <div class="tr"><span class="tl">Artist</span><span class="tv" id="sb_art">—</span></div>
-    <div class="tr"><span class="tl">Promoter payouts</span><span class="tv" id="sb_prom">—</span></div>
-    <div class="tr"><span class="tl">Cash out</span><span class="tv" id="sb_cash">—</span></div>
-    <div class="tr tot"><span class="tl">Total costs</span><span class="tv" id="sb_ctot">—</span></div>
-  </div>
-  <div class="sb-sect">
-    <div class="tr tot" id="sb_net_row"><span class="tl">Net</span><span class="tv" id="sb_net">—</span></div>
-    <div class="tr"><span class="tl">Net margin</span><span class="tv" id="sb_margin">—</span></div>
-  </div>
-  <div class="sb-sect">
-    <div class="sb-label">Attendance</div>
-    <div class="tr"><span class="tl">Headcount</span><span class="tv" id="sb_hc">—</span></div>
-    <div class="tr"><span class="tl">SPH</span><span class="tv" id="sb_sph">—</span></div>
-    <div class="tr"><span class="tl">Deductions</span><span class="tv" id="sb_deduct">—</span></div>
-    <div class="tr"><span class="tl">Net bar</span><span class="tv" id="sb_netbar">—</span></div>
-  </div>
-  <div class="sb-sect" id="projPanel" style="display:none">
-    <div class="sb-label">vs. Projected</div>
-    <div class="tr"><span class="tl">Proj. bar</span><span class="tv" id="sb_pbar">—</span></div>
-    <div class="tr"><span class="tl">Proj. door</span><span class="tv" id="sb_pdoor">—</span></div>
-    <div class="tr"><span class="tl">Bar variance</span><span class="tv" id="sb_vbar">—</span></div>
-    <div class="tr"><span class="tl">Door variance</span><span class="tv" id="sb_vdoor">—</span></div>
-  </div>
-</div>
-</div>
-
-<div class="toast" id="toast"></div>
+<!-- Toast container -->
+<div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-const BASE='/api';
-const params=new URLSearchParams(location.search);
-const EID=parseInt(params.get('event_id')||'0');
-let actualsId=null,costsId=null,reviewId=null,evData={};
-const $=id=>document.getElementById(id);
-const fv=id=>parseFloat($( id)?.value||0)||0;
-const iv=id=>parseInt($(id)?.value||0)||0;
-const sv=(id,v)=>{if($(id))$(id).value=(v??'');};
-const fmt=n=>n==null?'—':'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtN=n=>n==null?'—':Number(n).toLocaleString('en-US');
+const BASE = '/api';
+const $ = id => document.getElementById(id);
+const fv = id => parseFloat($(''+id)?.value || 0) || 0;
+const iv = id => parseInt($(''+id)?.value || 0) || 0;
+const sv = (id, v) => { if($(id)) $(id).value = (v ?? ''); };
+const fmt = n => n === 0 ? '—' : '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const fmtN = n => n.toLocaleString();
 
-function toast(msg,type=''){
-  const t=$('toast');t.textContent=msg;
-  t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'')+' show';
-  setTimeout(()=>t.className='toast',2800);
+let EID = null;
+let actualsId = null, costsId = null, reviewId = null;
+let evData = {};
+
+// Get event_id from URL
+const params = new URLSearchParams(location.search);
+EID = parseInt(params.get('event_id')) || null;
+
+// ── Live sidebar update ──────────────────────────────────────────────────
+function upd() {
+  // Auto-compute headcount if blank
+  const scan = iv('ticket_scan_count'), walkup = iv('walk_up_count'), comp = iv('comp_admissions');
+  const hc_field = $('total_headcount');
+  if(hc_field && hc_field.dataset.manual !== 'true' && (scan || walkup || comp)) {
+    hc_field.value = scan + walkup + comp;
+  }
+
+  // Night of Entry costs
+  const security = fv('security_total');
+  const production = fv('production_staff_total');
+  const cashout = fv('police_total') + fv('door_cashout') + fv('restroom_paidout_total') +
+                  fv('coat_check_paidout_total') + fv('cashout_misc');
+  const nightTotal = security + production + cashout;
+
+  // Post-event costs
+  const promoterPayouts = fv('promoter_bar_payout') + fv('promoter_door_payout') + fv('promoter_table_payout');
+  const artist = fv('artist_cost_paid_by_venue');
+  const marketing = fv('marketing_internal') + fv('marketing_promoter_contribution');
+  const riderActual = fv('rider_actual');
+  const postTotal = promoterPayouts + artist + marketing + riderActual;
+
+  // Rider variance
+  const riderEst = fv('rider_estimate');
+  const riderVar = riderActual - riderEst;
+  sv('rider_variance', riderVar === 0 ? '0.00' : (riderVar > 0 ? '+' : '') + riderVar.toFixed(2));
+
+  // Headcount & tables
+  const hc = iv('total_headcount');
+  const tables = iv('tables_active');
+
+  // Sidebar
+  $('sb-security').textContent = security > 0 ? fmt(security) : '—';
+  $('sb-production').textContent = production > 0 ? fmt(production) : '—';
+  $('sb-cashout').textContent = cashout > 0 ? fmt(cashout) : '—';
+  $('sb-night-total').textContent = fmt(nightTotal === 0 ? 0 : nightTotal);
+  if(nightTotal === 0) $('sb-night-total').textContent = '$0';
+
+  $('sb-promoter-payouts').textContent = promoterPayouts > 0 ? fmt(promoterPayouts) : '—';
+  $('sb-artist').textContent = artist > 0 ? fmt(artist) : '—';
+  $('sb-marketing').textContent = marketing > 0 ? fmt(marketing) : '—';
+  $('sb-rider').textContent = riderActual > 0 ? fmt(riderActual) : '—';
+  $('sb-post-total').textContent = postTotal === 0 ? '$0' : fmt(postTotal);
+
+  $('sb-headcount').textContent = hc > 0 ? fmtN(hc) : '—';
+  $('sb-tables').textContent = tables > 0 ? fmtN(tables) : '—';
+
+  const combined = nightTotal + postTotal;
+  $('sb-combined').textContent = combined === 0 ? '$0' : fmt(combined);
+
+  // Mark unsaved
+  setSavedState('unsaved');
 }
 
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
-function switchTab(n){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===n));
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+n));
+// Auto-compute headcount unless user manually typed in that field
+$('total_headcount') && $('total_headcount').addEventListener('input', () => {
+  $('total_headcount').dataset.manual = 'true';
+  upd();
+});
+
+// ── Save state indicator ────────────────────────────────────────────────
+function setSavedState(state) {
+  const dot = $('saved-dot'), txt = $('saved-text');
+  if(state === 'saved')  { dot.className='saved-dot green'; txt.textContent='Saved'; }
+  else if(state === 'error') { dot.className='saved-dot red'; txt.textContent='Error'; }
+  else                   { dot.className='saved-dot'; txt.textContent='Unsaved'; }
 }
 
-function selTime(el,v){
-  document.querySelectorAll('.radio-opt').forEach(o=>o.classList.remove('sel'));
-  el.classList.add('sel');
+// ── Expanders ───────────────────────────────────────────────────────────
+function toggleStaff() {
+  const t = $('staff-trigger'), b = $('staff-body');
+  const open = b.classList.toggle('open');
+  t.classList.toggle('open', open);
+  if(open && $('staff-rows').children.length === 0) addStaffRow();
+}
+function toggleDebrief() {
+  const t = $('debrief-trigger'), b = $('debrief-body');
+  const open = b.classList.toggle('open');
+  t.classList.toggle('open', open);
+}
+function addStaffRow() {
+  const row = document.createElement('div');
+  row.className = 'staff-row';
+  row.innerHTML = `<input class="fi" type="text" placeholder="Name"><input class="fi" type="text" placeholder="Position / role"><button class="btn-remove" onclick="this.parentElement.remove()" title="Remove">×</button>`;
+  $('staff-rows').appendChild(row);
 }
 
-function calcPolice(){
-  const h=fv('police_hours'),r=fv('police_rate'),m=fv('police_minimum');
-  const strip=$('policeStrip');
-  if(h>0){const tot=Math.max(h*r,m);$('policeVal').textContent=fmt(tot);strip.style.display='flex';upd();}
-  else strip.style.display='none';
+// ── Toast ───────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const w = $('toast-wrap');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  w.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-function calcHosp(){
-  const e=fv('hospitality_rider_estimate'),a=fv('hospitality_rider_actual');
-  sv('hosp_variance',(a-e).toFixed(2));
-}
+// ── Load data ───────────────────────────────────────────────────────────
+async function loadEvent() {
+  if(!EID) {
+    $('loading').style.display = 'none';
+    $('event-name').textContent = 'No event selected';
+    return;
+  }
+  try {
+    // Event header
+    const e = await (await fetch(`${BASE}/events/${EID}`)).json();
+    evData = e;
+    $('nav-label').textContent = e.event_name || 'Post-Event Entry';
+    $('event-name').textContent = e.event_name || '—';
+    const meta = $('event-meta');
+    const dt = e.event_date ? new Date(e.event_date + 'T12:00:00').toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric',year:'numeric'}) : '';
+    if(dt) meta.innerHTML += `<span class="badge badge-gray">${dt}</span>`;
+    if(e.promoter_name) meta.innerHTML += `<span class="dot"></span><span class="badge badge-blue">${e.promoter_name}</span>`;
+    if(e.genre) meta.innerHTML += `<span class="dot"></span><span class="badge badge-gray">${e.genre}</span>`;
 
-function upd(){
-  const bar=fv('total_bar_sales'),door=fv('door_revenue_cash')+fv('door_revenue_card'),gross=bar+door;
-  const hc=iv('total_headcount'),deduct=fv('comps_total')+fv('voids')+fv('charge_backs'),netBar=bar-deduct;
-  const prom=fv('promoter_bar_payout')+fv('promoter_door_payout')+fv('promoter_table_payout');
-  const h=fv('police_hours'),r=fv('police_rate'),mp=fv('police_minimum');
-  const police=h>0?Math.max(h*r,mp):0;
-  const op=fv('nightly_operating_cost'),sec=fv('security_total')+fv('door_girls_total')+police;
-  const prod=fv('production_staff_total')+fv('production_equipment_total');
-  const hosp=fv('hospitality_rider_actual');
-  const mkt=fv('marketing_internal')+fv('marketing_promoter_contribution');
-  const art=fv('artist_fee_total')+fv('artist_cost_paid_by_venue');
-  const cash=fv('cash_out_total');
-  const ctot=op+sec+prod+hosp+mkt+art+prom+cash;
-  const net=gross-ctot,margin=gross>0?(net/gross*100):null;
+    // Settings (nightly cost default — read only, no longer entered)
+    // Actuals
+    const a = await (await fetch(`${BASE}/actuals/${EID}`)).json();
+    if(a && a.length > 0) {
+      const r = a[a.length - 1];
+      actualsId = r.id;
+      sv('ticket_scan_count', r.ticket_scan_count);
+      sv('walk_up_count', r.walk_up_count);
+      sv('comp_admissions', r.comp_admissions);
+      sv('total_headcount', r.total_headcount);
+      sv('tables_active', r.tables_active);
+      sv('promoter_bar_payout', r.promoter_bar_payout);
+      sv('promoter_door_payout', r.promoter_door_payout);
+      sv('promoter_table_payout', r.promoter_table_payout);
+      sv('artist_cost_paid_by_venue', r.artist_cost_paid_by_venue);
+      sv('effective_split_percentage', r.effective_split_percentage);
+      sv('settlement_notes', r.settlement_notes);
+    }
 
-  const f=v=>v?fmt(v):'—';
-  $('sb_bar').textContent=f(bar);$('sb_door').textContent=f(door);$('sb_gross').textContent=f(gross);
-  $('sb_op').textContent=f(op);$('sb_sec').textContent=f(sec);$('sb_prod').textContent=f(prod);
-  $('sb_hosp').textContent=f(hosp);$('sb_mkt').textContent=f(mkt);$('sb_art').textContent=f(art);
-  $('sb_prom').textContent=f(prom);$('sb_cash').textContent=f(cash);$('sb_ctot').textContent=f(ctot);
-  $('sb_deduct').textContent=f(deduct);$('sb_netbar').textContent=f(netBar);
-  $('sb_hc').textContent=hc?fmtN(hc):'—';
-  $('sb_sph').textContent=(gross>0&&hc>0)?fmt(gross/hc):'—';
-  $('sb_net').textContent=gross?fmt(net):'—';
-  $('sb_net_row').className='tr tot '+(net>0?'pos':net<0?'neg':'');
-  $('sb_margin').textContent=margin!=null?margin.toFixed(1)+'%':'—';
+    // Costs
+    const c = await (await fetch(`${BASE}/costs/${EID}`)).json();
+    if(c && c.id) {
+      costsId = c.id;
+      sv('security_count', c.door_girls_count);
+      sv('security_total', c.security_total);
+      sv('production_staff_count', c.production_staff_count);
+      sv('production_staff_total', c.production_staff_total);
+      sv('production_notes', c.production_equipment_notes);
+      sv('police_total', c.police_total);
+      sv('door_cashout', c.door_girls_total);
+      sv('restroom_paidout_total', c.restroom_paidout_total);
+      sv('coat_check_paidout_total', c.coat_check_paidout_total);
+      sv('cashout_misc', c.cash_out_total);
+      sv('marketing_internal', c.marketing_internal);
+      sv('marketing_promoter_contribution', c.marketing_promoter_contribution);
+      sv('marketing_notes', c.marketing_notes);
+      sv('rider_estimate', c.hospitality_rider_estimate);
+      sv('rider_actual', c.hospitality_rider_actual);
+      sv('rider_notes', c.hospitality_rider_notes);
+      // Cash out notes stored in security_notes (combined)
+      if(c.security_notes) {
+        try {
+          const cn = JSON.parse(c.security_notes);
+          sv('police_notes', cn.police); sv('door_notes', cn.door);
+          sv('restroom_notes', cn.restroom); sv('coat_check_notes', cn.coat_check);
+          sv('misc_notes', cn.misc);
+        } catch(e) {}
+      }
+    }
 
-  if(evData.projected_bar_revenue||evData.projected_door_revenue){
-    $('projPanel').style.display='';
-    const pb=evData.projected_bar_revenue,pd=evData.projected_door_revenue;
-    $('sb_pbar').textContent=fmt(pb);$('sb_pdoor').textContent=fmt(pd);
-    $('sb_vbar').textContent=pb!=null?fmt(bar-pb):'—';
-    $('sb_vdoor').textContent=pd!=null?fmt(door-pd):'—';
+    // Review
+    const rv = await (await fetch(`${BASE}/reviews/${EID}`)).json();
+    if(rv && rv.id) {
+      reviewId = rv.id;
+      sv('what_to_replicate', rv.what_to_replicate);
+      sv('what_to_change', rv.what_to_change);
+      sv('operational_breakdowns', rv.operational_breakdowns);
+      sv('crowd_demographic_observations', rv.crowd_demographic_observations);
+      sv('customer_service_observations', rv.customer_service_observations);
+      sv('inventory_observations', rv.inventory_observations);
+      sv('staffing_observations', rv.staffing_observations);
+      sv('promoter_artwork_on_time', rv.promoter_artwork_on_time);
+      sv('promoter_social_posting', rv.promoter_social_posting);
+      sv('promoter_attendance_vs_projection', rv.promoter_attendance_vs_projection);
+      sv('promoter_role_boundaries', rv.promoter_role_boundaries);
+      sv('promoter_performance_notes', rv.promoter_performance_notes);
+      if(rv.review_status) $('review_status').value = rv.review_status;
+    }
+
+    upd();
+    setSavedState('saved');
+  } catch(err) {
+    console.error(err);
+    toast('Failed to load event data', 'err');
+  } finally {
+    $('loading').style.display = 'none';
   }
 }
 
-async function loadEvent(){
-  if(!EID){$('loadingState').textContent='No event_id in URL. Add ?event_id=N';return;}
-  try{
-    const e=await(await fetch(`${BASE}/events/${EID}`)).json();
-    evData=e;
-    $('evName').textContent=e.event_name||'Unnamed Event';
-    document.title='VenueOS · Post-Event — '+(e.event_name||EID);
-    $('navLabel').textContent='Post-Event · '+(e.event_name||'Event '+EID);
-    const chips=[
-      e.event_date?`<span class="meta-pill">📅 <b>${e.event_date}</b></span>`:'',
-      e.event_type?`<span class="meta-pill"><b>${e.event_type}</b></span>`:'',
-      e.promoter_name?`<span class="meta-pill">Promoter: <b>${e.promoter_name}</b></span>`:'',
-      e.artist_name?`<span class="meta-pill">Artist: <b>${e.artist_name}</b></span>`:'',
-      e.projected_attendance?`<span class="meta-pill">Proj. ${fmtN(e.projected_attendance)} guests</span>`:'',
-    ];
-    $('evMeta').innerHTML=chips.filter(Boolean).join('');
-    const s=(e.event_status||'').toLowerCase();
-    const badge=$('evStatus');
-    badge.className='status-badge '+(s.includes('complet')?'complete':s.includes('confirm')?'complete':'active');
-    badge.textContent=e.event_status||'Active';
-  }catch(err){$('loadingState').textContent='Event not found ('+err.message+')';return;}
-
-  // Load settings default
-  try{
-    const sets=await(await fetch(`${BASE}/settings`)).json();
-    const noc=(sets||[]).find(s=>s.key==='nightly_operating_cost');
-    if(noc&&!fv('nightly_operating_cost'))sv('nightly_operating_cost',noc.value);
-  }catch{}
-
-  // Load actuals
-  try{
-    const a=await(await fetch(`${BASE}/actuals/${EID}`)).json();
-    if(a&&a.length>0){
-      const r=a[a.length-1];actualsId=r.id;
-      const af=['total_bar_sales','liquor_sales','beer_wine_sales','table_bottle_service','non_alcoholic_food_sales','tips','door_revenue_cash','door_revenue_card','tax_collected','comps_total','voids','charge_backs','bar_cogs_deduction','house_fee_deduction','total_headcount','ticket_scan_count','walk_up_count','comp_admissions','tables_active','promoter_bar_payout','promoter_door_payout','promoter_table_payout','artist_cost_paid_by_venue','effective_split_percentage','bar_threshold_retained','door_threshold_retained','benchmark_effective_split','settlement_notes','incident_description','incident_department'];
-      af.forEach(f=>{if(r[f]!=null)sv(f,r[f]);});
-      sv('actuals_notes',r.notes);
-      if(r.updated_at)$('actualsTs').textContent='Saved '+timeAgo(r.updated_at);
-      markComplete('actuals');
-    }
-  }catch{}
-
-  // Load costs
-  try{
-    const c=await(await fetch(`${BASE}/costs/${EID}`)).json();
-    if(c&&c.id){
-      costsId=c.id;
-      const cf=['nightly_operating_cost','security_total','security_notes','door_girls_count','door_girls_total','police_hours','police_rate','police_minimum','production_staff_count','production_staff_total','production_equipment_total','production_equipment_notes','hospitality_rider_estimate','hospitality_rider_actual','hospitality_rider_notes','marketing_internal','marketing_promoter_contribution','marketing_notes','artist_fee_total','cash_out_total','hourly_wages_tipped_total','tips_collected_total','restroom_paidout_total','coat_check_paidout_total','bartender_wages_total','barback_wages_total','server_wages_total'];
-      cf.forEach(f=>{if(c[f]!=null)sv(f,c[f]);});
-      calcPolice();calcHosp();markComplete('costs');
-    }
-  }catch{}
-
-  // Load review
-  try{
-    const rv=await(await fetch(`${BASE}/reviews/${EID}`)).json();
-    if(rv&&rv.id){
-      reviewId=rv.id;
-      ['actual_door_revenue','actual_bar_revenue','actual_table_revenue','artist_cost_actual','staffing_cost_actual','crowd_demographic_observations','customer_service_observations','operational_breakdowns','what_to_replicate','what_to_change','promoter_performance_notes','inventory_observations','staffing_observations','projected_effective_split','actual_effective_split','settlement_notes_reference'].forEach(f=>{if(rv[f]!=null)sv(f,rv[f]);});
-      sv('rev_actual_attendance',rv.actual_attendance);
-      if(rv.review_status)$('review_status').value=rv.review_status;
-      ['promoter_artwork_on_time','promoter_social_posting','promoter_attendance_vs_projection','promoter_role_boundaries'].forEach(f=>{if(rv[f])$(f).value=rv[f];});
-      markComplete('review');
-    }
-  }catch{}
-
-  $('loadingState').style.display='none';
-  $('eventHeader').style.display='flex';
-  $('btnRecap').style.display='inline-flex';
-  $('btnViewRecap').style.display='inline-flex';
-  upd();
+// ── Save functions ──────────────────────────────────────────────────────
+async function saveActuals() {
+  const p = {
+    event_id: EID,
+    time_of_entry: new Date().toISOString(),
+    total_bar_sales: 0, liquor_sales: 0, beer_wine_sales: 0,
+    table_bottle_service: 0, comps_total: 0, voids: 0,
+    tax_collected: 0, tips: 0, door_revenue_cash: 0, door_revenue_card: 0,
+    bar_cogs_deduction: 0, bar_threshold_retained: 0,
+    house_fee_deduction: 0, door_threshold_retained: 0, charge_backs: 0,
+    non_alcoholic_food_sales: 0, benchmark_effective_split: null,
+    incident_description: null, incident_department: null, notes: null,
+    total_headcount: iv('total_headcount'),
+    tables_active: iv('tables_active'),
+    ticket_scan_count: iv('ticket_scan_count'),
+    walk_up_count: iv('walk_up_count'),
+    comp_admissions: iv('comp_admissions'),
+    promoter_bar_payout: fv('promoter_bar_payout'),
+    promoter_door_payout: fv('promoter_door_payout'),
+    promoter_table_payout: fv('promoter_table_payout'),
+    artist_cost_paid_by_venue: fv('artist_cost_paid_by_venue'),
+    effective_split_percentage: fv('effective_split_percentage') || null,
+    settlement_notes: $('settlement_notes')?.value || null,
+  };
+  let res;
+  if(actualsId) {
+    res = await fetch(`${BASE}/actuals/${actualsId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)});
+  } else {
+    res = await fetch(`${BASE}/actuals`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)});
+    if(res.ok) { const j = await res.json(); actualsId = j.id; }
+  }
+  if(!res.ok) throw new Error('actuals save failed');
 }
 
-function markComplete(tab){
-  const badge=$(  'badge-'+tab);if(!badge)return;
-  badge.textContent='✓';badge.closest('.tab').classList.add('complete');
+async function saveCosts() {
+  // Pack cash out notes as JSON into security_notes column
+  const cashoutNotes = JSON.stringify({
+    police: $('police_notes')?.value || '',
+    door: $('door_notes')?.value || '',
+    restroom: $('restroom_notes')?.value || '',
+    coat_check: $('coat_check_notes')?.value || '',
+    misc: $('misc_notes')?.value || ''
+  });
+  const p = {
+    event_id: EID,
+    nightly_operating_cost: 0,
+    security_total: fv('security_total'),
+    security_notes: cashoutNotes,
+    door_girls_count: iv('security_count'),
+    door_girls_total: fv('door_cashout'),
+    police_hours: 0, police_rate: 0, police_minimum: 0,
+    police_total: fv('police_total'),
+    production_staff_count: iv('production_staff_count'),
+    production_staff_total: fv('production_staff_total'),
+    production_equipment_total: 0,
+    production_equipment_notes: $('production_notes')?.value || null,
+    hospitality_rider_estimate: fv('rider_estimate'),
+    hospitality_rider_actual: fv('rider_actual'),
+    hospitality_rider_notes: $('rider_notes')?.value || null,
+    marketing_internal: fv('marketing_internal'),
+    marketing_promoter_contribution: fv('marketing_promoter_contribution'),
+    marketing_notes: $('marketing_notes')?.value || null,
+    artist_fee_total: 0,
+    cash_out_total: fv('cashout_misc'),
+    hourly_wages_tipped_total: 0, tips_collected_total: 0,
+    restroom_paidout_total: fv('restroom_paidout_total'),
+    coat_check_paidout_total: fv('coat_check_paidout_total'),
+    bartender_wages_total: 0, barback_wages_total: 0, server_wages_total: 0,
+  };
+  const res = await fetch(`${BASE}/costs`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)});
+  if(!res.ok) throw new Error('costs save failed');
+  if(!costsId) { const j = await res.json(); costsId = j.id; }
 }
 
-function timeAgo(ts){
-  if(!ts)return'';const d=new Date(ts),now=new Date(),diff=Math.floor((now-d)/60000);
-  if(diff<1)return'just now';if(diff<60)return diff+'m ago';if(diff<1440)return Math.floor(diff/60)+'h ago';
-  return d.toLocaleDateString();
+async function saveReview() {
+  const p = {
+    event_id: EID,
+    actual_attendance: iv('total_headcount') || null,
+    actual_door_revenue: 0, actual_bar_revenue: 0, actual_table_revenue: 0,
+    artist_cost_actual: fv('artist_cost_paid_by_venue'),
+    staffing_cost_actual: fv('production_staff_total'),
+    crowd_demographic_observations: $('crowd_demographic_observations')?.value || null,
+    customer_service_observations: $('customer_service_observations')?.value || null,
+    operational_breakdowns: $('operational_breakdowns')?.value || null,
+    what_to_replicate: $('what_to_replicate')?.value || null,
+    what_to_change: $('what_to_change')?.value || null,
+    promoter_performance_notes: $('promoter_performance_notes')?.value || null,
+    inventory_observations: $('inventory_observations')?.value || null,
+    staffing_observations: $('staffing_observations')?.value || null,
+    promoter_artwork_on_time: $('promoter_artwork_on_time')?.value || 'N/A',
+    promoter_social_posting: $('promoter_social_posting')?.value || 'N/A',
+    promoter_attendance_vs_projection: $('promoter_attendance_vs_projection')?.value || 'N/A',
+    promoter_role_boundaries: $('promoter_role_boundaries')?.value || 'N/A',
+    review_status: $('review_status')?.value || 'Draft',
+    projected_effective_split: null, actual_effective_split: fv('effective_split_percentage') || null,
+    settlement_notes_reference: $('settlement_notes')?.value || null,
+  };
+  let res;
+  if(reviewId) {
+    res = await fetch(`${BASE}/reviews/${reviewId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)});
+  } else {
+    res = await fetch(`${BASE}/reviews`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)});
+    if(res.ok) { const j = await res.json(); reviewId = j.id; }
+  }
+  if(!res.ok) throw new Error('review save failed');
 }
 
-async function saveActuals(){
-  const btn=$('btnSaveActuals');btn.disabled=true;btn.textContent='Saving…';
-  const toe=document.querySelector('.radio-opt.sel input, input[name="toe"]:checked');
-  const p={event_id:EID,time_of_entry:toe?toe.value:'close',total_bar_sales:fv('total_bar_sales'),liquor_sales:fv('liquor_sales'),beer_wine_sales:fv('beer_wine_sales'),table_bottle_service:fv('table_bottle_service'),non_alcoholic_food_sales:fv('non_alcoholic_food_sales'),tips:fv('tips'),door_revenue_cash:fv('door_revenue_cash'),door_revenue_card:fv('door_revenue_card'),tax_collected:fv('tax_collected'),comps_total:fv('comps_total'),voids:fv('voids'),charge_backs:fv('charge_backs'),bar_cogs_deduction:fv('bar_cogs_deduction'),house_fee_deduction:fv('house_fee_deduction'),total_headcount:iv('total_headcount'),ticket_scan_count:iv('ticket_scan_count'),walk_up_count:iv('walk_up_count'),comp_admissions:iv('comp_admissions'),tables_active:iv('tables_active'),promoter_bar_payout:fv('promoter_bar_payout'),promoter_door_payout:fv('promoter_door_payout'),promoter_table_payout:fv('promoter_table_payout'),artist_cost_paid_by_venue:fv('artist_cost_paid_by_venue'),effective_split_percentage:fv('effective_split_percentage')||null,bar_threshold_retained:fv('bar_threshold_retained'),door_threshold_retained:fv('door_threshold_retained'),benchmark_effective_split:$('benchmark_effective_split').value||null,settlement_notes:$('settlement_notes').value||null,incident_description:$('incident_description').value||null,incident_department:$('incident_department').value||null,notes:$('actuals_notes').value||null};
-  try{
-    let res;
-    if(actualsId)res=await fetch(`${BASE}/actuals/${actualsId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-    else{res=await fetch(`${BASE}/actuals`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});if(res.ok){const j=await res.json();actualsId=j.id;}}
-    if(!res.ok)throw new Error(await res.text());
-    toast('Night-of actuals saved ✓','ok');markComplete('actuals');
-    $('actualsTs').textContent='Saved just now';
-    setTimeout(()=>switchTab('costs'),700);
-  }catch(e){toast('Save failed: '+e.message,'err');}
-  btn.disabled=false;btn.textContent='Save Night-of Actuals';
+async function saveAll() {
+  const btn = $('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    await Promise.all([saveActuals(), saveCosts(), saveReview()]);
+    setSavedState('saved');
+    toast('Saved successfully', 'ok');
+  } catch(err) {
+    setSavedState('error');
+    toast('Save failed — check connection', 'err');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save All';
+  }
 }
 
-async function saveCosts(){
-  const btn=$('btnSaveCosts');btn.disabled=true;btn.textContent='Saving…';
-  const h=fv('police_hours'),r=fv('police_rate'),m=fv('police_minimum');
-  const p={event_id:EID,nightly_operating_cost:fv('nightly_operating_cost'),security_total:fv('security_total'),security_notes:$('security_notes').value||null,door_girls_count:iv('door_girls_count'),door_girls_total:fv('door_girls_total'),police_hours:h,police_rate:r||50,police_minimum:m||200,production_staff_count:iv('production_staff_count'),production_staff_total:fv('production_staff_total'),production_equipment_total:fv('production_equipment_total'),production_equipment_notes:$('production_equipment_notes').value||null,hospitality_rider_estimate:fv('hospitality_rider_estimate'),hospitality_rider_actual:fv('hospitality_rider_actual'),hospitality_rider_notes:$('hospitality_rider_notes').value||null,marketing_internal:fv('marketing_internal'),marketing_promoter_contribution:fv('marketing_promoter_contribution'),marketing_notes:$('marketing_notes').value||null,artist_fee_total:fv('artist_fee_total'),cash_out_total:fv('cash_out_total'),hourly_wages_tipped_total:fv('hourly_wages_tipped_total'),tips_collected_total:fv('tips_collected_total'),restroom_paidout_total:fv('restroom_paidout_total'),coat_check_paidout_total:fv('coat_check_paidout_total'),bartender_wages_total:fv('bartender_wages_total'),barback_wages_total:fv('barback_wages_total'),server_wages_total:fv('server_wages_total')};
-  try{
-    const res=await fetch(`${BASE}/costs`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-    if(!res.ok)throw new Error(await res.text());
-    const j=await res.json();costsId=j.id;
-    toast('Operating costs saved ✓','ok');markComplete('costs');
-    setTimeout(()=>switchTab('review'),700);
-  }catch(e){toast('Save failed: '+e.message,'err');}
-  btn.disabled=false;btn.textContent='Save Operating Costs';
+function goRecap() {
+  if(EID) location.href = `/api/event-recap?event_id=${EID}`;
 }
 
-async function saveReview(){
-  const btn=$('btnSaveReview');btn.disabled=true;btn.textContent='Saving…';
-  const p={event_id:EID,actual_attendance:iv('rev_actual_attendance')||null,actual_door_revenue:fv('actual_door_revenue'),actual_bar_revenue:fv('actual_bar_revenue'),actual_table_revenue:fv('actual_table_revenue'),artist_cost_actual:fv('artist_cost_actual'),staffing_cost_actual:fv('staffing_cost_actual'),crowd_demographic_observations:$('crowd_demographic_observations').value||null,customer_service_observations:$('customer_service_observations').value||null,operational_breakdowns:$('operational_breakdowns').value||null,what_to_replicate:$('what_to_replicate').value||null,what_to_change:$('what_to_change').value||null,promoter_performance_notes:$('promoter_performance_notes').value||null,inventory_observations:$('inventory_observations').value||null,staffing_observations:$('staffing_observations').value||null,promoter_artwork_on_time:$('promoter_artwork_on_time').value,promoter_social_posting:$('promoter_social_posting').value,promoter_attendance_vs_projection:$('promoter_attendance_vs_projection').value,promoter_role_boundaries:$('promoter_role_boundaries').value,review_status:$('review_status').value,projected_effective_split:fv('projected_effective_split')||null,actual_effective_split:fv('actual_effective_split')||null,settlement_notes_reference:$('settlement_notes_reference').value||null};
-  try{
-    let res;
-    if(reviewId)res=await fetch(`${BASE}/reviews/${reviewId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-    else{res=await fetch(`${BASE}/reviews`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});if(res.ok){const j=await res.json();reviewId=j.id;}}
-    if(!res.ok)throw new Error(await res.text());
-    toast('Post-event review saved ✓','ok');markComplete('review');
-  }catch(e){toast('Save failed: '+e.message,'err');}
-  btn.disabled=false;btn.textContent='Save Post-Event Review';
-}
-
-function viewRecap(){window.location.href=`/api/event-recap?event_id=${EID}`;}
-
-loadEvent();
+// ── Init ────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', loadEvent);
 </script>
 </body>
 </html>
