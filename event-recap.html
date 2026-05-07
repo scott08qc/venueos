@@ -559,7 +559,11 @@ function deriveModel(data, comparisons, costs) {
   // Table revenue = bottle service (from item-level) PLUS any explicit table_bottle_service field
   const tableActual = bottleRevenue + num(e.table_bottle_service);
   const totalAlcohol = barDrinksRevenue + tableActual;
+  const doorPresold = num(e.door_presold_revenue);
+  const doorWalkup = num(e.door_walkup_revenue);
   const doorActual = num(e.actual_door_revenue ?? (num(e.door_revenue_cash) + num(e.door_revenue_card)));
+  const tablePresold = num(e.table_presold_revenue);
+  const tableWalkup = num(e.table_walkup_revenue);
   const grossRev = totalAlcohol + doorActual;
   // Legacy alias for code that still references barActual
   const barActual = netSales;
@@ -617,20 +621,31 @@ function deriveModel(data, comparisons, costs) {
   // rider locks at booking, not controlled night-of)
   const c = costs || {};
   const cSecurity = num(c.security_total);
-  const cDoorGirls = num(c.door_girls_total);
-  const cPolice = num(c.police_total);
   const cProdStaff = num(c.production_staff_total);
   const cProdEquip = num(c.production_equipment_total);
   const cMarketingVar = num(c.marketing_internal) - num(c.marketing_promoter_contribution);  // above-floor variable
-  // NEW: cash out, tipped wages, payroll tax burden
-  const cCashOut = num(c.cash_out_total);
-  const cTippedWages = num(c.hourly_wages_tipped_total);
+  // Cash out + tipped wages broken into components, payroll tax burden
+  const cPolice = num(c.police_total);
+  const cDoorGirls = num(c.door_girls_total);
+  const cRestroomPaidout = num(c.restroom_paidout_total);
+  const cCoatCheckPaidout = num(c.coat_check_paidout_total);
+  // Cash Out total: prefer entered total; otherwise sum components
+  const cCashOutComponentSum = cPolice + cDoorGirls + cRestroomPaidout + cCoatCheckPaidout;
+  const cCashOut = num(c.cash_out_total) > 0 ? num(c.cash_out_total) : cCashOutComponentSum;
+
+  const cBartenderWages = num(c.bartender_wages_total);
+  const cBarbackWages = num(c.barback_wages_total);
+  const cServerWages = num(c.server_wages_total);
+  const cTippedComponentSum = cBartenderWages + cBarbackWages + cServerWages;
+  const cTippedWages = num(c.hourly_wages_tipped_total) > 0 ? num(c.hourly_wages_tipped_total) : cTippedComponentSum;
+
   const cPayrollTaxOnWages = cTippedWages * DISTRICT.PAYROLL_TAX_RATE_VENUE;
   const cPayrollTaxOnTips = tipsCollected * DISTRICT.PAYROLL_TAX_RATE_VENUE;
 
-  // Variable cost components (rider is now Artist Cost, not Variable Op)
+  // Variable cost components — Police + Door Girls are now ROLLED UP into Cash Out, not separate lines
+  // (rider is now Artist Cost, not Variable Op)
   const cVarSum = cCashOut + cTippedWages + cPayrollTaxOnWages + cPayrollTaxOnTips
-                + cSecurity + cDoorGirls + cPolice + cProdStaff + cProdEquip + cMarketingVar;
+                + cSecurity + cProdStaff + cProdEquip + cMarketingVar;
   const opCarryStatic = DISTRICT.OP_CARRY_STATIC;
   const opCarryVariable = cVarSum > 0 ? cVarSum : DISTRICT.OP_CARRY_VARIABLE;
   const opCarryTotal = opCarryStatic + opCarryVariable;
@@ -690,13 +705,16 @@ function deriveModel(data, comparisons, costs) {
     attendance, expected, drawPct, sph,
     bottleCount: num(s.bottle_count), bottleRev: num(s.bottle_service_revenue),
     has,
+    doorPresold, doorWalkup, tablePresold, tableWalkup,
     // Variable cost detail (from event_costs if present)
     costDetail: {
       cash_out: cCashOut,
+      cash_out_components: { police: cPolice, door_girls: cDoorGirls, restroom: cRestroomPaidout, coat_check: cCoatCheckPaidout },
       tipped_wages: cTippedWages,
+      tipped_wages_components: { bartenders: cBartenderWages, barbacks: cBarbackWages, servers: cServerWages },
       payroll_tax_wages: cPayrollTaxOnWages,
       payroll_tax_tips: cPayrollTaxOnTips,
-      security: cSecurity, door_girls: cDoorGirls, police: cPolice,
+      security: cSecurity,
       prod_staff: cProdStaff, prod_equip: cProdEquip,
       marketing_var: cMarketingVar,
       rider: cRider,
@@ -877,13 +895,13 @@ function renderReconciliation(m) {
       <tbody>
         <tr><td>Gross Sales</td><td class="num">${fmtMoney(grossLine)}</td></tr>
         <tr><td>Item Discounts / Comps</td><td class="num neg">${compsLine > 0 ? '−' + fmtMoney(compsLine) : '$0'}</td></tr>
-        <tr class="subtotal"><td>Net Sales (flows into P&L)</td><td class="num">${fmtMoney(m.netSales)}</td></tr>
+        <tr class="subtotal"><td>Sales (Net of Comps)</td><td class="num">${fmtMoney(m.netSales)}</td></tr>
         <tr class="expandable" onclick="toggleReconPassthroughs()">
           <td><span class="caret ${open?'open':''}">▶</span>Pass-Throughs (tax, tips, CC processing)</td>
           <td class="num dim">+${fmtMoney(passThroughTotal)}</td>
         </tr>
         ${open ? `<tr class="detail"><td colspan="2">${renderReconPassthroughDetail(m)}</td></tr>` : ''}
-        <tr class="grand"><td>Total Customer Paid</td><td class="num">${fmtMoney(totalCustomerPaid)}</td></tr>
+        <tr class="grand"><td>Net Sales</td><td class="num">${fmtMoney(totalCustomerPaid)}</td></tr>
       </tbody>
     </table>
   </div>`;
@@ -928,7 +946,7 @@ function renderKpiStrip(m) {
   <div class="kpi-strip">
     <div class="kpi hero">
       <div>
-        <div class="kpi-eyebrow">Net to Venue</div>
+        <div class="kpi-eyebrow">Profit to Venue</div>
         <div class="kpi-value lg">${m.has.barRevenue ? fmtMoneyDelta(m.netToVenue) : '—'}</div>
       </div>
       <div class="kpi-sub">${m.has.barRevenue ? (m.netToVenue >= 0 ? 'Cleared $' + Math.round(m.opCarryTotal).toLocaleString() + ' carry' : 'Below $' + Math.round(m.opCarryTotal).toLocaleString() + ' carry') : 'Awaiting close-out'}</div>
@@ -1099,7 +1117,7 @@ function buildCascadeRows(m) {
       districtAvg: -DISTRICT.OP_CARRY_VARIABLE,
     },
 
-    { grand: true, label: 'Net to Venue', val: m.netToVenue },
+    { grand: true, label: 'Profit to Venue', val: m.netToVenue },
   ];
 }
 
@@ -1214,11 +1232,39 @@ function renderItemTable(m, mode) {
 
 function renderCascadeDetail(r, m) {
   // Custom drill-down content per row
+  if (r.key === 'door') {
+    const presold = num(m.doorPresold);
+    const walkup = num(m.doorWalkup);
+    const total = m.doorActual;
+    const presoldShare = total > 0 ? Math.round(presold / total * 100) : 0;
+    const walkupShare = total > 0 ? Math.round(walkup / total * 100) : 0;
+    return `
+      <table class="dt" style="background:var(--surface)">
+        <tbody>
+          <tr><td>Pre-Ticketed (Eventbrite / Peerpop / SeeTickets)</td><td class="num ${presold > 0 ? '' : 'dim'}">${presold > 0 ? fmtMoney(presold) + ' · ' + presoldShare + '%' : '— enter post-event'}</td></tr>
+          <tr><td>Walk-Up (Square at door)</td><td class="num ${walkup > 0 ? '' : 'dim'}">${walkup > 0 ? fmtMoney(walkup) + ' · ' + walkupShare + '%' : '— enter post-event'}</td></tr>
+          <tr class="subtotal"><td>Total Door Revenue</td><td class="num">${fmtMoney(total)}</td></tr>
+        </tbody>
+      </table>`;
+  }
   if (r.key === 'bar_drinks') {
     return renderItemTable(m, 'bar_drinks');
   }
   if (r.key === 'table') {
-    return renderItemTable(m, 'table');
+    const presold = num(m.tablePresold);
+    const walkup = num(m.tableWalkup);
+    const total = m.tableActual;
+    const presoldShare = total > 0 ? Math.round(presold / total * 100) : 0;
+    const walkupShare = total > 0 ? Math.round(walkup / total * 100) : 0;
+    const presoldBlock = `
+      <table class="dt" style="background:var(--surface);margin-bottom:10px">
+        <tbody>
+          <tr><td>Pre-Sold Tables (advance reservations)</td><td class="num ${presold > 0 ? '' : 'dim'}">${presold > 0 ? fmtMoney(presold) + ' · ' + presoldShare + '%' : '— enter post-event'}</td></tr>
+          <tr><td>Walk-Up Bottle Service</td><td class="num ${walkup > 0 ? '' : 'dim'}">${walkup > 0 ? fmtMoney(walkup) + ' · ' + walkupShare + '%' : '— enter post-event'}</td></tr>
+          <tr class="subtotal"><td>Total Table Revenue</td><td class="num">${fmtMoney(total)}</td></tr>
+        </tbody>
+      </table>`;
+    return presoldBlock + renderItemTable(m, 'table');
   }
   if (r.key === 'cogs') {
     return `
@@ -1301,6 +1347,62 @@ function toggleCascadeRow(key) {
   if (tbody) tbody.innerHTML = rows.map(r => renderCascadeRow(r, m)).join('');
 }
 
+// Module-level expansion state for the nested variable-cost rows
+let varCashOutExpanded = false;
+let varTippedExpanded = false;
+
+function toggleVarSub(key) {
+  if (key === 'cash_out') varCashOutExpanded = !varCashOutExpanded;
+  if (key === 'tipped_wages') varTippedExpanded = !varTippedExpanded;
+  rerenderCascadeTable();
+}
+
+function rerenderCascadeTable() {
+  const m = deriveModel(currentEventData, currentComparisons, currentCosts);
+  const rows = buildCascadeRows(m);
+  const tbody = g('cascade-tbody');
+  if (tbody) tbody.innerHTML = rows.map(r => renderCascadeRow(r, m)).join('');
+}
+
+function renderVariableSubDetail(key, m) {
+  if (key === 'cash_out') {
+    const c = m.costDetail.cash_out_components;
+    const items = [
+      { label: 'Police Security', val: c.police, dft: 200 },
+      { label: 'Door Girls', val: c.door_girls, dft: 400 },
+      { label: 'Restroom Paidouts', val: c.restroom, dft: 0 },
+      { label: 'Coat Check Paidouts', val: c.coat_check, dft: 0 },
+    ];
+    const sum = items.reduce((a, x) => a + x.val, 0);
+    return `
+      <table class="dt" style="background:var(--surface)">
+        <tbody>
+          ${items.map(x => `<tr><td>${x.label}</td><td class="num ${x.val > 0 ? '' : 'dim'}">${x.val > 0 ? fmtMoney(x.val) : '—'}</td><td class="num dim" style="width:90px">calc dft ${fmtMoney(x.dft)}</td></tr>`).join('')}
+          <tr class="subtotal"><td>Total Cash Out</td><td class="num">${fmtMoney(sum > 0 ? sum : m.costDetail.cash_out)}</td><td></td></tr>
+        </tbody>
+      </table>
+      ${sum === 0 ? `<div style="font-size:10.5px;color:var(--ink-4);font-style:italic;margin-top:6px">Components not yet entered. Total above (if shown) is from cash_out_total field; component breakdown source TBD.</div>` : ''}`;
+  }
+  if (key === 'tipped_wages') {
+    const c = m.costDetail.tipped_wages_components;
+    const items = [
+      { label: 'Bartenders', val: c.bartenders },
+      { label: 'Barbacks', val: c.barbacks },
+      { label: 'Servers', val: c.servers },
+    ];
+    const sum = items.reduce((a, x) => a + x.val, 0);
+    return `
+      <div style="font-size:10.5px;color:var(--ink-4);font-style:italic;margin-bottom:6px">Base pay $${DISTRICT.TIPPED_BASE_RATE}/hr × scheduled hours. Tips paid out separately to staff (passthrough).</div>
+      <table class="dt" style="background:var(--surface)">
+        <tbody>
+          ${items.map(x => `<tr><td>${x.label}</td><td class="num ${x.val > 0 ? '' : 'dim'}">${x.val > 0 ? fmtMoney(x.val) : '—'}</td></tr>`).join('')}
+          <tr class="subtotal"><td>Total Tipped Wages (base only)</td><td class="num">${fmtMoney(sum > 0 ? sum : m.costDetail.tipped_wages)}</td></tr>
+        </tbody>
+      </table>`;
+  }
+  return '';
+}
+
 /* ─── COMPONENT: Variable Costs table (used as drill-down under Op Carry Variable) ── */
 function renderVariableCostsTable(m) {
   const c = m.costDetail;
@@ -1308,18 +1410,17 @@ function renderVariableCostsTable(m) {
   const typeAvg = currentComparisons && currentComparisons.type_avg ? currentComparisons.type_avg : null;
   const dft = DISTRICT.CALC_DEFAULTS;
 
-  // Lines ordered per Scott — purely night-level variables first, then labor, then ops, then marketing
+  // Lines — Cash Out and Hourly Wages Tipped are EXPANDABLE (sub-components nested under)
+  // Police + Door Girls roll up into Cash Out (not separate top-level lines anymore)
   const lines = [
-    { key: 'cash_out',    label: 'Cash Out',                    actual: c.cash_out,          promoter: promAvg && promAvg.cash_out_avg,    type: typeAvg && typeAvg.cash_out_avg,    district: null, sub: 'Per-night actual; previously averaged ($595)' },
-    { key: 'tipped_wages',label: 'Hourly Wages — Tipped',       actual: c.tipped_wages,      promoter: promAvg && promAvg.tipped_wages_avg,type: typeAvg && typeAvg.tipped_wages_avg,district: null, sub: '$2.18/hr × scheduled hrs (bartenders / barbacks / bottle girls)' },
-    { key: 'tax_wages',   label: 'Payroll Tax on Tipped Wages', actual: c.payroll_tax_wages, promoter: null, type: null, district: null, sub: '15% venue share, computed from tipped wages above' },
-    { key: 'tax_tips',    label: 'Payroll Tax on Tips',         actual: c.payroll_tax_tips,  promoter: null, type: null, district: null, sub: '15% venue share, computed from tips collected (employee pays separate 15% on their check)' },
+    { key: 'cash_out',    label: 'Cash Out',                    actual: c.cash_out,          promoter: promAvg && promAvg.cash_out_avg,    type: typeAvg && typeAvg.cash_out_avg,    district: null, expandable: true, expanded: varCashOutExpanded },
+    { key: 'tipped_wages',label: 'Hourly Wages — Tipped',       actual: c.tipped_wages,      promoter: promAvg && promAvg.tipped_wages_avg,type: typeAvg && typeAvg.tipped_wages_avg,district: null, expandable: true, expanded: varTippedExpanded },
+    { key: 'tax_wages',   label: 'Payroll Tax on Tipped Wages', actual: c.payroll_tax_wages, promoter: null, type: null, district: null, sub: '15% venue share, auto-computed from tipped wages' },
+    { key: 'tax_tips',    label: 'Payroll Tax on Tips',         actual: c.payroll_tax_tips,  promoter: null, type: null, district: null, sub: '15% venue share, auto-computed from tips collected' },
     { key: 'security',    label: 'Security',                     actual: c.security,          promoter: promAvg && promAvg.security_avg,   type: typeAvg && typeAvg.security_avg,    district: dft.security },
-    { key: 'door_girls',  label: 'Door Girls',                   actual: c.door_girls,        promoter: promAvg && promAvg.door_girls_avg, type: typeAvg && typeAvg.door_girls_avg,  district: dft.door_girls },
-    { key: 'police',      label: 'Police Security',              actual: c.police,            promoter: promAvg && promAvg.police_avg,     type: typeAvg && typeAvg.police_avg,      district: dft.police },
     { key: 'prod_staff',  label: 'Production Staff',             actual: c.prod_staff,        promoter: promAvg && promAvg.prod_staff_avg, type: typeAvg && typeAvg.prod_staff_avg,  district: dft.prod_staff },
     { key: 'prod_equip',  label: 'Production Equipment',         actual: c.prod_equip,        promoter: promAvg && promAvg.prod_equip_avg, type: typeAvg && typeAvg.prod_equip_avg,  district: dft.prod_equip },
-    { key: 'marketing',   label: 'Marketing — Variable',         actual: c.marketing_var,     promoter: promAvg && promAvg.marketing_avg,  type: typeAvg && typeAvg.marketing_avg,   district: dft.marketing, sub: 'Above the $' + DISTRICT.MARKETING_FLOOR_PER_NIGHT + '/night floor in Static · large delta drives nightly performance' },
+    { key: 'marketing',   label: 'Marketing — Variable',         actual: c.marketing_var,     promoter: promAvg && promAvg.marketing_avg,  type: typeAvg && typeAvg.marketing_avg,   district: dft.marketing, sub: 'Above the $' + DISTRICT.MARKETING_FLOOR_PER_NIGHT + '/night floor in Static' },
   ];
 
   const tbody = lines.map(l => {
@@ -1328,20 +1429,28 @@ function renderVariableCostsTable(m) {
     const typeDelta = l.actual > 0 && l.type ? deltaStr(l.actual, l.type) : null;
     const distDelta = l.actual > 0 && l.district ? deltaStr(l.actual, l.district) : null;
     const subRow = l.sub ? `<tr><td colspan="5" style="padding:0 12px 6px;font-size:10px;color:var(--ink-4);font-style:italic;text-align:left;border-bottom:1px solid rgba(0,0,0,0.04)">${l.sub}</td></tr>` : '';
-    return `<tr>
-      <td>${l.label}</td>
+    const caret = l.expandable ? `<span class="caret ${l.expanded?'open':''}">▶</span>` : '';
+    const trClass = l.expandable ? 'expandable' : '';
+    const onClick = l.expandable ? `onclick="toggleVarSub('${l.key}')"` : '';
+    let mainRow = `<tr class="${trClass}" ${onClick}>
+      <td>${caret}${l.label}</td>
       <td class="num ${aClass}">${l.actual > 0 ? fmtMoney(l.actual) : '—'}</td>
       <td class="num dim">${l.promoter ? fmtMoney(l.promoter) : '—'} ${promDelta ? `<span class="delta ${promDelta.cls}">${promDelta.str}</span>` : ''}</td>
       <td class="num dim">${l.type ? fmtMoney(l.type) : '—'} ${typeDelta ? `<span class="delta ${typeDelta.cls}">${typeDelta.str}</span>` : ''}</td>
       <td class="num dim">${l.district ? fmtMoney(l.district) : '—'} ${distDelta ? `<span class="delta ${distDelta.cls}">${distDelta.str}</span>` : ''}</td>
-    </tr>${subRow}`;
+    </tr>`;
+    let detailRow = '';
+    if (l.expandable && l.expanded) {
+      detailRow = `<tr class="detail"><td colspan="5">${renderVariableSubDetail(l.key, m)}</td></tr>`;
+    }
+    return mainRow + detailRow + subRow;
   }).join('');
 
-  // Totals — rider removed (now in Artist Cost), cash out / tipped labor / payroll tax added
+  // Totals — Police/Door Girls now part of Cash Out (not double-counted as separate)
   const totalActual = c.total;
-  const totalProm = promAvg ? num(promAvg.cash_out_avg) + num(promAvg.tipped_wages_avg) + (num(promAvg.tipped_wages_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + (num(promAvg.tips_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + num(promAvg.security_avg) + num(promAvg.door_girls_avg) + num(promAvg.police_avg) + num(promAvg.prod_staff_avg) + num(promAvg.prod_equip_avg) + num(promAvg.marketing_avg) : 0;
-  const totalType = typeAvg ? num(typeAvg.cash_out_avg) + num(typeAvg.tipped_wages_avg) + (num(typeAvg.tipped_wages_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + (num(typeAvg.tips_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + num(typeAvg.security_avg) + num(typeAvg.door_girls_avg) + num(typeAvg.police_avg) + num(typeAvg.prod_staff_avg) + num(typeAvg.prod_equip_avg) + num(typeAvg.marketing_avg) : 0;
-  const totalDist = dft.security + dft.door_girls + dft.police + dft.prod_staff + dft.prod_equip + dft.marketing;
+  const totalProm = promAvg ? num(promAvg.cash_out_avg) + num(promAvg.tipped_wages_avg) + (num(promAvg.tipped_wages_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + (num(promAvg.tips_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + num(promAvg.security_avg) + num(promAvg.prod_staff_avg) + num(promAvg.prod_equip_avg) + num(promAvg.marketing_avg) : 0;
+  const totalType = typeAvg ? num(typeAvg.cash_out_avg) + num(typeAvg.tipped_wages_avg) + (num(typeAvg.tipped_wages_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + (num(typeAvg.tips_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + num(typeAvg.security_avg) + num(typeAvg.prod_staff_avg) + num(typeAvg.prod_equip_avg) + num(typeAvg.marketing_avg) : 0;
+  const totalDist = dft.security + dft.prod_staff + dft.prod_equip + dft.marketing;
   const totalRow = `<tr class="grand">
     <td>Total Variable Costs</td>
     <td class="num ${totalActual > 0 ? '' : 'dim'}">${totalActual > 0 ? fmtMoney(totalActual) : '—'}</td>
@@ -1380,10 +1489,11 @@ function renderProjectedActualCard(m) {
     { label: 'Door Revenue',   proj: e.projected_door_revenue,       actual: m.doorActual },
     { label: 'Table Revenue',  proj: e.projected_table_revenue,      actual: m.tableActual },
     { label: 'Total Revenue',  proj: projTotal,                      actual: m.grossRev, total: true },
-    { label: 'Net to Venue',   proj: null,                           actual: m.netToVenue, total: true, fmt: 'delta' },
+    { label: 'Bar Spend / Head', proj: (num(e.expected_attendance) > 0 ? num(e.projected_bar_revenue) / num(e.expected_attendance) : null), actual: m.sph, fmt: 'sph' },
+    { label: 'Profit to Venue', proj: null,                           actual: m.netToVenue, total: true, fmt: 'delta' },
   ];
   const tbody = rows.map(r => {
-    const fmt = (v) => r.fmt === 'int' ? fmtInt(v) : r.fmt === 'delta' ? fmtMoneyDelta(v) : fmtMoney(v);
+    const fmt = (v) => r.fmt === 'int' ? fmtInt(v) : r.fmt === 'delta' ? fmtMoneyDelta(v) : r.fmt === 'sph' ? '$' + parseFloat(v).toFixed(2) : fmtMoney(v);
     const pStr = r.proj ? fmt(r.proj) : '—';
     const aStr = r.actual !== null && r.actual !== undefined ? fmt(r.actual) : '—';
     let varStr = '—', varCls = 'dim';
@@ -1517,7 +1627,7 @@ function renderSliderOutput(m, barPct, doorPct) {
       <div class="delta">was ${fmtMoney(m.doorPayout)}</div>
     </div>
     <div class="col">
-      <div class="l">New Net to Venue</div>
+      <div class="l">New Profit to Venue</div>
       <div class="v num ${netCls}">${fmtMoneyDelta(newNet)}</div>
       <div class="delta ${cls}">${delta >= 0 ? '+' : ''}${fmtMoney(delta)} vs actual</div>
     </div>
@@ -1545,7 +1655,7 @@ function renderSliderOutputCollectiv(m, threshold) {
       <div class="delta">was ${fmtMoney(m.totalPayouts)}</div>
     </div>
     <div class="col">
-      <div class="l">New Net to Venue</div>
+      <div class="l">New Profit to Venue</div>
       <div class="v num ${netCls}">${fmtMoneyDelta(newNet)}</div>
       <div class="delta ${cls}">${delta >= 0 ? '+' : ''}${fmtMoney(delta)} vs actual</div>
     </div>
@@ -2022,7 +2132,7 @@ function renderRangeDashboard(events, start, end) {
       type: 'bar',
       data: { labels, datasets: [
         { label: 'Bar Revenue', data: barData, backgroundColor: 'rgba(22,57,92,0.55)', borderColor: '#16395C', borderWidth: 1, borderRadius: 3 },
-        { label: 'Net to Venue', data: netData, type: 'line', tension: 0.3, borderColor: '#1B5E3F', backgroundColor: 'rgba(27,94,63,0.1)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#1B5E3F', fill: false },
+        { label: 'Profit to Venue', data: netData, type: 'line', tension: 0.3, borderColor: '#1B5E3F', backgroundColor: 'rgba(27,94,63,0.1)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#1B5E3F', fill: false },
       ]},
       options: { responsive: true, maintainAspectRatio: false,
         plugins: { legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 11 }, boxWidth: 12, padding: 14 } }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtMoney(c.raw) } } },
