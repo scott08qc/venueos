@@ -1635,7 +1635,7 @@ def create_app(static_dir: str) -> FastAPI:
             import anthropic
             client = anthropic.Anthropic()  # auto-reads ANTHROPIC_API_KEY from env
             message = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5",
                 max_tokens=1000,
                 messages=[{"role": "user", "content": data.get("prompt", "")}]
             )
