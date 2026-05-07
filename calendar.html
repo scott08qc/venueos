@@ -165,7 +165,8 @@
   .sidebar-stat-value { font-weight: 500; color: var(--text1); }
 
   /* ── Main calendar area ── */
-  .main { flex: 1; overflow-y: auto; padding: 24px 28px; }
+  .main { flex: 1; overflow-y: auto; padding: 24px 28px; min-width: 0; overflow-x: auto; }
+  .cal-grid-wrap { min-width: 700px; }
 
   .month-nav {
     display: flex;
