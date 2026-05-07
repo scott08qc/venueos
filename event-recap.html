@@ -334,6 +334,54 @@ button{font-family:inherit;cursor:pointer}
 .btn-export{padding:7px 18px;border:none;border-radius:6px;background:var(--brand);color:#fff;font-size:12px;font-weight:600}
 .btn-export:hover{background:var(--brand-2)}
 
+
+/* ── Gross→Net Reconciliation table ─────────────────────────────────── */
+.recon{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+@media(max-width:840px){.recon{grid-template-columns:1fr}}
+.recon-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;box-shadow:var(--sh-1)}
+.recon-card .h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.recon-card .h h3{font-family:'Inter Tight',sans-serif;font-size:13px;font-weight:600;letter-spacing:-0.015em;color:var(--ink-1)}
+.recon-card .h .meta{font-size:10.5px;color:var(--ink-4)}
+.recon-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:12px}
+.recon-row:last-child{border-bottom:none}
+.recon-row .l{color:var(--ink-3)}
+.recon-row .v{font-family:'DM Mono',monospace;font-weight:500;color:var(--ink-1)}
+.recon-row .v.dim{color:var(--ink-4)}
+.recon-row .v.neg{color:var(--neg)}
+.recon-row.subtotal{font-weight:600;border-top:1px solid var(--border-2);padding-top:7px;margin-top:2px}
+.recon-row.subtotal .l{color:var(--ink-1)}
+.recon-row.subtotal .v{font-size:13px}
+.recon-pass{margin-top:8px;padding:6px 9px;border-radius:6px;background:var(--surface-2);border-left:2px solid var(--ink-4);font-size:10.5px;color:var(--ink-3);line-height:1.5}
+
+/* ── Deal Slider card ─────────────────────────────────────────────────── */
+.deal-slider-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+@media(max-width:680px){.deal-slider-grid{grid-template-columns:1fr}}
+.slider-block{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.slider-block .label{font-size:9.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-4);display:flex;justify-content:space-between;align-items:baseline}
+.slider-block .label .pct{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--brand);letter-spacing:-0.02em}
+.slider-block input[type=range]{width:100%;margin-top:8px;-webkit-appearance:none;appearance:none;height:4px;background:var(--border-2);border-radius:2px;outline:none}
+.slider-block input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--brand);cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px var(--brand)}
+.slider-block input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--brand);cursor:pointer;border:2px solid #fff}
+.slider-block .axis{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-4);font-family:'DM Mono',monospace;margin-top:4px}
+.slider-output{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.slider-output .col .l{font-size:9.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-4);margin-bottom:2px}
+.slider-output .col .v{font-family:'Inter Tight',sans-serif;font-feature-settings:'tnum' 1;font-size:16px;font-weight:600;letter-spacing:-0.02em;color:var(--ink-1)}
+.slider-output .col .v.pos{color:var(--pos)}
+.slider-output .col .v.neg{color:var(--neg)}
+.slider-output .col .delta{font-size:10.5px;font-family:'DM Mono',monospace;margin-top:1px}
+.slider-output .col .delta.pos{color:var(--pos)}
+.slider-output .col .delta.neg{color:var(--neg)}
+.slider-reset{margin-top:8px;padding:5px 11px;border:1px solid var(--border);border-radius:5px;font-size:10.5px;font-weight:500;color:var(--ink-3);background:var(--surface);cursor:pointer}
+.slider-reset:hover{border-color:var(--brand);color:var(--brand)}
+
+/* ── Cascade alcohol indent rows ──────────────────────────────────────── */
+.dt tr.indent td:first-child{padding-left:24px;color:var(--ink-3);font-size:11.5px}
+.dt tr.indent td{font-size:11.5px}
+
+/* ── Clickable masthead bits ──────────────────────────────────────────── */
+.mh-clickable{cursor:pointer;border-bottom:1px dashed transparent;transition:color .12s,border-color .12s}
+.mh-clickable:hover{color:var(--brand);border-bottom-color:var(--brand-mid)}
+
 @media print{
   .nav,.mode-bar,.search-bar,.nav-right,.modal-overlay{display:none!important}
   .page{padding:0;max-width:100%}
@@ -352,6 +400,7 @@ button{font-family:inherit;cursor:pointer}
   </div>
   <div class="nav-right">
     <a class="nav-btn" href="/api/calendar">Calendar</a>
+    <button class="nav-btn" onclick="alert('Reports — coming next pass. Will roll up promoter / artist / type / time-period performance.')">Reports</button>
     <button class="nav-btn" onclick="window.location.href='/api/calculator'">+ New Event</button>
     <button class="nav-btn primary" onclick="openExportModal()">↓ Export</button>
   </div>
@@ -424,8 +473,15 @@ const DISTRICT = {
   CHARGED_COGS_DEFAULT: 25, DRY_GOODS_DEFAULT: 5,
   COLLECTIV_HOUSE_THRESHOLD: 10500, COLLECTIV_RECOVERY_GAP: 1974,
   ANNUAL_OPERATING_NIGHTS: 140, SPH_BENCH: 35,
+  // Tipped labor structure (Georgia)
+  TIPPED_BASE_RATE: 2.18,                  // $/hr base for tipped staff
+  PAYROLL_TAX_RATE_VENUE: 0.15,            // venue-side share of 30% combined payroll tax (15% emp / 15% venue)
+  CC_PROCESSING_RATE: 0.035,               // 3.5% pass-through to customer
+  // Marketing floor (placeholder until Ryan confirms exact line item from M2 model)
+  MARKETING_FLOOR_ANNUAL: 50000,           // baseline always-on marketing
+  MARKETING_FLOOR_PER_NIGHT: 357,          // 50K / 140 nights
   // Default per-event variable cost slate (calculator defaults)
-  CALC_DEFAULTS: { nightly_op: 3500, security: 800, door_girls: 400, police: 200, prod_staff: 600, prod_equip: 0, rider: 0, marketing: 300 },
+  CALC_DEFAULTS: { security: 800, door_girls: 400, police: 200, prod_staff: 600, prod_equip: 0, marketing: 300 },
 };
 
 const BASE = window.location.origin;
@@ -492,11 +548,32 @@ function deriveModel(data, comparisons, costs) {
   const s = data.summary || {};
   const items = data.items || [];
 
-  // Revenue
-  const barActual = num(e.actual_bar_revenue ?? e.total_bar_sales ?? e.net_bar_revenue ?? 0);
+  // ── Net Sales ── COALESCE priority: actual_bar_revenue → night_of_actuals.total_bar_sales → revel_bar_gross
+  // Note: this number is NET of comps already (per the Revel Operations Report flow)
+  const netSales = num(e.actual_bar_revenue ?? e.total_bar_sales ?? e.net_bar_revenue ?? 0);
+
+  // Bottle service revenue moves to Table Revenue bucket (Scott's call — ties to bottle/table service deal mechanics)
+  const bottleRevenue = num(s.bottle_service_revenue);
+  // Bar drinks = everything else inside Net Sales
+  const barDrinksRevenue = Math.max(0, netSales - bottleRevenue);
+  // Table revenue = bottle service (from item-level) PLUS any explicit table_bottle_service field
+  const tableActual = bottleRevenue + num(e.table_bottle_service);
+  const totalAlcohol = barDrinksRevenue + tableActual;
   const doorActual = num(e.actual_door_revenue ?? (num(e.door_revenue_cash) + num(e.door_revenue_card)));
-  const tableActual = num(e.actual_table_revenue ?? e.table_bottle_service ?? 0);
-  const grossRev = barActual + doorActual + tableActual;
+  const grossRev = totalAlcohol + doorActual;
+  // Legacy alias for code that still references barActual
+  const barActual = netSales;
+
+  // Gross→Net reconciliation (when item-level data available)
+  // Gross Sales = total_item_revenue (sum from event_item_sales). Comps = Gross - Net.
+  const grossItemSales = num(s.total_item_revenue);
+  const compsApplied = grossItemSales > 0 ? Math.max(0, grossItemSales - netSales) : 0;
+  // Estimate of card-paid revenue (Atlanta nightlife typical 70-80% card vs cash)
+  // CC processing fee is pass-through (customer-paid). Actual amount comes from Ops Report when available.
+  const ccProcessingPassThrough = netSales * 0.7 * DISTRICT.CC_PROCESSING_RATE;  // estimate; replace with actual from Ops Report when ingested
+  // Tax + tips collected (from Ops Report data when available)
+  const taxCollected = num(e.tax_collected);
+  const tipsCollected = costs ? num(costs.tips_collected_total) : 0;
 
   // Pour costs
   const liquorCogs = num(s.total_item_cogs ?? 0);
@@ -533,25 +610,42 @@ function deriveModel(data, comparisons, costs) {
   }
   const artistFee = num(e.artist_fee_landed) + num(e.artist_fee_travel);
   const totalPayouts = barPayout + doorPayout + tablePayout + artistFee;
-  const netPreOp = grossRev - totalPourCost - totalPayouts;
+  // netPreOp is recomputed below to include rider as part of artist cost
 
   // Op carry — variable from event_costs (if available), otherwise district default
+  // NOTE: hospitality_rider moved OUT of variable into Artist Cost section (Scott's call —
+  // rider locks at booking, not controlled night-of)
   const c = costs || {};
   const cSecurity = num(c.security_total);
   const cDoorGirls = num(c.door_girls_total);
   const cPolice = num(c.police_total);
   const cProdStaff = num(c.production_staff_total);
   const cProdEquip = num(c.production_equipment_total);
-  const cRider = num(c.hospitality_rider_actual);
-  const cMarketing = num(c.marketing_internal) - num(c.marketing_promoter_contribution);
-  const cVarSum = cSecurity + cDoorGirls + cPolice + cProdStaff + cProdEquip + cRider + cMarketing;
+  const cMarketingVar = num(c.marketing_internal) - num(c.marketing_promoter_contribution);  // above-floor variable
+  // NEW: cash out, tipped wages, payroll tax burden
+  const cCashOut = num(c.cash_out_total);
+  const cTippedWages = num(c.hourly_wages_tipped_total);
+  const cPayrollTaxOnWages = cTippedWages * DISTRICT.PAYROLL_TAX_RATE_VENUE;
+  const cPayrollTaxOnTips = tipsCollected * DISTRICT.PAYROLL_TAX_RATE_VENUE;
+
+  // Variable cost components (rider is now Artist Cost, not Variable Op)
+  const cVarSum = cCashOut + cTippedWages + cPayrollTaxOnWages + cPayrollTaxOnTips
+                + cSecurity + cDoorGirls + cPolice + cProdStaff + cProdEquip + cMarketingVar;
   const opCarryStatic = DISTRICT.OP_CARRY_STATIC;
   const opCarryVariable = cVarSum > 0 ? cVarSum : DISTRICT.OP_CARRY_VARIABLE;
   const opCarryTotal = opCarryStatic + opCarryVariable;
-  const netToVenue = netPreOp - opCarryTotal;
 
-  // Breakeven
-  const breakeven = totalPourCost + totalPayouts + opCarryTotal;
+  // Artist costs (consolidated — fee + travel + rider)
+  const cRider = num(c.hospitality_rider_actual);
+  const artistTotal = artistFee + cRider;
+
+  // Recompute net pre-op now that rider is in artist not variable
+  const totalPayoutsAndArtist = totalPayouts + cRider;  // adds rider into the pre-op deduction
+  const netPreOpFinal = grossRev - totalPourCost - totalPayoutsAndArtist;
+  const netToVenue = netPreOpFinal - opCarryTotal;
+
+  // Breakeven (revenue needed to net $0, including rider)
+  const breakeven = totalPourCost + totalPayoutsAndArtist + opCarryTotal;
   const revenueAboveBreakeven = grossRev - breakeven;
 
   // Attendance
@@ -563,13 +657,17 @@ function deriveModel(data, comparisons, costs) {
 
   // Has-flags
   const has = {
-    barRevenue: barActual > 0,
+    netSales: netSales > 0,
+    barRevenue: netSales > 0,
     doorRevenue: doorActual > 0,
     tableRevenue: tableActual > 0,
     attendance: attendance > 0,
     expected: expected > 0,
     splits: num(e.bar_split_promoter) > 0,
     artistFee: artistFee > 0,
+    rider: cRider > 0,
+    grossSales: grossItemSales > 0,
+    tipsCollected: tipsCollected > 0,
     projections: num(e.projected_bar_revenue) > 0 || num(e.projected_door_revenue) > 0,
     items: items.length > 0,
     costs: cVarSum > 0,
@@ -577,11 +675,16 @@ function deriveModel(data, comparisons, costs) {
 
   return {
     e, s, items,
+    netSales, barDrinksRevenue, bottleRevenue, totalAlcohol,
     barActual, doorActual, tableActual, grossRev,
+    grossItemSales, compsApplied, ccProcessingPassThrough, taxCollected, tipsCollected,
     liquorCogs, liquorPourPct, dryGoodsCost, totalPourCost, totalPourPct,
     chargedCogsPct, chargedCogsAmt, marginPadPct, marginPadAmt,
-    barPayout, doorPayout, tablePayout, artistFee, totalPayouts,
-    netPreOp, opCarryStatic, opCarryVariable, opCarryTotal, netToVenue,
+    barPayout, doorPayout, tablePayout,
+    artistFee, riderActual: cRider, artistTotal,
+    totalPayouts, totalPayoutsAndArtist,
+    netPreOp: netPreOpFinal,
+    opCarryStatic, opCarryVariable, opCarryTotal, netToVenue,
     breakeven, revenueAboveBreakeven,
     isCollectiv, houseThreshold,
     attendance, expected, drawPct, sph,
@@ -589,12 +692,14 @@ function deriveModel(data, comparisons, costs) {
     has,
     // Variable cost detail (from event_costs if present)
     costDetail: {
-      nightly_op: num(c.nightly_operating_cost),
+      cash_out: cCashOut,
+      tipped_wages: cTippedWages,
+      payroll_tax_wages: cPayrollTaxOnWages,
+      payroll_tax_tips: cPayrollTaxOnTips,
       security: cSecurity, door_girls: cDoorGirls, police: cPolice,
-      prod_staff: cProdStaff, prod_equip: cProdEquip, rider: cRider,
-      marketing_internal: num(c.marketing_internal),
-      marketing_promoter: num(c.marketing_promoter_contribution),
-      marketing_net: cMarketing,
+      prod_staff: cProdStaff, prod_equip: cProdEquip,
+      marketing_var: cMarketingVar,
+      rider: cRider,
       total: cVarSum,
     },
   };
@@ -653,6 +758,10 @@ function clearSearch() {
   g('search-results-bar').style.display = 'none';
 }
 function searchPromoter(name) { g('s-promoter').value = name; runSearch(); }
+function filterByPromoter(name){ clearSearch(); g('s-promoter').value = name; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
+function filterByArtist(name){ clearSearch(); g('s-artist').value = name; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
+function filterByType(t){ clearSearch(); g('s-type').value = t; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
+function filterByName(name){ clearSearch(); g('s-name').value = name; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function renderSearchPrompt() {
   g('page-root').innerHTML = `<div class="empty-state"><div class="empty-state-title">Search for an event</div><div class="empty-state-sub">Use any combination of artist, promoter, event name, or type</div></div>`;
@@ -701,9 +810,11 @@ function renderDashboard() {
     ${renderKpiStrip(m)}
     ${renderIntelChips(m)}
     ${m.isCollectiv ? renderCollectivBanner(m) : ''}
+    ${renderReconciliation(m)}
     <div class="cols">
       <div>
         ${renderCascadeCard(m)}
+        ${renderDealSliderCard(m)}
         ${renderVariableCostsCard(m)}
         ${renderProjectedActualCard(m)}
         ${renderBarMixCard(m)}
@@ -735,11 +846,11 @@ function renderMasthead(m) {
         <span class="eyebrow">Event Recap</span>
         <span class="badge-status ${statusCls}">${statusLabel}</span>
       </div>
-      <h1 class="mh-name">${e.event_name || 'Untitled Event'}</h1>
+      <h1 class="mh-name"><span class="mh-clickable" onclick="filterByName('${(e.event_name||'').replace(/'/g,"\\'")}')">${e.event_name || 'Untitled Event'}</span></h1>
       <div class="mh-meta">
-        ${e.tier1_category ? `<span><span class="label">Type</span>${formatCategory(e.tier1_category)}</span><span class="sep">·</span>` : ''}
-        ${e.promoter_name ? `<span><span class="label">Promoter</span><span class="promoter-link" onclick="searchPromoter('${(e.promoter_name||'').replace(/'/g,"\\'")}')">${e.promoter_name}</span></span><span class="sep">·</span>` : ''}
-        ${e.artist_name ? `<span><span class="label">Artist</span>${e.artist_name}</span><span class="sep">·</span>` : ''}
+        ${e.tier1_category ? `<span><span class="label">Type</span><span class="mh-clickable" onclick="filterByType('${e.tier1_category}')">${formatCategory(e.tier1_category)}</span></span><span class="sep">·</span>` : ''}
+        ${e.promoter_name ? `<span><span class="label">Promoter</span><span class="mh-clickable promoter-link" onclick="filterByPromoter('${(e.promoter_name||'').replace(/'/g,"\\'")}')">${e.promoter_name}</span></span><span class="sep">·</span>` : ''}
+        ${e.artist_name ? `<span><span class="label">Artist</span><span class="mh-clickable" onclick="filterByArtist('${(e.artist_name||'').replace(/'/g,"\\'")}')">${e.artist_name}</span></span><span class="sep">·</span>` : ''}
         ${e.doors_open_time || e.event_close_time ? `<span><span class="label">Hours</span>${e.doors_open_time || '—'} → ${e.event_close_time || 'close'}</span>` : ''}
       </div>
     </div>
@@ -747,6 +858,36 @@ function renderMasthead(m) {
       <div class="eyebrow">Event Date</div>
       <div class="date-day">${dayOfWeek}</div>
       <div class="date-full">${dateStr}</div>
+    </div>
+  </div>`;
+}
+
+/* ─── COMPONENT: Gross→Net Reconciliation ──────────────────────────── */
+function renderReconciliation(m) {
+  // Don't render if we have nothing to show
+  if (!m.has.netSales) return '';
+  const grossLine = m.has.grossSales ? m.grossItemSales : m.netSales;  // fall back to net when item totals not loaded
+  const compsLine = m.has.grossSales ? m.compsApplied : 0;
+  return `
+  <div class="recon">
+    <div class="recon-card">
+      <div class="h"><h3>Sales Reconciliation</h3><span class="meta">Gross → Net</span></div>
+      <div class="recon-row"><span class="l">Gross Sales (item-level)</span><span class="v">${fmtMoney(grossLine)}</span></div>
+      <div class="recon-row"><span class="l">Item Discounts / Comps</span><span class="v neg">${compsLine > 0 ? '−' + fmtMoney(compsLine) : '$0'}</span></div>
+      <div class="recon-row subtotal"><span class="l">Net Sales</span><span class="v">${fmtMoney(m.netSales)}</span></div>
+      <div class="recon-pass">
+        Net Sales is what flows into the P&L cascade. Gross Sales is reported by Revel before comps. Voids excluded from both.
+      </div>
+    </div>
+    <div class="recon-card">
+      <div class="h"><h3>Pass-Through Disclosures</h3><span class="meta">Customer-paid · Venue collects + remits</span></div>
+      <div class="recon-row"><span class="l">Sales Tax (~12.65%)</span><span class="v dim">${m.taxCollected > 0 ? fmtMoney(m.taxCollected) : '— pending Ops Report ingest'}</span></div>
+      <div class="recon-row"><span class="l">Tips Collected</span><span class="v dim">${m.has.tipsCollected ? fmtMoney(m.tipsCollected) : '— enter post-event'}</span></div>
+      <div class="recon-row"><span class="l">CC Processing (3.5%)</span><span class="v dim">est. ${fmtMoney(m.ccProcessingPassThrough)} (70% card mix assumption)</span></div>
+      <div class="recon-pass">
+        These are <strong>not</strong> venue costs — collected from customers, remitted to state / staff / processor. Shown for transparency.
+        Venue does carry payroll tax on tips (15% employer share) — see Variable Costs.
+      </div>
     </div>
   </div>`;
 }
@@ -854,77 +995,87 @@ function buildCascadeRows(m) {
   const projTotalRev = num(m.e.projected_bar_revenue) + num(m.e.projected_door_revenue) + num(m.e.projected_table_revenue);
   const promAvg = currentComparisons && currentComparisons.promoter_avg ? currentComparisons.promoter_avg : null;
   const typeAvg = currentComparisons && currentComparisons.type_avg ? currentComparisons.type_avg : null;
-  const district = currentComparisons && currentComparisons.district ? currentComparisons.district : null;
 
   return [
+    /* ── Revenue section: bar drinks, table (bottle), door → Total Alcohol → Gross ── */
     {
-      key: 'bar', label: 'Bar Revenue', val: m.barActual, kind: 'add', detailLabel: 'Sum of all liquor, bottle service, beer, and non-alcoholic sales',
-      proj: num(m.e.projected_bar_revenue),
-      promoterAvg: promAvg ? promAvg.bar_avg : null,
-      typeAvg: typeAvg ? typeAvg.bar_avg : null,
-      districtAvg: null,
+      key: 'bar_drinks', label: 'Bar — Drinks', val: m.barDrinksRevenue, kind: 'add',
+      detailLabel: 'Spirits / cocktails / beer / non-alcoholic — net of comps',
+      proj: m.has.projections ? num(m.e.projected_bar_revenue) - (num(m.e.projected_bar_revenue) * 0.39) : null, // rough — bottle is ~39% of bar mix
+      promoterAvg: promAvg ? num(promAvg.bar_avg) * 0.6 : null,
+      typeAvg: typeAvg ? num(typeAvg.bar_avg) * 0.6 : null,
     },
     {
-      key: 'door', label: 'Door Revenue', val: m.doorActual, kind: 'add', detailLabel: 'Cash + card from cover/ticket sales (Square + Eventbrite)',
-      proj: num(m.e.projected_door_revenue),
-      promoterAvg: promAvg ? promAvg.door_avg : null,
-      typeAvg: typeAvg ? typeAvg.door_avg : null,
-      districtAvg: null,
-    },
-    {
-      key: 'table', label: 'Table / Bottle', val: m.tableActual, kind: 'add', detailLabel: 'Table-service revenue separate from bar walk-up bottle service',
+      key: 'table', label: 'Table Revenue (Bottle Service)', val: m.tableActual, kind: 'add',
+      detailLabel: 'Bottle service — items where unit price ≥ $100 and name contains "Bottle"',
       proj: num(m.e.projected_table_revenue),
-      promoterAvg: promAvg ? promAvg.table_avg : null,
-      typeAvg: typeAvg ? typeAvg.table_avg : null,
-      districtAvg: null,
+      promoterAvg: promAvg ? num(promAvg.table_avg) : null,
+      typeAvg: typeAvg ? num(typeAvg.table_avg) : null,
     },
-    { subtotal: true, label: 'Gross Revenue', val: m.grossRev, proj: projTotalRev,
+    { subtotal: true, label: 'Total Alcohol', val: m.totalAlcohol,
+      proj: m.has.projections ? num(m.e.projected_bar_revenue) + num(m.e.projected_table_revenue) : null,
+      promoterAvg: promAvg ? num(promAvg.bar_avg) + num(promAvg.table_avg) : null,
+      typeAvg: typeAvg ? num(typeAvg.bar_avg) + num(typeAvg.table_avg) : null,
+    },
+    {
+      key: 'door', label: 'Door Revenue', val: m.doorActual, kind: 'add',
+      detailLabel: 'Cash + card from cover/ticket sales (Square + Eventbrite)',
+      proj: num(m.e.projected_door_revenue),
+      promoterAvg: promAvg ? num(promAvg.door_avg) : null,
+      typeAvg: typeAvg ? num(typeAvg.door_avg) : null,
+    },
+    { subtotal: true, label: 'Gross Revenue (Net of Comps)', val: m.grossRev, proj: projTotalRev,
       promoterAvg: promAvg ? (num(promAvg.bar_avg) + num(promAvg.door_avg) + num(promAvg.table_avg)) : null,
       typeAvg: typeAvg ? (num(typeAvg.bar_avg) + num(typeAvg.door_avg) + num(typeAvg.table_avg)) : null,
-      districtAvg: null,
     },
+
+    /* ── Pour costs ── */
     {
-      key: 'cogs', label: 'Liquor COGS', val: -m.liquorCogs, kind: 'sub', pct: m.liquorPourPct,
+      key: 'cogs', label: 'Liquor COGS', val: -m.liquorCogs, kind: 'cogs', pct: m.liquorPourPct,
       detailLabel: 'Item-level COGS via R365 join (1.5oz pour for spirits, 25oz per 750ml bottle)',
       proj: m.has.projections && m.has.barRevenue ? -(num(m.e.projected_bar_revenue) * 0.11) : null,
-      promoterAvg: null, typeAvg: null,
       districtAvg: m.has.barRevenue ? -(m.barActual * DISTRICT.POUR_COST_LIQUOR / 100) : null,
       districtPct: DISTRICT.POUR_COST_LIQUOR,
     },
     {
-      key: 'dry', label: 'Dry Goods', val: -m.dryGoodsCost, kind: 'sub', pct: DISTRICT.DRY_GOODS_DEFAULT,
+      key: 'dry', label: 'Dry Goods', val: -m.dryGoodsCost, kind: 'cogs', pct: DISTRICT.DRY_GOODS_DEFAULT,
       detailLabel: 'Cups, napkins, garnishes, straws — flat 5% of bar (manually adjustable per event)',
       proj: m.has.projections ? -(num(m.e.projected_bar_revenue) * 0.05) : null,
       districtAvg: m.has.barRevenue ? -(m.barActual * 0.05) : null,
       districtPct: DISTRICT.DRY_GOODS_DEFAULT,
     },
+
+    /* ── Splits ── */
     {
-      key: 'splits', label: 'Promoter Splits', val: -(m.barPayout + m.doorPayout + m.tablePayout), kind: 'sub',
+      key: 'splits', label: 'Promoter Splits', val: -(m.barPayout + m.doorPayout + m.tablePayout), kind: 'split',
       detailLabel: m.isCollectiv ? '50/50 split on net of $10,500 house off-top' : 'Per-stream split per deal terms',
       proj: m.has.splits ? -((num(m.e.projected_bar_revenue) * num(m.e.bar_split_promoter)/100) + (num(m.e.projected_door_revenue) * num(m.e.door_split_promoter)/100) + (num(m.e.projected_table_revenue) * num(m.e.table_split_promoter)/100)) : null,
       promoterAvg: promAvg ? -(num(promAvg.bar_payout_avg) + num(promAvg.door_payout_avg)) : null,
-      typeAvg: null,
     },
+
+    /* ── Artist costs (rider now consolidated here) ── */
     {
-      key: 'artist', label: 'Artist Fee', val: -m.artistFee, kind: 'sub',
-      detailLabel: m.isCollectiv ? 'Artist fee — 50/50 cost share within Collectiv framework' : 'Total artist payment + travel/rider',
+      key: 'artist', label: 'Artist Cost', val: -m.artistTotal, kind: 'split',
+      detailLabel: 'Artist fee + travel + hospitality rider',
       proj: -(num(m.e.artist_fee_landed) + num(m.e.artist_fee_travel)),
       promoterAvg: promAvg ? -num(promAvg.artist_fee_avg) : null,
       typeAvg: typeAvg ? -num(typeAvg.artist_fee_avg) : null,
     },
-    { subtotal: true, label: 'Net Pre-Operating', val: m.netPreOp,
-      proj: null, promoterAvg: null, typeAvg: null, districtAvg: null,
-    },
+
+    { subtotal: true, label: 'Net Pre-Operating', val: m.netPreOp },
+
+    /* ── Op carry ── */
     {
       key: 'static', label: 'Op Carry — Static', val: -m.opCarryStatic, kind: 'op',
-      detailLabel: 'Rent, taxes, insurance, utilities, salaries, payroll tax, marketing, maintenance — $1,204,122/yr ÷ 140 nights',
+      detailLabel: 'Rent, property tax, insurance, utilities, salaries, salaried payroll tax, marketing floor, maintenance — $1,204,122/yr ÷ 140 nights',
       districtAvg: -DISTRICT.OP_CARRY_STATIC,
     },
     {
       key: 'variable', label: 'Op Carry — Variable', val: -m.opCarryVariable, kind: 'op',
-      detailLabel: m.has.costs ? 'Actual variable costs from event close-out' : 'District average — security, cleaning, hourly tipped wages, cash-out, production',
-      proj: null, districtAvg: -DISTRICT.OP_CARRY_VARIABLE,
+      detailLabel: m.has.costs ? 'Per-night actuals from event close-out — see breakdown below' : 'District average until per-night actuals entered',
+      districtAvg: -DISTRICT.OP_CARRY_VARIABLE,
     },
+
     { grand: true, label: 'Net to Venue', val: m.netToVenue },
   ];
 }
@@ -991,11 +1142,17 @@ function renderCascadeRow(r, m) {
 
 function renderCascadeDetail(r, m) {
   // Custom drill-down content per row
-  if (r.key === 'bar') {
+  if (r.key === 'bar_drinks') {
     return `
-      <div>Bar revenue total: <span class="calc">$${fmtMoney(m.barActual)}</span></div>
-      <div style="margin-top:6px">By category: Spirits $${fmtMoney(num(m.s.spirits_revenue))} · Bottle $${fmtMoney(num(m.s.bottle_service_revenue))} · Cocktails $${fmtMoney(num(m.s.cocktail_revenue))} · Beer $${fmtMoney(num(m.s.beer_revenue))} · NA $${fmtMoney(num(m.s.na_revenue))}</div>
-      <div style="margin-top:6px">${currentComparisons && currentComparisons.promoter_avg ? `Promoter avg across ${currentComparisons.promoter_avg.n} other ${m.e.promoter_name} events: ${fmtMoney(currentComparisons.promoter_avg.bar_avg)}` : ''}</div>`;
+      <div>Bar drinks (excludes bottle service): <span class="calc">$${fmtMoney(m.barDrinksRevenue)}</span></div>
+      <div style="margin-top:6px">Spirits $${fmtMoney(num(m.s.spirits_revenue))} · Cocktails $${fmtMoney(num(m.s.cocktail_revenue))} · Beer $${fmtMoney(num(m.s.beer_revenue))} · NA $${fmtMoney(num(m.s.na_revenue))}</div>
+      <div style="margin-top:6px">Bottle service revenue ($${fmtMoney(m.bottleRevenue)}) is allocated to <strong>Table Revenue</strong> on the line below — bottle service ties to deal mechanics for table reservations.</div>`;
+  }
+  if (r.key === 'table') {
+    return `
+      <div>Table / Bottle Service: <span class="calc">$${fmtMoney(m.tableActual)}</span></div>
+      <div style="margin-top:6px">${m.bottleCount} bottles sold this event (items where unit price ≥ $100 and name contains "Bottle")</div>
+      <div style="margin-top:6px">Avg per bottle: ${m.bottleCount > 0 ? '$' + (m.tableActual / m.bottleCount).toFixed(0) : '—'}</div>`;
   }
   if (r.key === 'cogs') {
     return `
@@ -1024,25 +1181,31 @@ function renderCascadeDetail(r, m) {
   if (r.key === 'artist') {
     return `
       <div>Artist fee landed: <span class="calc">$${fmtMoney(num(m.e.artist_fee_landed))}</span></div>
-      <div style="margin-top:4px">Travel/rider: <span class="calc">$${fmtMoney(num(m.e.artist_fee_travel))}</span></div>
-      <div style="margin-top:6px">${m.e.deal_notes ? m.e.deal_notes : ''}</div>`;
+      <div style="margin-top:4px">Travel: <span class="calc">$${fmtMoney(num(m.e.artist_fee_travel))}</span></div>
+      <div style="margin-top:4px">Hospitality rider (actual): <span class="calc">$${fmtMoney(m.riderActual)}</span></div>
+      <div style="margin-top:4px">Total artist cost: <span class="calc">$${fmtMoney(m.artistTotal)}</span></div>
+      <div style="margin-top:6px;color:var(--ink-3)">Hospitality rider lives here (not in Variable Costs) because the amount is locked at booking by artist contract, not controlled night-of.</div>`;
   }
   if (r.key === 'static') {
     return `
       <div>$${DISTRICT.OP_CARRY_STATIC.toLocaleString()}/night = $1,204,122/yr ÷ 140 club nights</div>
-      <div style="margin-top:6px">Components: Rent + Tax + Insurance + Utilities + Waste + Licenses ($381,509) + Salaries + Payroll Tax + Marketing + Maintenance + Other Operational ($822,614)</div>
+      <div style="margin-top:6px"><strong>A1 Fixed ($381,509/yr):</strong> Rent · Property Tax · Insurance · Utilities · Waste · Licenses · Dues</div>
+      <div style="margin-top:4px"><strong>A2 Static-Variable ($822,614/yr):</strong> Salaries · Salaried Payroll Tax · <strong>Marketing Floor (~$${DISTRICT.MARKETING_FLOOR_ANNUAL.toLocaleString()}/yr · $${DISTRICT.MARKETING_FLOOR_PER_NIGHT}/night)</strong> · Maintenance · Other Operational</div>
+      <div style="margin-top:6px;color:var(--ink-3)">Marketing floor is the always-on baseline. Per-event marketing above the floor → Variable Costs panel below.</div>
+      <div style="margin-top:4px;color:var(--ink-3)"><strong>NOT in Static:</strong> Payroll tax on tipped staff (15% venue side on tips + tipped wages). Those land in Variable Costs (per-night burden).</div>
       <div style="margin-top:6px;color:var(--ink-3)">Source: Ryan's M2 Operating Cost Model 2025 v2 (verified line-by-line vs QB actuals)</div>`;
   }
   if (r.key === 'variable') {
     if (m.has.costs) {
       return `
-        <div>Actuals from event close-out (see Variable Costs panel below)</div>
-        <div style="margin-top:6px">Total: <span class="calc">$${fmtMoney(m.opCarryVariable)}</span> · vs district avg $${DISTRICT.OP_CARRY_VARIABLE.toLocaleString()}</div>`;
+        <div>Per-night actuals from event close-out: <span class="calc">$${fmtMoney(m.opCarryVariable)}</span></div>
+        <div style="margin-top:6px">vs District average $${DISTRICT.OP_CARRY_VARIABLE.toLocaleString()}/night ($542,240/yr ÷ 140)</div>
+        <div style="margin-top:6px">See <strong>Variable Costs</strong> panel below for line-item breakdown including payroll tax burden.</div>`;
     }
     return `
-      <div>$${DISTRICT.OP_CARRY_VARIABLE.toLocaleString()}/night = $542,240/yr ÷ 140 club nights (district average)</div>
-      <div style="margin-top:6px">Components: Cash Out ($83,297) · Hourly Wages Tipped ($43,573) · Security ($346,435) · Cleaning ($68,935) · Production Labor (TBD)</div>
-      <div style="margin-top:6px;color:var(--ink-3)">When actuals are entered via the calculator, they replace the district average above.</div>`;
+      <div>Defaulting to district average $${DISTRICT.OP_CARRY_VARIABLE.toLocaleString()}/night until per-night actuals are entered.</div>
+      <div style="margin-top:6px"><strong>Should include:</strong> Cash Out · Hourly Wages Tipped ($2.18/hr base) · Payroll Tax on Tipped Wages (15% venue) · Payroll Tax on Tips (15% venue) · Security · Door Girls · Police · Production Staff · Production Equipment · Marketing — Variable</div>
+      <div style="margin-top:6px;color:var(--ink-3)">Hospitality rider was relocated to Artist Cost above. Cleaning is rolled into Production Staff / Cash Out at District.</div>`;
   }
   return `<div>${r.detailLabel || ''}</div>`;
 }
@@ -1064,14 +1227,18 @@ function renderVariableCostsCard(m) {
   const typeAvg = currentComparisons && currentComparisons.type_avg ? currentComparisons.type_avg : null;
   const dft = DISTRICT.CALC_DEFAULTS;
 
+  // Lines ordered per Scott — purely night-level variables first, then labor, then ops, then marketing
   const lines = [
-    { key: 'security',    label: 'Security',           actual: c.security,     promoter: promAvg && promAvg.security_avg,    type: typeAvg && typeAvg.security_avg,    district: dft.security },
-    { key: 'door_girls',  label: 'Door Girls',         actual: c.door_girls,   promoter: promAvg && promAvg.door_girls_avg,  type: typeAvg && typeAvg.door_girls_avg,  district: dft.door_girls },
-    { key: 'police',      label: 'Police Security',    actual: c.police,       promoter: promAvg && promAvg.police_avg,      type: typeAvg && typeAvg.police_avg,      district: dft.police },
-    { key: 'prod_staff',  label: 'Production Staff',   actual: c.prod_staff,   promoter: promAvg && promAvg.prod_staff_avg,  type: typeAvg && typeAvg.prod_staff_avg,  district: dft.prod_staff },
-    { key: 'prod_equip',  label: 'Production Equip',   actual: c.prod_equip,   promoter: promAvg && promAvg.prod_equip_avg,  type: typeAvg && typeAvg.prod_equip_avg,  district: dft.prod_equip },
-    { key: 'rider',       label: 'Hospitality Rider',  actual: c.rider,        promoter: promAvg && promAvg.rider_avg,       type: typeAvg && typeAvg.rider_avg,       district: dft.rider },
-    { key: 'marketing',   label: 'Marketing (net)',    actual: c.marketing_net,promoter: promAvg && promAvg.marketing_avg,   type: typeAvg && typeAvg.marketing_avg,   district: dft.marketing },
+    { key: 'cash_out',    label: 'Cash Out',                    actual: c.cash_out,          promoter: promAvg && promAvg.cash_out_avg,    type: typeAvg && typeAvg.cash_out_avg,    district: null, sub: 'Per-night actual; previously averaged ($595)' },
+    { key: 'tipped_wages',label: 'Hourly Wages — Tipped',       actual: c.tipped_wages,      promoter: promAvg && promAvg.tipped_wages_avg,type: typeAvg && typeAvg.tipped_wages_avg,district: null, sub: '$2.18/hr × scheduled hrs (bartenders / barbacks / bottle girls)' },
+    { key: 'tax_wages',   label: 'Payroll Tax on Tipped Wages', actual: c.payroll_tax_wages, promoter: null, type: null, district: null, sub: '15% venue share, computed from tipped wages above' },
+    { key: 'tax_tips',    label: 'Payroll Tax on Tips',         actual: c.payroll_tax_tips,  promoter: null, type: null, district: null, sub: '15% venue share, computed from tips collected (employee pays separate 15% on their check)' },
+    { key: 'security',    label: 'Security',                     actual: c.security,          promoter: promAvg && promAvg.security_avg,   type: typeAvg && typeAvg.security_avg,    district: dft.security },
+    { key: 'door_girls',  label: 'Door Girls',                   actual: c.door_girls,        promoter: promAvg && promAvg.door_girls_avg, type: typeAvg && typeAvg.door_girls_avg,  district: dft.door_girls },
+    { key: 'police',      label: 'Police Security',              actual: c.police,            promoter: promAvg && promAvg.police_avg,     type: typeAvg && typeAvg.police_avg,      district: dft.police },
+    { key: 'prod_staff',  label: 'Production Staff',             actual: c.prod_staff,        promoter: promAvg && promAvg.prod_staff_avg, type: typeAvg && typeAvg.prod_staff_avg,  district: dft.prod_staff },
+    { key: 'prod_equip',  label: 'Production Equipment',         actual: c.prod_equip,        promoter: promAvg && promAvg.prod_equip_avg, type: typeAvg && typeAvg.prod_equip_avg,  district: dft.prod_equip },
+    { key: 'marketing',   label: 'Marketing — Variable',         actual: c.marketing_var,     promoter: promAvg && promAvg.marketing_avg,  type: typeAvg && typeAvg.marketing_avg,   district: dft.marketing, sub: 'Above the $' + DISTRICT.MARKETING_FLOOR_PER_NIGHT + '/night floor in Static · large delta drives nightly performance' },
   ];
 
   const tbody = lines.map(l => {
@@ -1079,21 +1246,22 @@ function renderVariableCostsCard(m) {
     const promDelta = l.actual > 0 && l.promoter ? deltaStr(l.actual, l.promoter) : null;
     const typeDelta = l.actual > 0 && l.type ? deltaStr(l.actual, l.type) : null;
     const distDelta = l.actual > 0 && l.district ? deltaStr(l.actual, l.district) : null;
+    const subRow = l.sub ? `<tr><td colspan="5" style="padding:0 12px 6px;font-size:10px;color:var(--ink-4);font-style:italic;text-align:left;border-bottom:1px solid rgba(0,0,0,0.04)">${l.sub}</td></tr>` : '';
     return `<tr>
       <td>${l.label}</td>
       <td class="num ${aClass}">${l.actual > 0 ? fmtMoney(l.actual) : '—'}</td>
       <td class="num dim">${l.promoter ? fmtMoney(l.promoter) : '—'} ${promDelta ? `<span class="delta ${promDelta.cls}">${promDelta.str}</span>` : ''}</td>
       <td class="num dim">${l.type ? fmtMoney(l.type) : '—'} ${typeDelta ? `<span class="delta ${typeDelta.cls}">${typeDelta.str}</span>` : ''}</td>
       <td class="num dim">${l.district ? fmtMoney(l.district) : '—'} ${distDelta ? `<span class="delta ${distDelta.cls}">${distDelta.str}</span>` : ''}</td>
-    </tr>`;
+    </tr>${subRow}`;
   }).join('');
 
-  // Totals
+  // Totals — rider removed (now in Artist Cost), cash out / tipped labor / payroll tax added
   const totalActual = c.total;
-  const totalProm = promAvg ? num(promAvg.security_avg) + num(promAvg.door_girls_avg) + num(promAvg.police_avg) + num(promAvg.prod_staff_avg) + num(promAvg.prod_equip_avg) + num(promAvg.rider_avg) + num(promAvg.marketing_avg) : 0;
-  const totalType = typeAvg ? num(typeAvg.security_avg) + num(typeAvg.door_girls_avg) + num(typeAvg.police_avg) + num(typeAvg.prod_staff_avg) + num(typeAvg.prod_equip_avg) + num(typeAvg.rider_avg) + num(typeAvg.marketing_avg) : 0;
-  const totalDist = dft.security + dft.door_girls + dft.police + dft.prod_staff + dft.prod_equip + dft.rider + dft.marketing;
-  const totalRow = `<tr class="subtotal">
+  const totalProm = promAvg ? num(promAvg.cash_out_avg) + num(promAvg.tipped_wages_avg) + (num(promAvg.tipped_wages_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + (num(promAvg.tips_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + num(promAvg.security_avg) + num(promAvg.door_girls_avg) + num(promAvg.police_avg) + num(promAvg.prod_staff_avg) + num(promAvg.prod_equip_avg) + num(promAvg.marketing_avg) : 0;
+  const totalType = typeAvg ? num(typeAvg.cash_out_avg) + num(typeAvg.tipped_wages_avg) + (num(typeAvg.tipped_wages_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + (num(typeAvg.tips_avg) * DISTRICT.PAYROLL_TAX_RATE_VENUE) + num(typeAvg.security_avg) + num(typeAvg.door_girls_avg) + num(typeAvg.police_avg) + num(typeAvg.prod_staff_avg) + num(typeAvg.prod_equip_avg) + num(typeAvg.marketing_avg) : 0;
+  const totalDist = dft.security + dft.door_girls + dft.police + dft.prod_staff + dft.prod_equip + dft.marketing;
+  const totalRow = `<tr class="grand">
     <td>Total Variable Costs</td>
     <td class="num ${totalActual > 0 ? '' : 'dim'}">${totalActual > 0 ? fmtMoney(totalActual) : '—'}</td>
     <td class="num dim">${totalProm ? fmtMoney(totalProm) : '—'}</td>
@@ -1102,14 +1270,18 @@ function renderVariableCostsCard(m) {
   </tr>`;
 
   const note = !m.has.costs
-    ? `<div style="font-size:11px;color:var(--ink-4);font-style:italic;margin-top:8px">No actuals recorded yet for this event. Comparison columns show peer averages from Ryan's calculator data.</div>`
+    ? `<div style="font-size:11px;color:var(--ink-4);font-style:italic;margin-top:10px;padding:8px 10px;background:var(--surface-2);border-left:2px solid var(--ink-4);border-radius:0 6px 6px 0;line-height:1.55">
+        <strong style="color:var(--ink-2)">Cash Out</strong> and <strong style="color:var(--ink-2)">Hourly Wages Tipped</strong> are entered post-event (source TBD — Ops Report Service Crew hours, schedule app, or manual entry).
+        Payroll tax on tipped wages and on tips is computed at 15% venue share automatically when the underlying numbers populate.
+        Hospitality rider lives in Artist Cost (cascade row above), not here.
+      </div>`
     : '';
 
   return `
   <div class="card">
     <div class="card-head">
       <h2>Variable Costs</h2>
-      <span class="meta">Per-event labor + equip + marketing — source: event_costs / calculator</span>
+      <span class="meta">Per-event labor + payroll tax + ops + variable marketing</span>
     </div>
     <table class="dt">
       <thead><tr><th></th><th>Actual</th><th class="vs">Promoter Avg</th><th class="vs">Type Avg</th><th class="vs">Calc Default</th></tr></thead>
