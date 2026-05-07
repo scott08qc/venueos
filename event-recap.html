@@ -412,24 +412,15 @@ button{font-family:inherit;cursor:pointer}
 </div>
 
 <div class="search-bar" id="search-bar-single">
-  <div class="search-field"><div class="search-label">Artist</div>
-    <input class="search-input sm" id="s-artist" placeholder="Steve Aoki" oninput="runSearch()" autocomplete="off"></div>
-  <div class="search-field"><div class="search-label">Promoter</div>
-    <input class="search-input sm" id="s-promoter" placeholder="Collectiv" oninput="runSearch()" autocomplete="off"></div>
-  <div class="search-field"><div class="search-label">Event Name</div>
-    <input class="search-input" id="s-name" placeholder="Therapy Sessions" oninput="runSearch()" autocomplete="off"></div>
-  <div class="search-field"><div class="search-label">Type</div>
-    <select class="search-input sm" id="s-type" onchange="runSearch()">
-      <option value="">All types</option>
-      <option value="electronic">Electronic</option>
-      <option value="latin">Latin</option>
-      <option value="hip_hop_rnb">Hip Hop / R&B</option>
-      <option value="open_format">Open Format</option>
-      <option value="college_university">College</option>
-      <option value="corporate_private">Corporate / Private</option>
+  <div class="search-field" style="flex:1;max-width:520px">
+    <div class="search-label">District Calendar — Choose Event</div>
+    <select class="search-input" id="event-picker" onchange="onEventPick(this.value)" style="min-width:380px;width:100%">
+      <option value="">Loading events…</option>
     </select>
   </div>
-  <div id="search-results-bar" class="search-results"></div>
+  <div style="font-size:11px;color:var(--ink-4);padding-bottom:8px;flex:1">
+    Single-event dashboard. Use the dropdown to navigate between recorded District events. For aggregate/comparison views, see Reports (coming soon).
+  </div>
 </div>
 
 <div class="search-bar" id="search-bar-range" style="display:none">
@@ -741,48 +732,57 @@ async function getEvents() {
   allEvents = await r.json();
   return allEvents;
 }
-let _searchDebounce = null;
-function runSearch() { clearTimeout(_searchDebounce); _searchDebounce = setTimeout(_doSearch, 220); }
-async function _doSearch() {
-  const artist = (g('s-artist').value || '').trim().toLowerCase();
-  const prom = (g('s-promoter').value || '').trim().toLowerCase();
-  const name = (g('s-name').value || '').trim().toLowerCase();
-  const type = g('s-type').value || '';
-  const rBar = g('search-results-bar');
-  if (!artist && !prom && !name && !type) {
-    rBar.style.display = 'none';
-    if (!currentEventId) renderSearchPrompt();
-    return;
-  }
+/* ─── Event picker (dropdown of District events grouped by month) ─── */
+async function populateEventPicker(currentId) {
   const events = await getEvents();
-  const matches = events.filter(ev => {
-    if (artist && !(ev.artist_name||'').toLowerCase().includes(artist)) return false;
-    if (prom && !(ev.promoter_name||'').toLowerCase().includes(prom)) return false;
-    if (name && !(ev.event_name||'').toLowerCase().includes(name)) return false;
-    if (type && ev.tier1_category !== type) return false;
-    return true;
-  }).slice(0, 12);
-  if (matches.length === 0) {
-    rBar.style.display = 'flex';
-    rBar.innerHTML = '<span style="font-size:11px;color:var(--ink-4)">No events found</span>';
-    return;
+  // Sort newest first
+  const sorted = [...events].sort((a, b) => (b.event_date || '').localeCompare(a.event_date || ''));
+  // Group by year-month
+  const byMonth = new Map();
+  for (const ev of sorted) {
+    if (!ev.event_date) continue;
+    const ym = ev.event_date.substring(0, 7);
+    if (!byMonth.has(ym)) byMonth.set(ym, []);
+    byMonth.get(ym).push(ev);
   }
-  rBar.style.display = 'flex';
-  rBar.innerHTML = `<span class="label">${matches.length} match${matches.length===1?'':'es'}:</span>` +
-    matches.map(ev => `<button class="search-result-pill" onclick="loadEvent(${ev.id});clearSearch()"><span class="date">${dateShort(ev.event_date)}</span> ${ev.event_name||'—'}${ev.artist_name?' · '+ev.artist_name:''}</button>`).join('');
+  const monthLabel = (ym) => {
+    const [y, m] = ym.split('-');
+    const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+  const picker = g('event-picker');
+  if (!picker) return;
+  const selectedAttr = (id) => id == currentId ? ' selected' : '';
+  picker.innerHTML = `<option value="">— Pick an event —</option>` +
+    Array.from(byMonth.entries()).map(([ym, evs]) => {
+      // For each month, sort by date asc within the month
+      const inMonth = [...evs].sort((a, b) => (a.event_date || '').localeCompare(b.event_date || ''));
+      return `<optgroup label="${monthLabel(ym)}">` +
+        inMonth.map(ev => {
+          const dt = new Date(ev.event_date.substring(0,10) + 'T00:00:00');
+          const dStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          const promoter = ev.promoter_name ? ' · ' + ev.promoter_name : '';
+          const artist = ev.artist_name ? ' · ' + ev.artist_name : '';
+          return `<option value="${ev.id}"${selectedAttr(ev.id)}>${dStr} · ${ev.event_name || '—'}${promoter}${artist}</option>`;
+        }).join('') +
+        `</optgroup>`;
+    }).join('');
 }
-function clearSearch() {
-  ['s-artist','s-promoter','s-name','s-type'].forEach(id => { const el = g(id); if (el) el.value = ''; });
-  g('search-results-bar').style.display = 'none';
+
+function onEventPick(id) {
+  if (!id) return;
+  loadEvent(parseInt(id, 10));
 }
-function searchPromoter(name) { g('s-promoter').value = name; runSearch(); }
-function filterByPromoter(name){ clearSearch(); g('s-promoter').value = name; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
-function filterByArtist(name){ clearSearch(); g('s-artist').value = name; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
-function filterByType(t){ clearSearch(); g('s-type').value = t; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
-function filterByName(name){ clearSearch(); g('s-name').value = name; runSearch(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+// Legacy filter functions are no-ops now — kept defined to avoid runtime errors
+function searchPromoter() {}
+function filterByPromoter() {}
+function filterByArtist() {}
+function filterByType() {}
+function filterByName() {}
 
 function renderSearchPrompt() {
-  g('page-root').innerHTML = `<div class="empty-state"><div class="empty-state-title">Search for an event</div><div class="empty-state-sub">Use any combination of artist, promoter, event name, or type</div></div>`;
+  g('page-root').innerHTML = `<div class="empty-state"><div class="empty-state-title">Choose an event from the dropdown above</div><div class="empty-state-sub">All District events listed by date</div></div>`;
 }
 function renderRangePlaceholder() {
   g('page-root').innerHTML = `<div class="empty-state"><div class="empty-state-title">Select a date range</div><div class="empty-state-sub">Use a preset or enter custom start and end dates</div></div>`;
@@ -839,10 +839,10 @@ function renderDashboard() {
       <div>
         ${renderMarginPadCard(m)}
         ${renderDealCard(m)}
+        ${renderRecapNotesCard(m)}
         ${renderMarketCard(m)}
       </div>
     </div>
-    ${renderNotesCard(m)}
     ${renderDealSliderCard(m)}
   `;
   g('page-root').innerHTML = html;
@@ -863,11 +863,11 @@ function renderMasthead(m) {
         <span class="eyebrow">Event Recap</span>
         <span class="badge-status ${statusCls}">${statusLabel}</span>
       </div>
-      <h1 class="mh-name"><span class="mh-clickable" onclick="filterByName('${(e.event_name||'').replace(/'/g,"\\'")}')">${e.event_name || 'Untitled Event'}</span></h1>
+      <h1 class="mh-name">${e.event_name || 'Untitled Event'}</h1>
       <div class="mh-meta">
-        ${e.tier1_category ? `<span><span class="label">Type</span><span class="mh-clickable" onclick="filterByType('${e.tier1_category}')">${formatCategory(e.tier1_category)}</span></span><span class="sep">·</span>` : ''}
-        ${e.promoter_name ? `<span><span class="label">Promoter</span><span class="mh-clickable promoter-link" onclick="filterByPromoter('${(e.promoter_name||'').replace(/'/g,"\\'")}')">${e.promoter_name}</span></span><span class="sep">·</span>` : ''}
-        ${e.artist_name ? `<span><span class="label">Artist</span><span class="mh-clickable" onclick="filterByArtist('${(e.artist_name||'').replace(/'/g,"\\'")}')">${e.artist_name}</span></span><span class="sep">·</span>` : ''}
+        ${e.tier1_category ? `<span><span class="label">Type</span>${formatCategory(e.tier1_category)}</span><span class="sep">·</span>` : ''}
+        ${e.promoter_name ? `<span><span class="label">Promoter</span>${e.promoter_name}</span><span class="sep">·</span>` : ''}
+        ${e.artist_name ? `<span><span class="label">Artist</span>${e.artist_name}</span><span class="sep">·</span>` : ''}
         ${e.doors_open_time || e.event_close_time ? `<span><span class="label">Hours</span>${e.doors_open_time || '—'} → ${e.event_close_time || 'close'}</span>` : ''}
       </div>
     </div>
@@ -2021,6 +2021,34 @@ function renderHistorySparkline(hist) {
   </div>`;
 }
 
+/* ─── COMPONENT: Recap Notes (right rail under Deal Structure) ─── */
+function renderRecapNotesCard(m) {
+  const e = m.e;
+  const items = [
+    { eyebrow: 'Crowd Demographics', text: e.crowd_demographic_observations },
+    { eyebrow: 'Promoter Performance', text: e.promoter_performance_notes },
+    { eyebrow: 'Replicate Next Time', text: e.what_to_replicate, cls: 'replicate' },
+    { eyebrow: 'Change Next Time', text: e.what_to_change, cls: 'change' },
+  ];
+  const present = items.filter(x => x.text);
+  if (present.length === 0) {
+    return `
+    <div class="card">
+      <div class="card-head"><h2>Recap Notes</h2><span class="meta">Manual entry</span></div>
+      <div class="no-data">No recap notes recorded yet for this event.</div>
+    </div>`;
+  }
+  return `
+    <div class="card">
+      <div class="card-head"><h2>Recap Notes</h2><span class="meta">Manual post-event observations</span></div>
+      ${present.map(x => `
+        <div class="note-box ${x.cls || ''}" style="margin-bottom:8px">
+          <span class="eyebrow">${x.eyebrow}</span>
+          <div class="text">${x.text}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
 /* ─── COMPONENT: Notes ──────────────────────────────────────────── */
 function renderNotesCard(m) {
   const e = m.e;
@@ -2189,8 +2217,13 @@ function doExport() { closeExportModal(); document.body.setAttribute('data-expor
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const eventId = params.get('event_id');
-  if (eventId) loadEvent(parseInt(eventId, 10));
-  else renderSearchPrompt();
+  if (eventId) {
+    loadEvent(parseInt(eventId, 10));
+    populateEventPicker(parseInt(eventId, 10));
+  } else {
+    renderSearchPrompt();
+    populateEventPicker(null);
+  }
 });
 </script>
 </body>
