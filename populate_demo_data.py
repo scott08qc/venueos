@@ -281,6 +281,88 @@ def populate_event(engine, event_id: int, promoter: str, genre: str, artist: str
 
     s = _generate_event_scenario(event_id, promoter, genre, artist, event_date)
 
+    # ── Override with item-level reality if it exists ──────────────────────
+    # Some events have real item sales already populated. Don't fight the data —
+    # use actual item totals and back-derive a sensible headcount that puts
+    # F&B/head inside the genre band.
+    with engine.connect() as conn:
+        item_totals = conn.execute(text("""
+            SELECT
+                COALESCE(SUM(total_revenue), 0) AS total_rev,
+                COALESCE(SUM(CASE WHEN item_name ILIKE '%Bottle%' OR item_name ILIKE '%Magnum%'
+                                  OR item_name IN ('Dom Perignon Champagne Brut', 'Veuve Clicquot Yellow Label',
+                                                   'Moet & Chandon Champagne Nectar Imperial Rose',
+                                                   'Clase Azul Reposado')
+                              THEN total_revenue ELSE 0 END), 0) AS table_rev,
+                COUNT(*) AS item_count
+            FROM event_item_sales WHERE event_id = :eid
+        """), {'eid': event_id}).fetchone()
+
+    if item_totals and float(item_totals.total_rev) > 100:
+        # Real items exist — use them and back-derive headcount
+        actual_total_fb = float(item_totals.total_rev)
+        actual_table = float(item_totals.table_rev)
+        actual_bar = actual_total_fb - actual_table
+
+        # Reverse: headcount = total_fb / target_per_head_in_band_midpoint
+        lo, hi = GENRE_FB_TARGETS.get(genre, (25, 40))
+        rng = _seed_for_event(event_id + 7)  # different seed for headcount vs scenario
+        target_per_head = rng.uniform(lo, hi)
+
+        # If "below" scenario, target lower spend per head (sparse crowd, lighter wallets)
+        if s['_is_below']:
+            target_per_head *= rng.uniform(0.85, 0.95)
+        else:
+            target_per_head *= rng.uniform(0.95, 1.10)
+
+        actual_attendance_override = max(50, int(actual_total_fb / target_per_head))
+        s['actual_attendance'] = actual_attendance_override
+        s['total_headcount'] = actual_attendance_override
+        s['actual_bar_revenue'] = round(actual_bar, 2)
+        s['actual_table_revenue'] = round(actual_table, 2)
+        s['total_bar_sales'] = round(actual_total_fb, 2)
+        s['table_bottle_service'] = round(actual_table, 2)
+
+        # Re-derive door / projections to match new attendance
+        if genre != 'corporate_private':
+            avg_ticket = {
+                'electronic': 60, 'latin': 35, 'hip_hop_rnb': 45,
+                'open_format': 25, 'college_university': 18,
+            }.get(genre, 35)
+            presold = int(actual_attendance_override * 0.75)
+            walk_up_count = int(actual_attendance_override * 0.25)
+            new_door = round(presold * avg_ticket + walk_up_count * (avg_ticket * 0.85), 2)
+            s['actual_door_revenue'] = new_door
+            s['door_revenue_card'] = round(new_door * 0.70, 2)
+            s['door_revenue_cash'] = round(new_door * 0.30, 2)
+
+        # Re-derive projections from variance flag
+        if s['_is_below']:
+            s['projected_bar_revenue']   = round(actual_bar / 0.65, 2)
+            s['projected_table_revenue'] = round(actual_table / 0.70, 2)
+            s['projected_door_revenue']  = round(s['actual_door_revenue'] / 0.70, 2)
+        else:
+            s['projected_bar_revenue']   = round(actual_bar / rng.uniform(1.00, 1.18), 2)
+            s['projected_table_revenue'] = round(actual_table / rng.uniform(1.00, 1.15), 2)
+            s['projected_door_revenue']  = round(s['actual_door_revenue'] / rng.uniform(0.92, 1.05), 2)
+
+        s['expected_attendance'] = int(actual_attendance_override / rng.uniform(0.92, 1.05))
+
+        # Re-derive cost variables that scale with headcount
+        if actual_attendance_override < 350:
+            s['tipped_staff_count'], s['tipped_hours_avg'] = 12, 5.5
+        elif actual_attendance_override < 600:
+            s['tipped_staff_count'], s['tipped_hours_avg'] = 16, 6.0
+        elif actual_attendance_override < 900:
+            s['tipped_staff_count'], s['tipped_hours_avg'] = 20, 6.25
+        else:
+            s['tipped_staff_count'], s['tipped_hours_avg'] = 23, 6.25
+        s['hourly_wages_tipped_total'] = round(s['tipped_staff_count'] * s['tipped_hours_avg'] * 2.18, 2)
+
+        # Re-derive table/GL counts
+        s['table_guest_count'] = max(0, int(actual_attendance_override * 0.05)) if genre in ('electronic', 'latin', 'hip_hop_rnb') else 0
+        s['guest_list_count'] = max(20, int(actual_attendance_override * 0.06))
+
     # Step 1: Update events table with projections + Collectiv terms
     with engine.begin() as conn:
         conn.execute(text("""
