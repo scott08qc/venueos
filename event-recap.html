@@ -492,8 +492,12 @@ const DISTRICT = {
   // Marketing floor (placeholder until Ryan confirms exact line item from M2 model)
   MARKETING_FLOOR_ANNUAL: 50000,           // baseline always-on marketing
   MARKETING_FLOOR_PER_NIGHT: 357,          // 50K / 140 nights
-  // Default per-event variable cost slate (calculator defaults)
-  CALC_DEFAULTS: { security: 800, door_girls: 400, police: 200, prod_staff: 600, prod_equip: 0, marketing: 300 },
+  // Default per-event variable cost slate (calculator defaults — match canonical baseline)
+  CALC_DEFAULTS: { security: 2475, door_girls: 400, police: 200, prod_staff: 400, prod_equip: 0, marketing: 300 },
+  SECURITY_BASELINE: 2475,             // 14 staff × $175 (floor)
+  SECURITY_CEILING: 4025,              // 23 staff × $175 (heavy night)
+  PRODUCTION_LABOR_FLOOR: 400,
+  PRODUCTION_LABOR_CEILING: 800,
 };
 
 const BASE = window.location.origin;

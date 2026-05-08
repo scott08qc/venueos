@@ -3143,6 +3143,19 @@ loadDiscrepancies();
             import traceback
             return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
 
+    # Admin: Bulk demo data population (idempotent)
+    @api.post("/admin/populate-demo")
+    def admin_populate_demo():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        try:
+            from populate_demo_data import populate_all_events
+            result = populate_all_events(engine)
+            return {"ok": True, **result}
+        except Exception as ex:
+            import traceback
+            return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
+
     # ââ App wiring ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     from fastapi.middleware.cors import CORSMiddleware
