@@ -8,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 
+from event_pnl import compute_event_pnl
+
 _raw_url = os.environ.get("DATABASE_URL", "")
 DATABASE_URL = (
     _raw_url
@@ -136,6 +138,12 @@ def init_db():
             ("net_revenue_actual", "NUMERIC"),
             ("actual_attendance", "INTEGER"),
             ("expected_attendance", "INTEGER"),
+            # ─── Deal-engine fields (May 2026 ruleset) ──────────────────
+            ("house_charge_base", "NUMERIC"),          # Collectiv base (10,500 default)
+            ("collectiv_op_add", "NUMERIC DEFAULT 0"), # Collectiv-side add ($1,000 reduction)
+            ("ticket_surcharge_revenue", "NUMERIC"),   # 15% of EB face, splits 50/50
+            ("guest_list_count", "INTEGER DEFAULT 0"), # GL bodies, no ticket
+            ("table_guest_count", "INTEGER DEFAULT 0"),# Table guests no ticket (heavy nights)
         ]:
             conn.execute(text(f"ALTER TABLE events ADD COLUMN IF NOT EXISTS {col} {dtype}"))
 
@@ -1062,6 +1070,19 @@ def create_app(static_dir: str) -> FastAPI:
             updated_at TIMESTAMP DEFAULT NOW()
           )
         """))
+        # ─── Deal-engine columns (May 2026 ruleset) ────────────────────
+        for col, dtype in [
+            ("tech_rider_actual", "NUMERIC DEFAULT 0"),     # tech rider, separate from hospitality
+            ("tech_rider_estimate", "NUMERIC DEFAULT 0"),
+            ("cleaning_total", "NUMERIC DEFAULT 492"),       # canonical static $492
+            ("excise_tax_collected", "NUMERIC DEFAULT 0"),   # 3% liquor excise
+            ("cc_processing_passthrough", "NUMERIC DEFAULT 0"),  # actual from ops report
+            ("security_staff_count", "INTEGER DEFAULT 0"),   # for AI ratio analysis
+            ("tipped_staff_count", "INTEGER DEFAULT 0"),
+            ("tipped_hours_avg", "NUMERIC DEFAULT 6.25"),
+            ("production_staff_count", "INTEGER DEFAULT 0"),
+        ]:
+            conn.execute(text(f"ALTER TABLE event_costs ADD COLUMN IF NOT EXISTS {col} {dtype}"))
         conn.commit()
         row = conn.execute(text("SELECT * FROM event_costs WHERE event_id = :eid"), {"eid": event_id}).fetchone()
         if not row:
@@ -1509,6 +1530,40 @@ def create_app(static_dir: str) -> FastAPI:
                   created_at TIMESTAMP DEFAULT NOW()
                 )
             """))
+            # ─── COGS source tracking (recipe vs revel vs flagged) ─────
+            for col, dtype in [
+                ("cogs_source", "TEXT DEFAULT 'revel'"),     # recipe | revel | flagged
+                ("cogs_correction_note", "TEXT"),
+                ("revel_original_cost", "NUMERIC"),          # preserved for audit
+            ]:
+                conn.execute(text(f"ALTER TABLE event_item_sales ADD COLUMN IF NOT EXISTS {col} {dtype}"))
+            # ─── Eventbrite tier breakdown ─────────────────────────────
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS event_ticket_tiers (
+                  id SERIAL PRIMARY KEY,
+                  event_id INTEGER NOT NULL,
+                  platform TEXT NOT NULL,           -- 'eventbrite' | 'see_tickets' | 'square_walk_up'
+                  tier_name TEXT,
+                  qty INTEGER DEFAULT 0,
+                  price NUMERIC DEFAULT 0,
+                  revenue NUMERIC DEFAULT 0,
+                  status TEXT,                      -- 'sold_out' | 'available' | 'closed'
+                  created_at TIMESTAMP DEFAULT NOW()
+                )
+            """))
+            # ─── Recipe unit costs (canonical reference) ───────────────
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS recipe_unit_costs (
+                  id SERIAL PRIMARY KEY,
+                  recipe_name TEXT UNIQUE NOT NULL,
+                  unit_cost NUMERIC,
+                  portion_size NUMERIC,
+                  recipe_type TEXT,                 -- 'pour' | 'bottle' | 'mix'
+                  needs_update BOOLEAN DEFAULT FALSE,
+                  notes TEXT,
+                  updated_at TIMESTAMP DEFAULT NOW()
+                )
+            """))
             conn.commit()
             event = conn.execute(text("""
                 SELECT e.*,
@@ -1606,6 +1661,56 @@ def create_app(static_dir: str) -> FastAPI:
             def cat_total(lst): return round(sum(i.get('total_revenue') or 0 for i in lst), 2)
             def cat_cogs(lst): return round(sum(i.get('total_cost') or 0 for i in lst), 2)
 
+            # ─── Pull supporting data for canonical P&L engine ─────────
+            costs_row = conn.execute(text("SELECT * FROM event_costs WHERE event_id = :eid"), {"eid": event_id}).fetchone()
+            costs_dict = dict(costs_row._mapping) if costs_row else {}
+            for k, v in costs_dict.items():
+                if hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                    costs_dict[k] = float(v)
+
+            actuals_row = conn.execute(text(
+                "SELECT * FROM night_of_actuals WHERE event_id = :eid AND time_of_entry ILIKE 'close%' "
+                "ORDER BY created_at DESC LIMIT 1"
+            ), {"eid": event_id}).fetchone()
+            actuals_dict = dict(actuals_row._mapping) if actuals_row else {}
+            for k, v in actuals_dict.items():
+                if hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                    actuals_dict[k] = float(v)
+
+            tier_rows = conn.execute(text(
+                "SELECT platform, tier_name, qty, price, revenue, status "
+                "FROM event_ticket_tiers WHERE event_id = :eid ORDER BY id"
+            ), {"eid": event_id}).fetchall()
+
+            ticket_breakdown = {
+                'eventbrite': [],
+                'see_tickets': {'qty': 0, 'price': 45},
+                'walk_up_square': {'qty': 0, 'revenue': 0},
+                'guest_list': int(d.get('guest_list_count') or 0),
+                'table_guests': int(d.get('table_guest_count') or 0),
+            }
+            for tr in tier_rows:
+                platform = tr.platform
+                if platform == 'eventbrite':
+                    ticket_breakdown['eventbrite'].append({
+                        'tier': tr.tier_name, 'qty': int(tr.qty or 0),
+                        'price': float(tr.price or 0),
+                    })
+                elif platform == 'see_tickets':
+                    ticket_breakdown['see_tickets'] = {
+                        'qty': int(tr.qty or 0), 'price': float(tr.price or 0)
+                    }
+                elif platform == 'square_walk_up':
+                    ticket_breakdown['walk_up_square'] = {
+                        'qty': int(tr.qty or 0), 'revenue': float(tr.revenue or 0)
+                    }
+
+            # ─── Run canonical P&L engine ──────────────────────────────
+            try:
+                pnl = compute_event_pnl(d, item_list, costs_dict, actuals_dict, ticket_breakdown)
+            except Exception as ex:
+                pnl = {'error': str(ex)}
+
             return {
                 "event": d,
                 "items": item_list,
@@ -1628,7 +1733,9 @@ def create_app(static_dir: str) -> FastAPI:
                     "cocktails": cocktails,
                     "na": na,
                     "fees": fees,
-                }
+                },
+                "pnl": pnl,
+                "tickets": ticket_breakdown,
             }
 
     # ââ AI Talking Points âââââââââââââââââââââââââââââââââââââââââââââââââââââ
@@ -3021,6 +3128,16 @@ loadDiscrepancies();
 </body>
 </html>"""
         return HTMLResponse(content=html)
+
+    # Admin: May 1 ingest (idempotent)
+    @api.post("/admin/ingest-may1")
+    def admin_ingest_may1(event_id: int = 131):
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        from ingest_may1 import run_full_ingest
+        with engine.begin() as conn:
+            result = run_full_ingest(conn, event_id)
+        return {"ok": True, **result}
 
     # ââ App wiring ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 

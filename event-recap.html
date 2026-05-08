@@ -700,6 +700,92 @@ function deriveModel(data, comparisons, costs) {
     costs: cVarSum > 0,
   };
 
+  // ─── Server-side canonical P&L override ──────────────────────────────
+  // When /api/event-detail returns a `pnl` block, use those values as truth.
+  // Falls back gracefully to client-side derivation for un-ingested events.
+  const serverPnl = data.pnl;
+  let canonicalOverride = {};
+  if (serverPnl && !serverPnl.error) {
+    const r = serverPnl.revenue || {};
+    const c = serverPnl.cogs || {};
+    const h = serverPnl.headcount || {};
+    const sp = serverPnl.spend || {};
+    const ar = serverPnl.artist || {};
+    const oc = serverPnl.op_carry || {};
+    const dl = serverPnl.deal || {};
+    const pt = serverPnl.pass_throughs || {};
+    canonicalOverride = {
+      // Revenue
+      barActual:        r.bar ?? barActual,
+      barDrinksRevenue: r.bar ?? barDrinksRevenue,
+      tableActual:      r.table ?? tableActual,
+      bottleRevenue:    r.table ?? bottleRevenue,
+      totalAlcohol:     r.fb_total ?? totalAlcohol,
+      doorActual:       r.door_total ?? doorActual,
+      ticketSurcharge:  r.ticket_surcharge ?? 0,
+      ebFaceRevenue:    r.eb_face ?? 0,
+      seeTicketsRev:    r.see_tix_revenue ?? 0,
+      walkUpRevenue:    r.walk_up_revenue ?? 0,
+      netSales:         r.net_sales ?? netSales,
+      grossRev:         r.net_sales ?? grossRev,
+      // COGS
+      liquorCogs:       c.total ?? liquorCogs,
+      barCogs:          c.bar ?? 0,
+      tableCogs:        c.table ?? 0,
+      liquorPourPct:    c.liquor_pour_pct ?? liquorPourPct,
+      grossMarginPct:   c.gross_margin_pct ?? null,
+      cogsCorrections:  c.corrections_applied ?? 0,
+      cogsZeroFlags:    c.zero_recipe_flags ?? 0,
+      // Headcount
+      headcount:        h.total ?? attendance,
+      ticketedCount:    h.ticketed ?? 0,
+      tableGuestCount:  h.table_guests ?? 0,
+      guestListCount:   h.guest_list ?? 0,
+      // Spend per head — F&B basis
+      fbPerHead:        sp.fb_per_head ?? null,
+      genreBandLow:     sp.genre_band_low ?? null,
+      genreBandHigh:    sp.genre_band_high ?? null,
+      fbInBand:         sp.in_band ?? null,
+      // Artist / riders
+      artistFee:        ar.fee ?? artistFee,
+      hospitalityRider: ar.hospitality_rider ?? 0,
+      techRider:        ar.tech_rider ?? 0,
+      artistTotal:      ar.total ?? (artistFee + cRider),
+      riderActual:      (ar.hospitality_rider ?? 0) + (ar.tech_rider ?? 0),
+      // Op carry
+      opCarryStatic:    oc.static ?? opCarryStatic,
+      opCarryVariable:  oc.variable ?? opCarryVariable,
+      opCarryTotal:     oc.total ?? opCarryTotal,
+      opCarryDetail:    oc.variable_breakdown || null,
+      // Deal
+      isCollectiv:      dl.is_collectiv ?? isCollectiv,
+      houseBase:        dl.house_base ?? 0,
+      collectivOpAdd:   dl.collectiv_op_add ?? 0,
+      houseNet:         dl.house_net ?? houseThreshold,
+      ebPlatformFee:    dl.eb_platform_fee ?? 0,
+      revenueInPool:    dl.revenue_in_pool ?? 0,
+      dealCosts50:      dl.deal_costs_50_50 ?? 0,
+      profitPool:       dl.profit_pool ?? 0,
+      eachHalfShare:    dl.each_50_share ?? 0,
+      profitToVenue:    dl.district_bottom_line ?? netToVenue,
+      collectivBottom:  dl.collectiv_bottom_line ?? 0,
+      carryCoveragePct: dl.carry_coverage_pct ?? 0,
+      carryGap:         dl.carry_gap ?? 0,
+      netToVenue:       dl.district_bottom_line ?? netToVenue,
+      // Net Pre-Operating = District bottom line + op carry total (back-derived for cascade subtotal)
+      netPreOp:         (dl.district_bottom_line ?? netToVenue) + (oc.total ?? opCarryTotal),
+      // Pass-throughs
+      passSalesTax:     pt.sales_tax ?? 0,
+      passExciseTax:    pt.excise_tax ?? 0,
+      passTips:         pt.tips ?? 0,
+      passCcProcessing: pt.cc_processing ?? 0,
+      passThroughTotal: pt.total ?? 0,
+      pnlSource:        'server',
+    };
+  } else {
+    canonicalOverride = { pnlSource: 'client', profitToVenue: netToVenue };
+  }
+
   return {
     e, s, items,
     netSales, barDrinksRevenue, bottleRevenue, totalAlcohol,
@@ -732,6 +818,10 @@ function deriveModel(data, comparisons, costs) {
       rider: cRider,
       total: cVarSum,
     },
+    // Tickets payload (when server provided)
+    tickets: data.tickets || null,
+    // Server-canonical overrides (preferred when present)
+    ...canonicalOverride,
   };
 }
 
@@ -908,7 +998,9 @@ function renderReconciliation(m) {
   if (!m.has.netSales) return '';
   const grossLine = m.has.grossSales ? m.grossItemSales : m.netSales;
   const compsLine = m.has.grossSales ? m.compsApplied : 0;
-  const passThroughTotal = m.taxCollected + m.tipsCollected + m.ccProcessingPassThrough;
+  const passThroughTotal = m.pnlSource === 'server'
+    ? m.passThroughTotal
+    : (m.taxCollected + m.tipsCollected + m.ccProcessingPassThrough);
   const totalCustomerPaid = m.netSales + passThroughTotal;
   const open = reconExpanded;
   return `
@@ -930,12 +1022,19 @@ function renderReconciliation(m) {
   </div>`;
 }
 function renderReconPassthroughDetail(m) {
+  // Prefer server P&L pass-through breakdown when present
+  const useServer = m.pnlSource === 'server';
+  const salesTax = useServer ? m.passSalesTax : m.taxCollected;
+  const exciseTax = useServer ? m.passExciseTax : 0;
+  const tips = useServer ? m.passTips : m.tipsCollected;
+  const cc = useServer ? m.passCcProcessing : m.ccProcessingPassThrough;
   return `
     <table class="dt" style="background:var(--surface)">
       <tbody>
-        <tr><td>Sales Tax (~12.65%) — to state</td><td class="num">${m.taxCollected > 0 ? '+' + fmtMoney(m.taxCollected) : '— pending Ops Report ingest'}</td></tr>
-        <tr><td>Tips Collected — to staff</td><td class="num">${m.has.tipsCollected ? '+' + fmtMoney(m.tipsCollected) : '— enter post-event'}</td></tr>
-        <tr><td>CC Processing (3.5%) — to processor</td><td class="num">+${fmtMoney(m.ccProcessingPassThrough)} <span class="pct">est. 70% card mix</span></td></tr>
+        <tr><td>Sales Tax (8.9% prevailing) — to state</td><td class="num">${salesTax > 0 ? '+' + fmtMoney(salesTax) : '— pending Ops Report ingest'}</td></tr>
+        ${useServer ? `<tr><td>Excise Tax (3.0% liquor) — to state</td><td class="num">${exciseTax > 0 ? '+' + fmtMoney(exciseTax) : '$0'}</td></tr>` : ''}
+        <tr><td>Tips Collected — to staff</td><td class="num">${tips > 0 ? '+' + fmtMoney(tips) : '— enter post-event'}</td></tr>
+        <tr><td>CC Processing (3.5%) — pass-through to customer</td><td class="num">${cc > 0 ? '+' + fmtMoney(cc) : '— pending Ops Report ingest'}${useServer ? '' : ' <span class="pct">est. 70% card mix</span>'}</td></tr>
       </tbody>
     </table>`;
 }
@@ -1000,10 +1099,10 @@ function renderKpiStrip(m) {
     </div>
     <div class="kpi">
       <div>
-        <div class="kpi-eyebrow">Bar / Head</div>
-        <div class="kpi-value ${sphCls}">${m.sph > 0 ? '$' + m.sph.toFixed(0) : '—'}</div>
+        <div class="kpi-eyebrow">F&amp;B / Head</div>
+        <div class="kpi-value ${(m.fbPerHead != null && m.genreBandLow != null) ? (m.fbInBand ? 'pos' : (m.fbPerHead < m.genreBandLow ? 'neg' : 'pos')) : sphCls}">${m.fbPerHead != null ? '$' + m.fbPerHead.toFixed(0) : (m.sph > 0 ? '$' + m.sph.toFixed(0) : '—')}</div>
       </div>
-      <div class="kpi-sub">${m.attendance ? fmtInt(m.attendance) + ' guests · district avg $' + DISTRICT.SPH_BENCH : 'No headcount'}</div>
+      <div class="kpi-sub">${m.headcount ? fmtInt(m.headcount) + ' guests' : (m.attendance ? fmtInt(m.attendance) + ' guests' : 'No headcount')}${m.genreBandLow != null ? ' · ' + formatCategory(m.e.tier1_category) + ' $' + m.genreBandLow + '–' + m.genreBandHigh : ' · district avg $' + DISTRICT.SPH_BENCH}</div>
     </div>
     <div class="kpi">
       <div>
@@ -1067,44 +1166,64 @@ async function fetchNightRead(m) {
   const fmt = v => v != null ? '$' + Math.round(v).toLocaleString() : 'no data';
   const pct  = v => v != null ? v.toFixed(1) + '%' : 'no data';
 
-  const prompt = `You are a senior operator analyst for District Atlanta, an 800-cap nightlife and live events venue. Review the following single-night event and provide a concise, data-driven Night Read in exactly this JSON format:
+  // Build a data block that's structurally consistent for every event so AI
+  // observations form patterns over time. Server P&L preferred when present.
+  const useServer = m.pnlSource === 'server';
+  const fbph = m.fbPerHead != null ? m.fbPerHead : (m.headcount > 0 ? (m.barActual / m.headcount) : 0);
+  const bandHint = (m.genreBandLow != null) ? `$${m.genreBandLow}–${m.genreBandHigh}` : 'unknown';
+  const inBandStatus = m.fbInBand === true ? 'inside band'
+                       : m.fbInBand === false ? (fbph < (m.genreBandLow ?? 0) ? 'below band' : 'above band')
+                       : 'no band';
+  const headcountTotal = m.headcount || m.attendance || 0;
+
+  const prompt = `You are a senior operator analyst for District Atlanta, an 800-cap nightlife and live events venue. Review the following single-night event recap and produce a structured Night Read with deep, data-driven observations.
+
+Return a valid JSON object with EXACTLY these four keys (no additional keys, no markdown, no preamble):
 {
-  "what_happened": "1-2 sentences summarizing the night's performance — revenue, profit to venue, and whether it was above/below expectations.",
-  "vs_history": "1 sentence comparing this event to this promoter's historical average at the venue, noting whether performance improved or declined and by how much.",
-  "vs_type": "1 sentence comparing this event to the type benchmark for this genre, noting whether bar yield, door revenue, or total revenue was above or below the typical event of this type.",
-  "lever": "1 specific, actionable recommendation for what the operator should do differently for the next event with this promoter or in this genre to improve profit, draw, or bar yield."
+  "what_happened": "2-3 sentences. State total revenue, total headcount, District net operating income, and whether the event landed within the structural ceiling for this venue/promoter combination. Be quantitative.",
+  "vs_history": "2-3 sentences. Compare to this promoter's historical average at the venue. Quote specific deltas. Note F&B per head trajectory if observable.",
+  "vs_type": "2-3 sentences. Compare to the genre benchmark for ${e.tier1_category || 'this event type'}. F&B per head landed at $${fbph.toFixed(2)} against the ${bandHint} band (${inBandStatus}) — interpret this and explain what it implies about the audience and operations.",
+  "lever": "1 specific, actionable recommendation for the operator's NEXT event with this promoter or genre. Anchor to the data shown — e.g., a specific cost line, a pricing tier, an operational ratio. Avoid platitudes."
 }
 
-Return only valid JSON. No markdown, no preamble.
+EVENT
+- Name: ${e.event_name || 'Unknown'} | Type: ${e.tier1_category || 'Unknown'} | Promoter: ${e.promoter_name || 'Unknown'} | Artist: ${e.artist_name || 'Unknown'}
+- Date: ${e.event_date || 'Unknown'} (${e.day_of_week || ''}) | Status: ${(e.status || '').toUpperCase()}
 
-EVENT DATA:
-- Event: ${e.event_name || 'Unknown'}
-- Type: ${e.tier1_category || 'Unknown'}
-- Promoter: ${e.promoter_name || 'Unknown'}
-- Date: ${e.event_date || 'Unknown'} (${e.day_of_week || ''})
-- Status: ${(e.status || '').toUpperCase()}
-
-FINANCIALS:
-- Total Revenue: ${fmt(m.grossRev)}
-- Profit to Venue: ${fmt(m.profitToVenue)}
-- Operating Carry: ${fmt(m.opCarryTotal)}
-- Margin Pad: ${pct(m.marginPadPct)} (${fmt(m.marginPad)} vs 25% charged)
-- Pour Cost: ${pct(m.liquorPourPct)} (District avg 13.6%)
+REVENUE (${useServer ? 'corrected · server P&L' : 'client-derived'})
+- Net Sales: ${fmt(m.netSales || m.grossRev)}
 - Bar Revenue: ${fmt(m.barActual)}
 - Table Revenue: ${fmt(m.tableActual)}
-- Door Revenue: ${fmt(m.doorActual)}
-${m.has.headcount ? `- Bar / Head: $${(m.barActual / m.headcount).toFixed(2)} (headcount: ${m.headcount})` : '- Headcount: not recorded'}
-- Deal Type: ${m.isCollectiv ? 'Collectiv 50/50 + $10,500 off-top' : (e.deal_structure_type || 'Standard')}
-${m.isCollectiv ? `- House Recovery Gap: -$1,974/night` : ''}
+- Door Revenue: ${fmt(m.doorActual)}${m.ticketSurcharge ? ' (incl. surcharge ' + fmt(m.ticketSurcharge) + ')' : ''}
 
-PROMOTER HISTORY (${promoterEventCount ? promoterEventCount + ' events' : 'no prior data'}):
-- Avg Bar: ${promoterAvg ? fmt(promoterAvg.bar_avg) : 'no data'}
-- Avg Door: ${promoterAvg ? fmt(promoterAvg.door_avg) : 'no data'}
-- Avg Net to Venue: ${promoterAvg ? fmt(promoterAvg.net_avg) : 'no data'}
+HEADCOUNT
+- Total bodies: ${headcountTotal}${m.ticketedCount ? ' (' + m.ticketedCount + ' ticketed' + (m.tableGuestCount ? ', ' + m.tableGuestCount + ' table guests' : '') + (m.guestListCount ? ', ' + m.guestListCount + ' guest list' : '') + ')' : ''}
+- F&B per head: $${fbph.toFixed(2)} | Genre band: ${bandHint} | Status: ${inBandStatus}
 
-TYPE BENCHMARK (${e.tier1_category || 'this genre'}):
-- Avg Bar: ${typeAvg ? fmt(typeAvg.bar_avg) : 'no data'}
-- Avg Door: ${typeAvg ? fmt(typeAvg.door_avg) : 'no data'}`;
+COGS & MARGIN
+- Total COGS: ${fmt(m.liquorCogs)} | Pour cost: ${pct(m.liquorPourPct)} | District benchmark: ${pct(DISTRICT.POUR_COST_BENCHMARK)}
+${m.cogsCorrections ? '- Recipe corrections applied: ' + m.cogsCorrections + ' SKUs corrected from Revel bottle-cost-on-pours bug' : ''}
+${m.cogsZeroFlags ? '- Recipe gaps flagged: ' + m.cogsZeroFlags + ' SKUs with $0 recipe cost (Revel cost retained)' : ''}
+
+DEAL ECONOMICS${useServer && m.isCollectiv ? ` (Collectiv 50/50 + house off-top)` : ''}
+- Profit to Venue: ${fmt(m.netToVenue || m.profitToVenue)}
+- Operating Carry Total: ${fmt(m.opCarryTotal)}${useServer ? ' (static $' + Math.round(m.opCarryStatic).toLocaleString() + ' + variable $' + Math.round(m.opCarryVariable).toLocaleString() + ')' : ''}
+${useServer && m.isCollectiv ? '- House charge base: $' + Math.round(m.houseBase).toLocaleString() + ' | Collectiv operating add: -$' + Math.round(m.collectivOpAdd).toLocaleString() + ' | Net to District: $' + Math.round(m.houseNet).toLocaleString() : ''}
+${useServer && m.isCollectiv ? '- Carry coverage from house charge: ' + m.carryCoveragePct.toFixed(1) + '% | Structural carry gap: $' + Math.round(Math.abs(m.carryGap)).toLocaleString() : ''}
+${useServer && m.isCollectiv ? '- Collectiv take: ' + fmt(m.collectivBottom) : ''}
+- Margin Pad: ${pct(m.marginPadPct)} (${fmt(m.marginPadAmt)} vs ${pct(m.chargedCogsPct,0)} charged)
+
+PROMOTER HISTORY (${promoterEventCount ? promoterEventCount + ' prior events' : 'no prior data'})
+- Avg Bar: ${promoterAvg ? fmt(promoterAvg.bar_avg) : 'no data'} | Avg Door: ${promoterAvg ? fmt(promoterAvg.door_avg) : 'no data'} | Avg Net to Venue: ${promoterAvg ? fmt(promoterAvg.net_avg) : 'no data'}
+
+GENRE BENCHMARK (${e.tier1_category || 'this genre'})
+- Avg Bar: ${typeAvg ? fmt(typeAvg.bar_avg) : 'no data'} | Avg Door: ${typeAvg ? fmt(typeAvg.door_avg) : 'no data'}
+
+WRITING GUIDELINES
+- Be specific and quantitative. Cite numbers from above, not generic observations.
+- Treat F&B per head against the genre band as the most operationally meaningful ratio. Going below the band = audience profile or operational issue. Going above = upside or pricing power.
+- For Collectiv events, the structural carry gap is a known feature of the deal — note it in context but don't editorialize.
+- The "lever" must be specific enough that someone could implement it next week.`;
 
   try {
     const res = await fetch(`${BASE_URL}/api/talking-points`, {
@@ -1149,14 +1268,20 @@ TYPE BENCHMARK (${e.tier1_category || 'this genre'}):
 
 /* ─── COMPONENT: Collectiv banner (data-only, slim) ───────────────── */
 function renderCollectivBanner(m) {
+  const useServer = m.pnlSource === 'server';
+  const houseNet = useServer ? m.houseNet : DISTRICT.COLLECTIV_HOUSE_THRESHOLD;
+  const houseBase = useServer ? m.houseBase : DISTRICT.COLLECTIV_HOUSE_THRESHOLD;
+  const opAdd = useServer ? m.collectivOpAdd : 0;
+  const carryGap = useServer ? Math.abs(m.carryGap) : DISTRICT.COLLECTIV_RECOVERY_GAP;
+  const opCarry = useServer ? m.opCarryTotal : DISTRICT.OP_CARRY_TOTAL;
   return `
   <div class="cv-banner">
-    <span><span class="label">Deal</span> <span class="num" style="color:var(--ink-1)">Collectiv 50/50 + $${DISTRICT.COLLECTIV_HOUSE_THRESHOLD.toLocaleString()} off-top</span></span>
+    <span><span class="label">Deal</span> <span class="num" style="color:var(--ink-1)">Collectiv 50/50 + $${Math.round(houseNet).toLocaleString()} house off-top${opAdd > 0 ? ' (base $' + Math.round(houseBase).toLocaleString() + ' − op add $' + Math.round(opAdd).toLocaleString() + ')' : ''}</span></span>
     <span class="sep"></span>
-    <span><span class="label">House Recovery Gap</span> <span class="val">−$${DISTRICT.COLLECTIV_RECOVERY_GAP.toLocaleString()}/night</span></span>
+    <span><span class="label">House Recovery Gap</span> <span class="val">−$${Math.round(carryGap).toLocaleString()}/night</span></span>
     <span class="sep"></span>
-    <span><span class="label">Charged</span> <span class="num" style="color:var(--ink-1)">$${DISTRICT.COLLECTIV_HOUSE_THRESHOLD.toLocaleString()}</span></span>
-    <span><span class="label" style="margin-left:8px">Actual carry</span> <span class="num" style="color:var(--ink-1)">$${DISTRICT.OP_CARRY_TOTAL.toLocaleString()}</span></span>
+    <span><span class="label">Net to District</span> <span class="num" style="color:var(--ink-1)">$${Math.round(houseNet).toLocaleString()}</span></span>
+    <span><span class="label" style="margin-left:8px">Actual carry</span> <span class="num" style="color:var(--ink-1)">$${Math.round(opCarry).toLocaleString()}</span></span>
   </div>`;
 }
 
@@ -1217,20 +1342,28 @@ function buildCascadeRows(m) {
 
     /* ── Splits ── */
     {
-      key: 'splits', label: 'Promoter Splits', val: -(m.barPayout + m.doorPayout + m.tablePayout), kind: 'split',
-      detailLabel: m.isCollectiv ? '50/50 split on net of $10,500 house off-top' : 'Per-stream split per deal terms',
+      key: 'splits', label: 'Promoter Splits', val: -((m.pnlSource === 'server' && m.isCollectiv) ? m.collectivBottom : (m.barPayout + m.doorPayout + m.tablePayout)), kind: 'split',
+      detailLabel: m.isCollectiv ? `50/50 split on net of $${Math.round(m.houseNet || DISTRICT.COLLECTIV_HOUSE_THRESHOLD).toLocaleString()} house off-top${m.collectivOpAdd > 0 ? ' (base $' + Math.round(m.houseBase).toLocaleString() + ' − Collectiv op add $' + Math.round(m.collectivOpAdd).toLocaleString() + ')' : ''}` : 'Per-stream split per deal terms',
       proj: m.has.splits ? -((num(m.e.projected_bar_revenue) * num(m.e.bar_split_promoter)/100) + (num(m.e.projected_door_revenue) * num(m.e.door_split_promoter)/100) + (num(m.e.projected_table_revenue) * num(m.e.table_split_promoter)/100)) : null,
       promoterAvg: promAvg ? -(num(promAvg.bar_payout_avg) + num(promAvg.door_payout_avg)) : null,
     },
 
-    /* ── Artist costs (rider now consolidated here) ── */
+    /* ── Artist costs (fee + riders) ── */
     {
       key: 'artist', label: 'Artist Cost', val: -m.artistTotal, kind: 'split',
-      detailLabel: 'Artist fee + travel + hospitality rider',
+      detailLabel: m.pnlSource === 'server'
+        ? `Talent fee $${Math.round(m.artistFee).toLocaleString()}${m.hospitalityRider > 0 ? ' + hospitality rider $' + Math.round(m.hospitalityRider).toLocaleString() : ''}${m.techRider > 0 ? ' + tech rider $' + Math.round(m.techRider).toLocaleString() : ''}`
+        : 'Artist fee + travel + hospitality rider',
       proj: -(num(m.e.artist_fee_landed) + num(m.e.artist_fee_travel)),
       promoterAvg: promAvg ? -num(promAvg.artist_fee_avg) : null,
       typeAvg: typeAvg ? -num(typeAvg.artist_fee_avg) : null,
     },
+
+    /* ── Eventbrite platform fees (if server P&L surfaces them) ── */
+    ...(m.pnlSource === 'server' && m.ebPlatformFee > 0 ? [{
+      key: 'eb_fee', label: 'Eventbrite Platform Fee', val: -m.ebPlatformFee, kind: 'split',
+      detailLabel: '3.5% + $1.59/ticket — splits 50/50 with Collectiv',
+    }] : []),
 
     { subtotal: true, label: 'Net Pre-Operating', val: m.netPreOp },
 
@@ -1242,7 +1375,7 @@ function buildCascadeRows(m) {
     },
     {
       key: 'variable', label: 'Op Carry — Variable', val: -m.opCarryVariable, kind: 'op',
-      detailLabel: m.has.costs ? 'Per-night actuals from event close-out — see breakdown below' : 'District average until per-night actuals entered',
+      detailLabel: (m.pnlSource === 'server' || m.has.costs) ? 'Per-night actuals from ops report — click for breakdown' : 'District average until per-night actuals entered',
       districtAvg: -DISTRICT.OP_CARRY_VARIABLE,
     },
 
