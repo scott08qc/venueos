@@ -3169,6 +3169,19 @@ loadDiscrepancies();
             import traceback
             return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
 
+    # Admin: Apply recipe-corrected COGS to all events with item data
+    @api.post("/admin/correct-all-cogs")
+    def admin_correct_all_cogs():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        try:
+            from correct_all_cogs import correct_all_event_cogs
+            result = correct_all_event_cogs(engine)
+            return {"ok": True, **result}
+        except Exception as ex:
+            import traceback
+            return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
+
     # ââ App wiring ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     from fastapi.middleware.cors import CORSMiddleware
