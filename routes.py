@@ -132,6 +132,10 @@ def init_db():
             ("status", "TEXT NOT NULL DEFAULT 'confirmed'"),
             ("revel_bar_gross", "NUMERIC"),
             ("headliner", "TEXT"),
+            ("actual_bar_revenue", "NUMERIC"),
+            ("net_revenue_actual", "NUMERIC"),
+            ("actual_attendance", "INTEGER"),
+            ("expected_attendance", "INTEGER"),
         ]:
             conn.execute(text(f"ALTER TABLE events ADD COLUMN IF NOT EXISTS {col} {dtype}"))
 
