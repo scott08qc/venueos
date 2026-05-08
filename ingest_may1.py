@@ -303,14 +303,23 @@ def upsert_may1_costs(conn, event_id: int = 131):
 
 
 def upsert_may1_event_fields(conn, event_id: int = 131):
-    """Set Collectiv deal terms on the event row itself."""
+    """Set Collectiv deal terms on the event row itself, plus projections."""
     conn.execute(text("""
         UPDATE events SET
             house_charge_base = 10500,
             collectiv_op_add = 1000,
             guest_list_count = 50,
             table_guest_count = 150,
-            artist_fee_landed = COALESCE(NULLIF(artist_fee_landed, 0), 65000)
+            artist_fee_landed = COALESCE(NULLIF(artist_fee_landed, 0), 65000),
+            -- Projections for May 1 Disclosure (sold-out night, projections were aggressive)
+            -- Bar projection was higher than what 1,125 heads at $38 spend produced;
+            -- door projection met (sold out), table projection met
+            projected_bar_revenue   = 32000,
+            projected_door_revenue  = 58000,
+            projected_table_revenue = 24000,
+            expected_attendance     = 1100,
+            actual_attendance       = 1125,
+            actual_bar_revenue      = 21107.24
         WHERE id = :eid
     """), {'eid': event_id})
 

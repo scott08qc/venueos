@@ -200,10 +200,18 @@ def compute_event_pnl(
     guest_list = int(ticket_breakdown.get('guest_list', 0))
     ticketed = eb_qty + see_qty + walk_up_qty
 
-    total_headcount = ticketed + table_guests + guest_list
-    if total_headcount == 0:
-        # Fall back to actuals.total_headcount
-        total_headcount = int(_f(actuals.get('total_headcount')))
+    # Prefer event.actual_attendance / event.total_headcount when set — these
+    # are the source of truth from the ops report. Only use derived ticketed
+    # counts when no actuals are present (e.g., projecting a future event).
+    actual_hc = int(_f(event.get('actual_attendance')) or _f(event.get('total_headcount')) or _f(actuals.get('total_headcount')))
+    derived_hc = ticketed + table_guests + guest_list
+
+    if actual_hc > 0:
+        total_headcount = actual_hc
+    elif derived_hc > 0:
+        total_headcount = derived_hc
+    else:
+        total_headcount = 0
 
     fb_per_head = round(fb_revenue / total_headcount, 2) if total_headcount > 0 else 0
 
