@@ -1637,7 +1637,8 @@ def create_app(static_dir: str) -> FastAPI:
 
             items = conn.execute(text("""
                 SELECT item_name, item_category, item_subcategory,
-                  quantity_sold, unit_price, total_revenue, cost_per_unit, total_cost, gross_margin
+                  quantity_sold, unit_price, total_revenue, cost_per_unit, total_cost, gross_margin,
+                  cogs_source, cogs_correction_note, revel_original_cost
                 FROM event_item_sales
                 WHERE event_id = :eid
                 ORDER BY total_revenue DESC

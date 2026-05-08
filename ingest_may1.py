@@ -132,6 +132,18 @@ PRODUCT_TO_RECIPE = {
 # Special: zero-cogs override (Add Margarita is a tequila upcharge button, marginal mix-in)
 ZERO_COGS_PRODUCTS = {'Add Margarita'}
 
+# Table-service items that don't follow "Bottle/Magnum" naming but ARE table service
+# (champagnes priced as bottles, premium tequilas served whole). Get 22% pour cost.
+TABLE_SERVICE_RECLASS = {
+    'Dom Perignon Champagne Brut',
+    'Veuve Clicquot Yellow Label',
+    'Moet & Chandon Champagne Nectar Imperial Rose',
+    'Clase Azul Reposado',
+    'Prince de RIchemont Brut Bottle',  # has "Bottle" but already caught
+}
+
+BOTTLE_STANDARD_POUR_COST = 0.22  # 22% — Atlanta nightlife industry standard for bottle service
+
 
 def load_recipe_costs(conn):
     """Idempotent upsert of recipe unit costs into recipe_unit_costs table."""
@@ -169,12 +181,32 @@ def correct_event_cogs(conn, event_id: int):
         name = r.item_name or ''
         qty = float(r.quantity_sold or 0)
         revel_cost = float(r.total_cost or 0)
+        rev = float(r.total_revenue or 0)
+
+        # Identify if this is a table-service item (Bottle/Magnum naming OR explicit reclass)
+        is_table = ('Bottle' in name or 'Magnum' in name or name in TABLE_SERVICE_RECLASS)
 
         if name in ZERO_COGS_PRODUCTS:
             new_cost = 0.0
             note = "Upcharge button — marginal mix-in cost ignored"
             source = 'recipe'
             corrections += 1
+        elif is_table:
+            # All table service: 22% standard pour cost (Revel typically reports $0)
+            if revel_cost > 0 and revel_cost / max(rev, 1) <= 0.30:
+                # Revel cost looks plausible (under 30% of revenue) — keep it
+                new_cost = revel_cost
+                note = "Table-service SKU — Revel cost retained"
+                source = 'revel'
+            elif rev > 0:
+                new_cost = round(rev * BOTTLE_STANDARD_POUR_COST, 2)
+                note = f"Table-service SKU — 22% standard pour cost (industry benchmark)"
+                source = 'recipe'
+                corrections += 1
+            else:
+                new_cost = 0
+                note = "Table-service SKU with no revenue"
+                source = 'revel'
         elif name in PRODUCT_TO_RECIPE:
             recipe_key = PRODUCT_TO_RECIPE[name]
             recipe = RECIPE_UNIT_COSTS.get(recipe_key, {})
@@ -190,11 +222,6 @@ def correct_event_cogs(conn, event_id: int):
                 note = f"Recipe '{recipe_key}' shows $0 — needs update"
                 source = 'flagged'
                 flags += 1
-        elif 'Bottle' in name or 'Magnum' in name:
-            # Bottle SKU — Revel cost is correct, keep it
-            new_cost = revel_cost
-            note = "Bottle SKU — Revel cost retained"
-            source = 'revel'
         else:
             # No mapping — leave alone
             new_cost = revel_cost
