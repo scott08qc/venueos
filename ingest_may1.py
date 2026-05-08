@@ -288,19 +288,51 @@ def upsert_may1_event_fields(conn, event_id: int = 131):
     """), {'eid': event_id})
 
 
-def run_full_ingest(conn, event_id: int = 131):
-    """Apply all May 1 corrections idempotently."""
-    # Add unique constraint on event_costs.event_id if missing (needed for ON CONFLICT)
-    try:
-        conn.execute(text("ALTER TABLE event_costs ADD CONSTRAINT event_costs_event_id_unique UNIQUE (event_id)"))
-    except Exception:
-        pass  # already exists
+def run_full_ingest(engine, event_id: int = 131):
+    """Apply all May 1 corrections idempotently. Each step gets its own
+    transaction so a failure in one step (e.g. constraint already exists)
+    doesn't poison subsequent work.
+    """
+    # Step 0: Ensure unique constraint on event_costs.event_id (for ON CONFLICT)
+    # First clean up any duplicate rows (keep most recent)
+    with engine.begin() as conn:
+        try:
+            conn.execute(text("""
+                DELETE FROM event_costs
+                WHERE id NOT IN (
+                    SELECT MAX(id) FROM event_costs GROUP BY event_id
+                )
+            """))
+        except Exception:
+            pass
+    with engine.begin() as conn:
+        try:
+            conn.execute(text(
+                "ALTER TABLE event_costs ADD CONSTRAINT event_costs_event_id_unique UNIQUE (event_id)"
+            ))
+        except Exception:
+            pass  # constraint already exists — that's fine
 
-    load_recipe_costs(conn)
-    cogs_result = correct_event_cogs(conn, event_id)
-    populate_may1_tickets(conn, event_id)
-    upsert_may1_costs(conn, event_id)
-    upsert_may1_event_fields(conn, event_id)
+    # Step 1: Load recipe unit costs
+    with engine.begin() as conn:
+        load_recipe_costs(conn)
+
+    # Step 2: Correct COGS on existing item rows
+    cogs_result = {'corrections': 0, 'flags': 0}
+    with engine.begin() as conn:
+        cogs_result = correct_event_cogs(conn, event_id)
+
+    # Step 3: Populate ticket tiers
+    with engine.begin() as conn:
+        populate_may1_tickets(conn, event_id)
+
+    # Step 4: Upsert costs row (uses ON CONFLICT — needs Step 0 constraint)
+    with engine.begin() as conn:
+        upsert_may1_costs(conn, event_id)
+
+    # Step 5: Set event-level deal fields
+    with engine.begin() as conn:
+        upsert_may1_event_fields(conn, event_id)
 
     return {
         'event_id': event_id,

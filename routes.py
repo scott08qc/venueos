@@ -3134,10 +3134,13 @@ loadDiscrepancies();
     def admin_ingest_may1(event_id: int = 131):
         if not engine:
             raise HTTPException(status_code=503, detail="DB not configured")
-        from ingest_may1 import run_full_ingest
-        with engine.begin() as conn:
-            result = run_full_ingest(conn, event_id)
-        return {"ok": True, **result}
+        try:
+            from ingest_may1 import run_full_ingest
+            result = run_full_ingest(engine, event_id)
+            return {"ok": True, **result}
+        except Exception as ex:
+            import traceback
+            return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
 
     # ââ App wiring ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
