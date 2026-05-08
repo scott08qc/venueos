@@ -3156,6 +3156,19 @@ loadDiscrepancies();
             import traceback
             return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
 
+    # Admin: Candela Apr 11 ingest (real ops data + ticketing spec)
+    @api.post("/admin/ingest-candela-apr11")
+    def admin_ingest_candela():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        try:
+            from ingest_candela_apr11 import run_candela_apr11_ingest
+            result = run_candela_apr11_ingest(engine, 122)
+            return {"ok": True, **result}
+        except Exception as ex:
+            import traceback
+            return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
+
     # ââ App wiring ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     from fastapi.middleware.cors import CORSMiddleware

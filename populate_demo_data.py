@@ -72,7 +72,8 @@ COLLECTIV_HOSPITALITY_STD = 800
 COLLECTIV_TECH_STD = 500
 
 # Locked event 131 (Disclosure) — don't touch, already canonically populated
-LOCKED_EVENTS = {131}
+# Locked event 122 (Candela Apr 11) — real ops data + ticketing spec
+LOCKED_EVENTS = {131, 122}
 
 
 def _seed_for_event(event_id: int) -> random.Random:
