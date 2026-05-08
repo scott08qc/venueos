@@ -293,7 +293,64 @@ def run_full_ingest(engine, event_id: int = 131):
     transaction so a failure in one step (e.g. constraint already exists)
     doesn't poison subsequent work.
     """
-    # Step 0: Ensure unique constraint on event_costs.event_id (for ON CONFLICT)
+    # Step 0a: Ensure all required columns exist on event_costs.
+    # Mirror of the migrations in /api/costs route — also run here in case the
+    # costs route hasn't been hit yet on this DB.
+    column_specs = [
+        ("event_costs", "tech_rider_actual",         "NUMERIC DEFAULT 0"),
+        ("event_costs", "tech_rider_estimate",       "NUMERIC DEFAULT 0"),
+        ("event_costs", "cleaning_total",            "NUMERIC DEFAULT 492"),
+        ("event_costs", "excise_tax_collected",      "NUMERIC DEFAULT 0"),
+        ("event_costs", "cc_processing_passthrough", "NUMERIC DEFAULT 0"),
+        ("event_costs", "security_staff_count",      "INTEGER DEFAULT 0"),
+        ("event_costs", "tipped_staff_count",        "INTEGER DEFAULT 0"),
+        ("event_costs", "tipped_hours_avg",          "NUMERIC DEFAULT 6.25"),
+        ("event_costs", "production_staff_count",    "INTEGER DEFAULT 0"),
+        ("events", "house_charge_base",         "NUMERIC"),
+        ("events", "collectiv_op_add",          "NUMERIC DEFAULT 0"),
+        ("events", "ticket_surcharge_revenue",  "NUMERIC"),
+        ("events", "guest_list_count",          "INTEGER DEFAULT 0"),
+        ("events", "table_guest_count",         "INTEGER DEFAULT 0"),
+        ("event_item_sales", "cogs_source",          "TEXT DEFAULT 'revel'"),
+        ("event_item_sales", "cogs_correction_note", "TEXT"),
+        ("event_item_sales", "revel_original_cost",  "NUMERIC"),
+    ]
+    for table, col, dtype in column_specs:
+        with engine.begin() as conn:
+            try:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {dtype}"))
+            except Exception:
+                pass  # column already exists or table doesn't — non-fatal
+
+    # Step 0b: Ensure supporting tables exist
+    with engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS event_ticket_tiers (
+              id SERIAL PRIMARY KEY,
+              event_id INTEGER NOT NULL,
+              platform TEXT NOT NULL,
+              tier_name TEXT,
+              qty INTEGER DEFAULT 0,
+              price NUMERIC DEFAULT 0,
+              revenue NUMERIC DEFAULT 0,
+              status TEXT,
+              created_at TIMESTAMP DEFAULT NOW()
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS recipe_unit_costs (
+              id SERIAL PRIMARY KEY,
+              recipe_name TEXT UNIQUE NOT NULL,
+              unit_cost NUMERIC,
+              portion_size NUMERIC,
+              recipe_type TEXT,
+              needs_update BOOLEAN DEFAULT FALSE,
+              notes TEXT,
+              updated_at TIMESTAMP DEFAULT NOW()
+            )
+        """))
+
+    # Step 0c: Ensure unique constraint on event_costs.event_id (for ON CONFLICT)
     # First clean up any duplicate rows (keep most recent)
     with engine.begin() as conn:
         try:
@@ -326,7 +383,7 @@ def run_full_ingest(engine, event_id: int = 131):
     with engine.begin() as conn:
         populate_may1_tickets(conn, event_id)
 
-    # Step 4: Upsert costs row (uses ON CONFLICT — needs Step 0 constraint)
+    # Step 4: Upsert costs row (uses ON CONFLICT — needs Step 0c constraint)
     with engine.begin() as conn:
         upsert_may1_costs(conn, event_id)
 
