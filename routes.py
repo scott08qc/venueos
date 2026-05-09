@@ -2285,7 +2285,8 @@ def create_app(static_dir: str) -> FastAPI:
                       WHERE eis.event_id = e.id
                       AND eis.item_category IN ('Bar', 'Bottle Service', 'Spirits', 'Beer', 'Cocktails')),
                       e.revel_bar_gross, 0) AS net_bar_revenue,
-                  NULL AS actual_door_revenue
+                  NULL AS actual_door_revenue,
+                  'district' AS event_source
                 FROM events e
                 WHERE e.event_date >= :start AND e.event_date <= :end
 
@@ -2305,7 +2306,8 @@ def create_app(static_dir: str) -> FastAPI:
                   'completed' AS status, NULL AS notes,
                   h.gross_revenue AS revel_bar_gross,
                   h.gross_revenue AS net_bar_revenue,
-                  NULL AS actual_door_revenue
+                  NULL AS actual_door_revenue,
+                  'competitor_venue' AS event_source
                 FROM historical_events h
                 WHERE h.event_date >= :start AND h.event_date <= :end
 
