@@ -266,44 +266,94 @@ def compute_event_pnl(
 
     # ─── DEAL MECHANICS ───────────────────────────────────────────────────
     is_collectiv = _is_collectiv(event)
+    deal_type = (event.get('deal_type') or '').strip().lower()
+    promoter_name = (event.get('promoter_name') or '').strip().lower()
 
     # Net house charge calc: base − Collectiv add (only for Collectiv events)
     house_base = _f(event.get('house_charge_base'), COLLECTIV_HOUSE_BASE_DEFAULT if is_collectiv else 0)
     collectiv_op_add = _f(event.get('collectiv_op_add'), COLLECTIV_OP_ADD_DEFAULT if is_collectiv else 0)
     house_net = house_base - collectiv_op_add
 
-    if is_collectiv:
-        # Path A (Scott's specified order):
-        # 1. Pull house_net from net_sales → kept on District side
-        # 2. Remaining revenue enters 50/50 pool
-        # 3. Deal costs (split 50/50): COGS + artist_total + EB platform fees
-        #    NOTE: walk_up_revenue is District-only, so it's NOT in the pool that gets split
-        # 4. Profit = pool − deal_costs, split 50/50
-        # 5. District = 50% + house_net − op_carry_total
-        # 6. Collectiv = 50%
+    # Candela / revenue-share deal config (% of net + 50/50 split on artist + production)
+    promoter_pct_of_net = _f(event.get('promoter_pct_of_net'))
+    split_costs_total = _f(event.get('split_costs_total'))   # Artist + production above-baseline costs the venue and promoter share 50/50
 
-        # Walk-up Square is District-only — exclude from pool
+    is_revenue_share = (
+        promoter_pct_of_net > 0
+        or deal_type == 'revenue_share'
+        or promoter_name == 'candela'  # Candela is locked at 27%
+    )
+
+    # Pre-init shared variables so all branches and output dict can reference them
+    each_split_share = 0.0
+    split_costs = 0.0
+    each_half = 0.0
+    district_50_share = 0.0
+    collectiv_50_share = 0.0
+    revenue_subject_to_split = 0.0
+    profit_pool = 0.0
+    deal_costs = 0.0
+    district_net_operating_income = 0.0
+    collectiv_net_take = 0.0
+    district_total_revenue_in = 0.0
+    carry_coverage_pct = 0.0
+    carry_gap = 0.0
+
+    if is_collectiv:
+        # Collectiv: house off-top + 50/50 split on remainder
         revenue_subject_to_split = net_sales - walk_up_revenue - house_net
         deal_costs = total_cogs + artist_total + eb_platform_fee
         profit_pool = revenue_subject_to_split - deal_costs
         each_half = profit_pool / 2.0
-
         district_50_share = each_half
         collectiv_50_share = each_half
-
-        # District-only revenue (walk-up Square goes straight to District before split)
-        district_total_revenue_in = (
-            district_50_share + house_net + walk_up_revenue
-        )
+        district_total_revenue_in = district_50_share + house_net + walk_up_revenue
         district_net_operating_income = district_total_revenue_in - op_carry_total
         collectiv_net_take = collectiv_50_share
-
-        # Op-carry recovery view
         carry_coverage_pct = round((house_net / op_carry_total) * 100, 1) if op_carry_total > 0 else 0
         carry_gap = house_net - op_carry_total
 
+    elif is_revenue_share:
+        # Candela / Utopia-style revenue share:
+        #   1. Promoter takes X% of net sales (Candela = 27%)
+        #   2. District gets remaining (1-X)% of net sales
+        #   3. Artist + production split costs (above normal venue overhead) are split 50/50
+        #   4. District then absorbs full op carry (rent/utilities/baseline staff/security baseline)
+        pct = promoter_pct_of_net if promoter_pct_of_net > 0 else 27.0  # Candela default
+        promoter_revenue_share = round(net_sales * pct / 100.0, 2)
+        district_revenue_share = net_sales - promoter_revenue_share
+
+        # 50/50 split costs — artist fee + tech rider + hospitality rider + above-baseline production
+        # Use explicit split_costs_total if provided; otherwise sum the components
+        if split_costs_total > 0:
+            split_costs = split_costs_total
+        else:
+            split_costs = artist_total  # falls back to artist fee + riders
+
+        each_split_share = round(split_costs / 2.0, 2)
+        # District also pays full COGS, EB platform fee, and op carry (their share of the deal)
+        district_net_operating_income = (
+            district_revenue_share
+            - total_cogs
+            - eb_platform_fee
+            - each_split_share
+            - op_carry_total
+        )
+        collectiv_net_take = promoter_revenue_share - each_split_share
+
+        # Reuse fields for display compatibility
+        revenue_subject_to_split = net_sales
+        deal_costs = total_cogs + split_costs + eb_platform_fee
+        profit_pool = net_sales - deal_costs
+        each_half = each_split_share
+        district_50_share = district_revenue_share
+        collectiv_50_share = promoter_revenue_share
+        district_total_revenue_in = district_revenue_share
+        carry_coverage_pct = 0  # not applicable
+        carry_gap = 0
+
     else:
-        # Standard non-Collectiv deal mechanics — fall through to existing splits in the data
+        # Standard / promoter-paid deals — fall through to existing splits in actuals
         bar_payout = _f(actuals.get('promoter_bar_payout'))
         door_payout = _f(actuals.get('promoter_door_payout'))
         table_payout = _f(actuals.get('promoter_table_payout'))
@@ -311,7 +361,7 @@ def compute_event_pnl(
 
         deal_costs = total_cogs + artist_total + eb_platform_fee
         profit_pool = net_sales - deal_costs - promoter_take
-        each_half = 0  # not applicable
+        each_half = 0
         district_50_share = 0
         collectiv_50_share = 0
 
@@ -395,6 +445,11 @@ def compute_event_pnl(
         },
         'deal': {
             'is_collectiv': is_collectiv,
+            'is_revenue_share': is_revenue_share,
+            'deal_type': 'collectiv' if is_collectiv else ('revenue_share' if is_revenue_share else 'standard'),
+            'promoter_pct_of_net': promoter_pct_of_net if is_revenue_share else 0,
+            'split_costs_total': round(split_costs, 2) if is_revenue_share else 0,
+            'split_costs_each_share': round(each_split_share, 2) if is_revenue_share else 0,
             'house_base': round(house_base, 2),
             'collectiv_op_add': round(collectiv_op_add, 2),
             'house_net': round(house_net, 2),
@@ -403,9 +458,12 @@ def compute_event_pnl(
             'revenue_in_pool': round(revenue_subject_to_split, 2),
             'deal_costs_50_50': round(total_cogs + artist_total + eb_platform_fee, 2),
             'profit_pool': round(profit_pool, 2),
-            'each_50_share': round(each_half, 2) if is_collectiv else 0,
+            'each_50_share': round(each_half, 2),
+            'district_revenue_share': round(district_50_share, 2) if is_revenue_share else 0,
+            'promoter_revenue_share': round(collectiv_50_share, 2) if is_revenue_share else 0,
             'district_bottom_line': round(district_net_operating_income, 2),
             'collectiv_bottom_line': round(collectiv_net_take, 2),
+            'promoter_bottom_line': round(collectiv_net_take, 2),
             'carry_coverage_pct': carry_coverage_pct,
             'carry_gap': round(carry_gap, 2),
         },

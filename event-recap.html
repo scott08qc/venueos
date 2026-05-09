@@ -761,8 +761,14 @@ function deriveModel(data, comparisons, costs) {
       opCarryVariable:  oc.variable ?? opCarryVariable,
       opCarryTotal:     oc.total ?? opCarryTotal,
       opCarryDetail:    oc.variable_breakdown || null,
-      // Deal
+      // Deal — pass full block through plus pull-up fields for backwards compat
+      deal:             dl,
       isCollectiv:      dl.is_collectiv ?? isCollectiv,
+      isRevenueShare:   dl.is_revenue_share || false,
+      dealType:         dl.deal_type || null,
+      promoterPctOfNet: dl.promoter_pct_of_net ?? 0,
+      splitCostsTotal:  dl.split_costs_total ?? 0,
+      splitCostEachShare: dl.split_costs_each_share ?? 0,
       houseBase:        dl.house_base ?? 0,
       collectivOpAdd:   dl.collectiv_op_add ?? 0,
       houseNet:         dl.house_net ?? houseThreshold,
@@ -773,6 +779,9 @@ function deriveModel(data, comparisons, costs) {
       eachHalfShare:    dl.each_50_share ?? 0,
       profitToVenue:    dl.district_bottom_line ?? netToVenue,
       collectivBottom:  dl.collectiv_bottom_line ?? 0,
+      promoterBottom:   dl.promoter_bottom_line ?? dl.collectiv_bottom_line ?? 0,
+      districtRevShare: dl.district_revenue_share ?? 0,
+      promoterRevShare: dl.promoter_revenue_share ?? 0,
       carryCoveragePct: dl.carry_coverage_pct ?? 0,
       carryGap:         dl.carry_gap ?? 0,
       netToVenue:       dl.district_bottom_line ?? netToVenue,
@@ -1209,12 +1218,15 @@ COGS & MARGIN
 ${m.cogsCorrections ? '- Recipe corrections applied: ' + m.cogsCorrections + ' SKUs corrected from Revel bottle-cost-on-pours bug' : ''}
 ${m.cogsZeroFlags ? '- Recipe gaps flagged: ' + m.cogsZeroFlags + ' SKUs with $0 recipe cost (Revel cost retained)' : ''}
 
-DEAL ECONOMICS${useServer && m.isCollectiv ? ` (Collectiv 50/50 + house off-top)` : ''}
+DEAL ECONOMICS${useServer && m.isCollectiv ? ` (Collectiv 50/50 + house off-top)` : useServer && m.isRevenueShare ? ` (${m.promoterPctOfNet}% revenue share + 50/50 split costs)` : ''}
 - Profit to Venue: ${fmt(m.netToVenue || m.profitToVenue)}
 - Operating Carry Total: ${fmt(m.opCarryTotal)}${useServer ? ' (static $' + Math.round(m.opCarryStatic).toLocaleString() + ' + variable $' + Math.round(m.opCarryVariable).toLocaleString() + ')' : ''}
 ${useServer && m.isCollectiv ? '- House charge base: $' + Math.round(m.houseBase).toLocaleString() + ' | Collectiv operating add: -$' + Math.round(m.collectivOpAdd).toLocaleString() + ' | Net to District: $' + Math.round(m.houseNet).toLocaleString() : ''}
 ${useServer && m.isCollectiv ? '- Carry coverage from house charge: ' + m.carryCoveragePct.toFixed(1) + '% | Structural carry gap: $' + Math.round(Math.abs(m.carryGap)).toLocaleString() : ''}
 ${useServer && m.isCollectiv ? '- Collectiv take: ' + fmt(m.collectivBottom) : ''}
+${useServer && m.isRevenueShare ? '- Promoter take (' + m.promoterPctOfNet + '% of net): ' + fmt(m.promoterRevShare) + ' (less their $' + Math.round(m.splitCostEachShare).toLocaleString() + ' share of split costs = net ' + fmt(m.promoterBottom) + ')' : ''}
+${useServer && m.isRevenueShare ? '- District take (' + (100 - m.promoterPctOfNet) + '% of net): ' + fmt(m.districtRevShare) + ' (less COGS, EB fees, $' + Math.round(m.splitCostEachShare).toLocaleString() + ' split cost share, op carry)' : ''}
+${useServer && m.isRevenueShare ? '- Split costs total: ' + fmt(m.splitCostsTotal) + ' (artist + production above baseline, 50/50 with promoter)' : ''}
 - Margin Pad: ${pct(m.marginPadPct)} (${fmt(m.marginPadAmt)} vs ${pct(m.chargedCogsPct,0)} charged)
 
 PROMOTER HISTORY (${promoterEventCount ? promoterEventCount + ' prior events' : 'no prior data'})
@@ -1346,19 +1358,29 @@ function buildCascadeRows(m) {
 
     /* ── Splits ── */
     {
-      key: 'splits', label: 'Promoter Splits', val: -((m.pnlSource === 'server' && m.isCollectiv) ? m.collectivBottom : (m.barPayout + m.doorPayout + m.tablePayout)), kind: 'split',
-      detailLabel: m.isCollectiv ? `50/50 split on net of $${Math.round(m.houseNet || DISTRICT.COLLECTIV_HOUSE_THRESHOLD).toLocaleString()} house off-top${m.collectivOpAdd > 0 ? ' (base $' + Math.round(m.houseBase).toLocaleString() + ' − Collectiv op add $' + Math.round(m.collectivOpAdd).toLocaleString() + ')' : ''}` : 'Per-stream split per deal terms',
+      key: 'splits',
+      label: m.isRevenueShare ? `Promoter Take (${m.promoterPctOfNet}% of Net)` : 'Promoter Splits',
+      val: -((m.pnlSource === 'server' && (m.isCollectiv || m.isRevenueShare)) ? m.promoterBottom : (m.barPayout + m.doorPayout + m.tablePayout)),
+      kind: 'split',
+      detailLabel: m.isRevenueShare
+        ? `${m.promoterPctOfNet}% of $${Math.round(m.netSales).toLocaleString()} net sales = ${fmtMoney(m.promoterRevShare)} to ${m.e.promoter_name}, less their $${Math.round(m.splitCostEachShare).toLocaleString()} share of split costs`
+        : (m.isCollectiv ? `50/50 split on net of $${Math.round(m.houseNet || DISTRICT.COLLECTIV_HOUSE_THRESHOLD).toLocaleString()} house off-top${m.collectivOpAdd > 0 ? ' (base $' + Math.round(m.houseBase).toLocaleString() + ' − Collectiv op add $' + Math.round(m.collectivOpAdd).toLocaleString() + ')' : ''}` : 'Per-stream split per deal terms'),
       proj: m.has.splits ? -((num(m.e.projected_bar_revenue) * num(m.e.bar_split_promoter)/100) + (num(m.e.projected_door_revenue) * num(m.e.door_split_promoter)/100) + (num(m.e.projected_table_revenue) * num(m.e.table_split_promoter)/100)) : null,
       promoterAvg: promAvg ? -(num(promAvg.bar_payout_avg) + num(promAvg.door_payout_avg)) : null,
     },
 
     /* ── Artist costs (fee + riders) ── */
     {
-      key: 'artist', label: 'Artist Cost', val: -m.artistTotal, kind: 'split',
-      detailLabel: m.pnlSource === 'server'
-        ? `Talent fee $${Math.round(m.artistFee).toLocaleString()}${m.hospitalityRider > 0 ? ' + hospitality rider $' + Math.round(m.hospitalityRider).toLocaleString() : ''}${m.techRider > 0 ? ' + tech rider $' + Math.round(m.techRider).toLocaleString() : ''}`
-        : 'Artist fee + travel + hospitality rider',
-      proj: -(num(m.e.artist_fee_landed) + num(m.e.artist_fee_travel)),
+      key: 'artist',
+      label: m.isRevenueShare ? 'Split Costs (50/50)' : 'Artist Cost',
+      val: m.isRevenueShare ? -m.splitCostEachShare : -m.artistTotal,
+      kind: 'split',
+      detailLabel: m.isRevenueShare
+        ? `Split costs total ${fmtMoney(m.splitCostsTotal)} (artist fee + production above baseline) — District pays ${fmtMoney(m.splitCostEachShare)}, promoter pays the other half`
+        : (m.pnlSource === 'server'
+            ? `Talent fee $${Math.round(m.artistFee).toLocaleString()}${m.hospitalityRider > 0 ? ' + hospitality rider $' + Math.round(m.hospitalityRider).toLocaleString() : ''}${m.techRider > 0 ? ' + tech rider $' + Math.round(m.techRider).toLocaleString() : ''}`
+            : 'Artist fee + travel + hospitality rider'),
+      proj: m.isRevenueShare ? null : -(num(m.e.artist_fee_landed) + num(m.e.artist_fee_travel)),
       promoterAvg: promAvg ? -num(promAvg.artist_fee_avg) : null,
       typeAvg: typeAvg ? -num(typeAvg.artist_fee_avg) : null,
     },
@@ -1959,18 +1981,49 @@ function resetHouseThreshold(eventId) {
 /* ─── COMPONENT: Deal Structure ──────────────────────────────────────── */
 function renderDealCard(m) {
   const e = m.e;
-  if (!m.has.splits && !m.has.artistFee && !m.has.projections && !e.deal_structure_type) {
+  const useServer = m.pnlSource === 'server';
+  const dealType = useServer && m.deal && m.deal.deal_type;
+  const isRevShare = useServer && m.deal && m.deal.is_revenue_share;
+  const isCollectiv = useServer && m.deal && m.deal.is_collectiv;
+
+  if (!m.has.splits && !m.has.artistFee && !m.has.projections && !e.deal_structure_type && !dealType) {
     return `<div class="card"><div class="card-head"><h2>Deal Structure</h2></div><div class="no-data">No deal terms on file. Enter via Deal Calculator.</div></div>`;
   }
-  const rows = [
-    { label: 'Type', val: e.deal_structure_type || '—' },
-    { label: 'Door Split', val: e.door_split_promoter ? `${100 - e.door_split_promoter}/${e.door_split_promoter}` : '—' },
-    { label: 'Bar Split', val: e.bar_split_promoter ? `${100 - e.bar_split_promoter}/${e.bar_split_promoter}` : '—' },
-    { label: 'Table Split', val: e.table_split_promoter ? `${100 - e.table_split_promoter}/${e.table_split_promoter}` : '—' },
-    { label: 'House Off-Top', val: e.house_fee_amount ? fmtMoney(e.house_fee_amount) : '—' },
-    { label: 'Charged COGS', val: fmtPct(m.chargedCogsPct,0) },
-    { label: 'Artist Fee', val: m.has.artistFee ? fmtMoney(m.artistFee) : '—' },
-  ];
+
+  let rows;
+  if (isRevShare) {
+    // Candela-style: % of net + 50/50 split costs
+    rows = [
+      { label: 'Type', val: e.deal_structure_type || `Revenue Share — ${m.deal.promoter_pct_of_net}% to Promoter` },
+      { label: 'Promoter % of Net', val: `${m.deal.promoter_pct_of_net}%` },
+      { label: 'District % of Net', val: `${(100 - m.deal.promoter_pct_of_net).toFixed(0)}%` },
+      { label: 'Split Costs (50/50)', val: fmtMoney(m.deal.split_costs_total) },
+      { label: 'Each Side Pays', val: fmtMoney(m.deal.split_costs_each_share) },
+      { label: 'Charged COGS', val: fmtPct(m.chargedCogsPct,0) },
+      { label: 'Artist Fee', val: m.has.artistFee ? fmtMoney(m.artistFee) : '—' },
+    ];
+  } else if (isCollectiv) {
+    rows = [
+      { label: 'Type', val: e.deal_structure_type || 'Collectiv 50/50 + House Off-Top' },
+      { label: 'House Base', val: fmtMoney(m.deal.house_base) },
+      { label: 'Collectiv Op Add', val: m.deal.collectiv_op_add > 0 ? `−${fmtMoney(m.deal.collectiv_op_add)}` : '$0' },
+      { label: 'Net House Charge', val: fmtMoney(m.deal.house_net) },
+      { label: 'Bar Split', val: '50/50 of remainder' },
+      { label: 'Door Split', val: '50/50 of remainder' },
+      { label: 'Charged COGS', val: fmtPct(m.chargedCogsPct,0) },
+      { label: 'Artist Fee', val: m.has.artistFee ? fmtMoney(m.artistFee) : '—' },
+    ];
+  } else {
+    rows = [
+      { label: 'Type', val: e.deal_structure_type || '—' },
+      { label: 'Door Split', val: e.door_split_promoter ? `${100 - e.door_split_promoter}/${e.door_split_promoter}` : '—' },
+      { label: 'Bar Split', val: e.bar_split_promoter ? `${100 - e.bar_split_promoter}/${e.bar_split_promoter}` : '—' },
+      { label: 'Table Split', val: e.table_split_promoter ? `${100 - e.table_split_promoter}/${e.table_split_promoter}` : '—' },
+      { label: 'House Off-Top', val: e.house_fee_amount ? fmtMoney(e.house_fee_amount) : '—' },
+      { label: 'Charged COGS', val: fmtPct(m.chargedCogsPct,0) },
+      { label: 'Artist Fee', val: m.has.artistFee ? fmtMoney(m.artistFee) : '—' },
+    ];
+  }
   return `
   <div class="card">
     <div class="card-head"><h2>Deal Structure</h2></div>

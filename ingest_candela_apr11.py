@@ -54,7 +54,11 @@ def run_candela_apr11_ingest(engine, event_id: int = 122):
                 guest_list_count        = 50,
                 table_guest_count       = 150,
                 house_charge_base       = NULL,
-                collectiv_op_add        = 0
+                collectiv_op_add        = 0,
+                deal_type               = 'revenue_share',
+                promoter_pct_of_net     = 27,
+                split_costs_total       = 3500,
+                deal_structure_type     = 'Revenue Share — 27% to Promoter + 50/50 on $3,500 Split Costs'
             WHERE id = :eid
         """), {'eid': event_id})
 

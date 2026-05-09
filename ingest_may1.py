@@ -347,6 +347,9 @@ def run_full_ingest(engine, event_id: int = 131):
         ("events", "ticket_surcharge_revenue",  "NUMERIC"),
         ("events", "guest_list_count",          "INTEGER DEFAULT 0"),
         ("events", "table_guest_count",         "INTEGER DEFAULT 0"),
+        ("events", "deal_type",                 "TEXT"),               # 'collectiv' | 'revenue_share' | 'standard'
+        ("events", "promoter_pct_of_net",       "NUMERIC"),            # e.g. 27 for Candela
+        ("events", "split_costs_total",         "NUMERIC"),            # 50/50-split costs above baseline overhead
         ("event_item_sales", "cogs_source",          "TEXT DEFAULT 'revel'"),
         ("event_item_sales", "cogs_correction_note", "TEXT"),
         ("event_item_sales", "revel_original_cost",  "NUMERIC"),
