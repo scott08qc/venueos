@@ -3182,6 +3182,19 @@ loadDiscrepancies();
             import traceback
             return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
 
+    # Admin: Fix promoter intelligence data (normalize review_status, set comparison flags)
+    @api.post("/admin/fix-promoter-data")
+    def admin_fix_promoter_data():
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        try:
+            from fix_promoter_data import fix_promoter_review_data
+            result = fix_promoter_review_data(engine)
+            return {"ok": True, **result}
+        except Exception as ex:
+            import traceback
+            return {"ok": False, "error": str(ex), "traceback": traceback.format_exc()}
+
     # ââ App wiring ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     from fastapi.middleware.cors import CORSMiddleware

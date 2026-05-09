@@ -468,7 +468,38 @@ def populate_event(engine, event_id: int, promoter: str, genre: str, artist: str
         })
 
     # Step 4: Upsert post_event_reviews (for actuals)
+    # review_status must be 'complete' (lowercase) for promoter intelligence query
+    proj_attendance_int = int(s['expected_attendance'])
+    actual_attendance_int = int(s['actual_attendance'])
+    if proj_attendance_int > 0:
+        ratio = actual_attendance_int / proj_attendance_int
+        if ratio >= 1.05:
+            attendance_vs = 'above'
+        elif ratio <= 0.85:
+            attendance_vs = 'below'
+        else:
+            attendance_vs = 'met'
+    else:
+        attendance_vs = None
+
+    # Effective split — for Candela revenue share use 27%; for Collectiv use ~35%
+    if (promoter or '').strip().lower() == 'collectiv':
+        effective_split = 35.0
+    elif (promoter or '').strip().lower() == 'candela':
+        effective_split = 27.0
+    else:
+        effective_split = None
+
     with engine.begin() as conn:
+        # Add comparison column if missing (idempotent)
+        try:
+            conn.execute(text("""
+                ALTER TABLE post_event_reviews
+                ADD COLUMN IF NOT EXISTS promoter_attendance_vs_projection TEXT
+            """))
+        except Exception:
+            pass
+
         existing = conn.execute(text(
             "SELECT id FROM post_event_reviews WHERE event_id = :eid LIMIT 1"
         ), {'eid': event_id}).fetchone()
@@ -479,24 +510,29 @@ def populate_event(engine, event_id: int, promoter: str, genre: str, artist: str
                     actual_bar_revenue     = :ab,
                     actual_door_revenue    = :ad,
                     actual_table_revenue   = :at,
-                    artist_cost_actual     = :ac
+                    artist_cost_actual     = :ac,
+                    review_status          = 'complete',
+                    promoter_attendance_vs_projection = :avp,
+                    actual_effective_split = COALESCE(:es, actual_effective_split)
                 WHERE id = :id
             """), {
                 'id': existing.id, 'aa': s['actual_attendance'], 'ab': s['actual_bar_revenue'],
                 'ad': s['actual_door_revenue'], 'at': s['actual_table_revenue'],
                 'ac': s['artist_fee_total'],
+                'avp': attendance_vs, 'es': effective_split,
             })
         else:
             conn.execute(text("""
                 INSERT INTO post_event_reviews (
                     event_id, actual_attendance, actual_bar_revenue,
                     actual_door_revenue, actual_table_revenue, artist_cost_actual,
-                    review_status
-                ) VALUES (:eid, :aa, :ab, :ad, :at, :ac, 'completed')
+                    review_status, promoter_attendance_vs_projection, actual_effective_split
+                ) VALUES (:eid, :aa, :ab, :ad, :at, :ac, 'complete', :avp, :es)
             """), {
                 'eid': event_id, 'aa': s['actual_attendance'], 'ab': s['actual_bar_revenue'],
                 'ad': s['actual_door_revenue'], 'at': s['actual_table_revenue'],
                 'ac': s['artist_fee_total'],
+                'avp': attendance_vs, 'es': effective_split,
             })
 
     return {
