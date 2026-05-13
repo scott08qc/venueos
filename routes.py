@@ -1159,11 +1159,9 @@ def create_app(static_dir: str) -> FastAPI:
 
     @api.get("/promoter-intelligence")
     def get_promoter_intelligence(promoter: str, event_type: str = None):
-      import traceback
       if not engine:
         raise HTTPException(status_code=503, detail="DB not configured")
-      try:
-        with engine.connect() as conn:
+      with engine.connect() as conn:
         rows = conn.execute(text("""
           SELECT
             h.id,
@@ -1259,7 +1257,7 @@ def create_app(static_dir: str) -> FastAPI:
           }
 
         def safe_avg(lst):
-          vals = [v for v in lst if v is not None]
+          vals = [float(v) for v in lst if v is not None]
           return round(sum(vals) / len(vals), 2) if vals else None
 
         def safe_pct(a, b):
@@ -1368,7 +1366,7 @@ def create_app(static_dir: str) -> FastAPI:
             "draw_accuracy": {
               "score": draw_score,
               "avg_draw_ratio": avg_draw_ratio,
-              "label": f"Averages {round((avg_draw_ratio or 0) * 100)}% of promised attendance" if avg_draw_ratio else "Insufficient data",
+              "label": f"Averages {round(float(avg_draw_ratio or 0) * 100)}% of promised attendance" if avg_draw_ratio else "Insufficient data",
               "weight": "35%"
             },
             "bar_yield": {
@@ -1380,7 +1378,7 @@ def create_app(static_dir: str) -> FastAPI:
             "deal_profitability": {
               "score": profitability_score,
               "avg_net_revenue": avg_net,
-              "label": f"${round(avg_net):,} avg net to venue" if avg_net else "Insufficient data",
+              "label": f"${int(round(float(avg_net))):,} avg net to venue" if avg_net else "Insufficient data",
               "weight": "25%"
             },
             "consistency": {
@@ -1416,9 +1414,6 @@ def create_app(static_dir: str) -> FastAPI:
           },
           "history": history
         }
-      except Exception as _e:
-        import traceback as _tb
-        raise HTTPException(status_code=500, detail=f"PROMOTER_INTEL_ERROR: {str(_e)} | {_tb.format_exc()[-600:]}")
 
     # ââ Artist Intelligence âââââââââââââââââââââââââââââââââââââââââââââââââââ
 
