@@ -1159,9 +1159,11 @@ def create_app(static_dir: str) -> FastAPI:
 
     @api.get("/promoter-intelligence")
     def get_promoter_intelligence(promoter: str, event_type: str = None):
+      import traceback
       if not engine:
         raise HTTPException(status_code=503, detail="DB not configured")
-      with engine.connect() as conn:
+      try:
+        with engine.connect() as conn:
         rows = conn.execute(text("""
           SELECT
             h.id,
@@ -1414,6 +1416,9 @@ def create_app(static_dir: str) -> FastAPI:
           },
           "history": history
         }
+      except Exception as _e:
+        import traceback as _tb
+        raise HTTPException(status_code=500, detail=f"PROMOTER_INTEL_ERROR: {str(_e)} | {_tb.format_exc()[-600:]}")
 
     # ââ Artist Intelligence âââââââââââââââââââââââââââââââââââââââââââââââââââ
 
@@ -1431,7 +1436,7 @@ def create_app(static_dir: str) -> FastAPI:
                   e.artist_fee_landed, e.artist_fee_travel,
                   r.actual_attendance, r.actual_bar_revenue,
                   r.actual_door_revenue, r.actual_table_revenue,
-                  r.spend_per_head_actual, r.net_revenue_actual,
+                  NULL AS spend_per_head_actual, NULL AS net_revenue_actual,
                   r.actual_effective_split, r.review_status,
                   n.total_bar_sales, n.total_headcount,
                   n.effective_split_percentage
@@ -1579,7 +1584,7 @@ def create_app(static_dir: str) -> FastAPI:
                   CASE WHEN e.event_date < CURRENT_DATE THEN 'completed' ELSE e.status END AS status,
                   r.actual_attendance, r.actual_bar_revenue, r.actual_door_revenue,
                   r.actual_table_revenue, r.artist_cost_actual, r.staffing_cost_actual,
-                  r.spend_per_head_actual, r.net_revenue_actual, r.actual_effective_split,
+                  NULL AS spend_per_head_actual, NULL AS net_revenue_actual, r.actual_effective_split,
                   r.crowd_demographic_observations, r.promoter_performance_notes,
                   r.what_to_replicate, r.what_to_change, r.review_status,
                   n.total_bar_sales, n.total_headcount, n.door_revenue_cash,
