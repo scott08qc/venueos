@@ -555,10 +555,17 @@ const GENRE_COLORS = {
 
 const PROMOTER_COLORS = ['#2C5F8A', '#2D6A4F', '#5A3A8A', '#8B5E0A'];
 
+const SCAFFOLD_PROMOTERS = new Set([
+  'Casa Sol','Apex Events','Fuego Nights','Pinnacle Events',
+  'Frequency','Metro Private','Luna Roja','City Sound',
+  'Libre Collective','Open Theory'
+]);
+
 async function loadData() {
   try {
     const res = await fetch(`${BASE_URL}/api/promoters/summary`);
-    allPromoters = await res.json();
+    const raw = await res.json();
+    allPromoters = raw.filter(p => !SCAFFOLD_PROMOTERS.has(p.promoter_name));
     filteredPromoters = [...allPromoters];
     updateSummaryBar();
     renderRoster();
