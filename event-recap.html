@@ -1163,6 +1163,7 @@ function renderNightRead() {
       </div>
       <span class="night-read-label">Night Read</span>
       <span class="night-read-badge">AI</span>
+      <span style="font-size:9.5px;color:var(--ink-4);margin-left:6px;">Pulled from: revenue actuals · headcount · genre benchmark · promoter history · deal economics</span>
     </div>
     <div class="night-read-loading" id="night-read-body">Analyzing night…</div>
   </div>`;
@@ -1272,7 +1273,7 @@ WRITING GUIDELINES
       <div class="nr-lever">
         <div class="nr-lever-icon">→</div>
         <div class="nr-lever-content">
-          <div class="nr-lever-label">Top Lever</div>
+          <div class="nr-lever-label">Top Lever <span style="font-size:9px;color:var(--ink-4);font-weight:400;text-transform:none;letter-spacing:0;">· AI · anchored to data above</span></div>
           <div class="nr-lever-text">${parsed.lever || '—'}</div>
         </div>
       </div>`;
@@ -2362,7 +2363,7 @@ function renderRecapNotesCard(m) {
       <div class="card-head"><h2>Recap Notes</h2><span class="meta">Manual post-event observations</span></div>
       ${present.map(x => `
         <div class="note-box ${x.cls || ''}" style="margin-bottom:8px">
-          <span class="eyebrow">${x.eyebrow}</span>
+          <span class="eyebrow">${x.eyebrow} <span style="font-size:9px;font-weight:400;color:var(--ink-4);text-transform:none;letter-spacing:0;">· Operator · post-event form</span></span>
           <div class="text">${x.text}</div>
         </div>`).join('')}
     </div>`;
@@ -2377,8 +2378,8 @@ function renderNotesCard(m) {
   <div class="card">
     <div class="card-head"><h2>Post-Event Observations</h2></div>
     <div class="notes-grid">
-      ${e.crowd_demographic_observations ? `<div class="note-box"><span class="eyebrow">Crowd</span><div class="text">${e.crowd_demographic_observations}</div></div>` : ''}
-      ${e.promoter_performance_notes ? `<div class="note-box"><span class="eyebrow">Promoter Performance</span><div class="text">${e.promoter_performance_notes}</div></div>` : ''}
+      ${e.crowd_demographic_observations ? `<div class="note-box"><span class="eyebrow">Crowd <span style="font-size:9px;font-weight:400;color:var(--ink-4);">· Operator · post-event form</span></span><div class="text">${e.crowd_demographic_observations}</div></div>` : ''}
+      ${e.promoter_performance_notes ? `<div class="note-box"><span class="eyebrow">Promoter Performance <span style="font-size:9px;font-weight:400;color:var(--ink-4);">· Operator · post-event form</span></span><div class="text">${e.promoter_performance_notes}</div></div>` : ''}
       ${e.what_to_replicate ? `<div class="note-box replicate"><span class="eyebrow">Replicate</span><div class="text">${e.what_to_replicate}</div></div>` : ''}
       ${e.what_to_change ? `<div class="note-box change"><span class="eyebrow">Change</span><div class="text">${e.what_to_change}</div></div>` : ''}
     </div>
