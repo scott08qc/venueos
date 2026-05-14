@@ -1229,7 +1229,7 @@ def create_app(static_dir: str) -> FastAPI:
                     return round(sum(vals) / len(vals), 2) if vals else None
 
                 def safe_pct(a, b):
-                    return round((float(a) / float(b)) * 100, 1) if b and float(b) > 0 else None
+                    return round((float(a) / float(b)) * 100, 1) if a is not None and b and float(b) > 0 else None
 
                 def calc_net(e):
                     bar = float(e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("net_bar_revenue") or 0)
