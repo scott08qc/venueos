@@ -1157,289 +1157,213 @@ def create_app(static_dir: str) -> FastAPI:
 
     # ââ Promoter Intelligence âââââââââââââââââââââââââââââââââââââââââââââââââ
 
-    @api.get("/promoter-sql-debug")
-    def promoter_sql_debug(promoter: str, event_type: str = None):
-      import traceback as _tb
-      if not engine:
-        return {"error": "no engine"}
-      try:
-        with engine.connect() as conn:
-          rows = conn.execute(text("""
-            SELECT e.id, e.event_name, e.tier1_category,
-                   r.actual_attendance, r.actual_bar_revenue, r.review_status,
-                   n.total_bar_sales
-            FROM events e
-            LEFT JOIN post_event_reviews r ON r.event_id = e.id AND LOWER(r.review_status) = 'complete'
-            LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry ILIKE 'close%'
-            WHERE LOWER(e.promoter_name) LIKE LOWER(:p)
-            ORDER BY e.event_date DESC LIMIT 5
-          """), {"p": f"%{promoter}%"}).fetchall()
-          data = [dict(r._mapping) for r in rows]
-          safe = [{k: (float(v) if hasattr(v, 'as_integer_ratio') and not isinstance(v, int) else v) for k, v in row.items()} for row in data]
-          return {"count": len(data), "rows": safe}
-      except Exception as _e:
-        return {"error": str(_e), "trace": _tb.format_exc()[-1000:]}
-
     @api.get("/promoter-intelligence")
     def get_promoter_intelligence(promoter: str, event_type: str = None):
-      if not engine:
-        raise HTTPException(status_code=503, detail="DB not configured")
-      with engine.connect() as conn:
-        rows = conn.execute(text("""
-          SELECT
-            h.id,
-            h.event_name,
-            h.event_date,
-            h.tier1_category,
-            NULL::integer AS expected_attendance,
-            NULL::numeric AS projected_bar_revenue,
-            NULL::numeric AS projected_door_revenue,
-            NULL::numeric AS projected_table_revenue,
-            NULL::numeric AS door_split_promoter,
-            NULL::numeric AS bar_split_promoter,
-            NULL::numeric AS table_split_promoter,
-            NULL::numeric AS artist_fee_landed,
-            NULL::numeric AS artist_fee_travel,
-            h.artist_name,
-            h.gross_revenue AS revel_bar_gross,
-            h.gross_revenue AS net_bar_revenue,
-            NULL::integer AS actual_attendance,
-            h.gross_revenue AS actual_bar_revenue,
-            NULL::numeric AS actual_door_revenue,
-            NULL::numeric AS actual_table_revenue,
-            NULL::numeric AS actual_effective_split,
-            'Complete' AS review_status,
-            h.gross_revenue AS total_bar_sales,
-            NULL::integer AS total_headcount,
-            NULL::numeric AS door_revenue_cash,
-            NULL::numeric AS door_revenue_card,
-            NULL::numeric AS effective_split_percentage
-          FROM historical_events h
-          WHERE LOWER(h.promoter_name) LIKE LOWER(:promoter)
+        if not engine:
+            raise HTTPException(status_code=503, detail="DB not configured")
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(text("""
+                  SELECT
+                    h.id, h.event_name, h.event_date, h.tier1_category,
+                    NULL::integer AS expected_attendance,
+                    NULL::numeric AS projected_bar_revenue,
+                    NULL::numeric AS projected_door_revenue,
+                    NULL::numeric AS projected_table_revenue,
+                    NULL::numeric AS door_split_promoter,
+                    NULL::numeric AS bar_split_promoter,
+                    NULL::numeric AS table_split_promoter,
+                    NULL::numeric AS artist_fee_landed,
+                    NULL::numeric AS artist_fee_travel,
+                    h.artist_name,
+                    h.gross_revenue AS revel_bar_gross,
+                    h.gross_revenue AS net_bar_revenue,
+                    NULL::integer AS actual_attendance,
+                    h.gross_revenue AS actual_bar_revenue,
+                    NULL::numeric AS actual_door_revenue,
+                    NULL::numeric AS actual_table_revenue,
+                    NULL::numeric AS actual_effective_split,
+                    'Complete' AS review_status,
+                    h.gross_revenue AS total_bar_sales,
+                    NULL::integer AS total_headcount,
+                    NULL::numeric AS door_revenue_cash,
+                    NULL::numeric AS door_revenue_card,
+                    NULL::numeric AS effective_split_percentage
+                  FROM historical_events h
+                  WHERE LOWER(h.promoter_name) LIKE LOWER(:promoter)
 
-          UNION ALL
+                  UNION ALL
 
-          SELECT
-            e.id,
-            e.event_name,
-            e.event_date,
-            e.tier1_category,
-            e.expected_attendance,
-            e.projected_bar_revenue,
-            e.projected_door_revenue,
-            e.projected_table_revenue,
-            e.door_split_promoter,
-            e.bar_split_promoter,
-            e.table_split_promoter,
-            e.artist_fee_landed,
-            e.artist_fee_travel,
-            e.artist_name,
-            e.revel_bar_gross,
-            COALESCE(
-              n.total_bar_sales,
-              (SELECT SUM(eis.total_revenue)
-               FROM event_item_sales eis
-               WHERE eis.event_id = e.id
-               AND eis.item_category IN ('Bar', 'Bottle Service', 'Spirits', 'Beer', 'Cocktails')),
-              e.revel_bar_gross,
-              0
-            ) AS net_bar_revenue,
-            r.actual_attendance,
-            r.actual_bar_revenue,
-            r.actual_door_revenue,
-            r.actual_table_revenue,
-            r.actual_effective_split,
-            r.review_status,
-            n.total_bar_sales,
-            n.total_headcount,
-            n.door_revenue_cash,
-            n.door_revenue_card,
-            n.effective_split_percentage
-          FROM events e
-          LEFT JOIN post_event_reviews r ON r.event_id = e.id
-            AND LOWER(r.review_status) = 'complete'
-          LEFT JOIN night_of_actuals n ON n.event_id = e.id
-            AND n.time_of_entry ILIKE 'close%'
-          WHERE LOWER(e.promoter_name) LIKE LOWER(:promoter)
+                  SELECT
+                    e.id, e.event_name, e.event_date, e.tier1_category,
+                    e.expected_attendance,
+                    e.projected_bar_revenue, e.projected_door_revenue, e.projected_table_revenue,
+                    e.door_split_promoter, e.bar_split_promoter, e.table_split_promoter,
+                    e.artist_fee_landed, e.artist_fee_travel, e.artist_name,
+                    e.revel_bar_gross,
+                    COALESCE(n.total_bar_sales, e.revel_bar_gross, 0) AS net_bar_revenue,
+                    r.actual_attendance, r.actual_bar_revenue,
+                    r.actual_door_revenue, r.actual_table_revenue,
+                    r.actual_effective_split, r.review_status,
+                    n.total_bar_sales, n.total_headcount,
+                    n.door_revenue_cash, n.door_revenue_card,
+                    n.effective_split_percentage
+                  FROM events e
+                  LEFT JOIN post_event_reviews r ON r.event_id = e.id
+                    AND LOWER(r.review_status) = 'complete'
+                  LEFT JOIN night_of_actuals n ON n.event_id = e.id
+                    AND n.time_of_entry ILIKE 'close%%'
+                  WHERE LOWER(e.promoter_name) LIKE LOWER(:promoter)
+                  ORDER BY event_date DESC LIMIT 30
+                """), {"promoter": f"%{promoter}%"}).fetchall()
 
-          ORDER BY event_date DESC
-          LIMIT 30
-        """), {"promoter": f"%{promoter}%"}).fetchall()
+                all_events = [dict(r._mapping) for r in rows]
+                type_events = [e for e in all_events if not event_type or e.get("tier1_category") == event_type]
 
-        all_events = [dict(r._mapping) for r in rows]
-        type_events = [e for e in all_events if not event_type or e.get("tier1_category") == event_type]
+                if not all_events:
+                    return {"found": False, "promoter": promoter, "message": "No completed events found for this promoter",
+                            "reputation_score": None, "recommendations": None, "history": []}
 
-        if not all_events:
-          return {
-            "found": False,
-            "promoter": promoter,
-            "message": "No completed events found for this promoter",
-            "reputation_score": None,
-            "recommendations": None,
-            "history": []
-          }
+                def safe_avg(lst):
+                    vals = [float(v) for v in lst if v is not None]
+                    return round(sum(vals) / len(vals), 2) if vals else None
 
-        def safe_avg(lst):
-          vals = [float(v) for v in lst if v is not None]
-          return round(sum(vals) / len(vals), 2) if vals else None
+                def safe_pct(a, b):
+                    return round((float(a) / float(b)) * 100, 1) if b and float(b) > 0 else None
 
-        def safe_pct(a, b):
-          return round((a / b) * 100, 1) if b and b > 0 else None
+                def calc_net(e):
+                    bar = float(e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("net_bar_revenue") or 0)
+                    door = float(e.get("actual_door_revenue") or 0) + float(e.get("door_revenue_cash") or 0) + float(e.get("door_revenue_card") or 0)
+                    table = float(e.get("actual_table_revenue") or 0)
+                    total_rev = bar + door + table
+                    bar_split = float(e.get("bar_split_promoter") or 0) / 100
+                    door_split = float(e.get("door_split_promoter") or 0) / 100
+                    table_split = float(e.get("table_split_promoter") or 0) / 100
+                    promoter_take = (bar * bar_split) + (door * door_split) + (table * table_split)
+                    artist = float(e.get("artist_fee_landed") or 0) + float(e.get("artist_fee_travel") or 0)
+                    return total_rev - promoter_take - artist
 
-        ref_events = type_events if type_events else all_events
+                ref_events = type_events if type_events else all_events
 
-        draw_ratios = []
-        for e in ref_events:
-          if e.get("actual_attendance") and e.get("expected_attendance") and e["expected_attendance"] > 0:
-            draw_ratios.append(e["actual_attendance"] / e["expected_attendance"])
-        avg_draw_ratio = safe_avg(draw_ratios)
-        draw_score = min(10, round((avg_draw_ratio or 0.5) * 8, 1)) if avg_draw_ratio else None
+                draw_ratios = []
+                for e in ref_events:
+                    att = e.get("actual_attendance")
+                    exp = e.get("expected_attendance")
+                    if att and exp and int(exp) > 0:
+                        draw_ratios.append(float(att) / float(exp))
 
-        sph_actuals = [
-          (e.get("actual_bar_revenue") or e.get("total_bar_sales") or 0) / e["actual_attendance"]
-          for e in ref_events
-          if e.get("actual_attendance") and e["actual_attendance"] > 0
-          and (e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("net_bar_revenue"))
-        ]
-        avg_sph = safe_avg(sph_actuals)
-        sph_proj = [e["projected_bar_revenue"] / e["expected_attendance"]
-                    for e in ref_events
-                    if e.get("projected_bar_revenue") and e.get("expected_attendance") and e["expected_attendance"] > 0]
-        avg_sph_proj = safe_avg(sph_proj)
-        bar_yield_ratio = safe_pct(avg_sph, avg_sph_proj) / 100 if avg_sph and avg_sph_proj else None
-        bar_score = min(10, round((bar_yield_ratio or 0.5) * 9, 1)) if bar_yield_ratio else None
+                avg_draw_ratio = safe_avg(draw_ratios)
+                draw_score = min(10, round((avg_draw_ratio or 0.5) * 8, 1)) if avg_draw_ratio else None
 
-        def calc_net(e):
-          bar = float(e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("net_bar_revenue") or 0)
-          door = float(e.get("actual_door_revenue") or 0) + float(e.get("door_revenue_cash") or 0) + float(e.get("door_revenue_card") or 0)
-          table = float(e.get("actual_table_revenue") or 0)
-          total_rev = bar + door + table
-          bar_split = float(e.get("bar_split_promoter") or 0) / 100
-          door_split = float(e.get("door_split_promoter") or 0) / 100
-          table_split = float(e.get("table_split_promoter") or 0) / 100
-          promoter_take = (bar * bar_split) + (door * door_split) + (table * table_split)
-          artist = float(e.get("artist_fee_landed") or 0) + float(e.get("artist_fee_travel") or 0)
-          return total_rev - promoter_take - artist
+                sph_actuals = []
+                for e in ref_events:
+                    att = e.get("actual_attendance")
+                    bar = e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("net_bar_revenue")
+                    if att and int(att) > 0 and bar:
+                        sph_actuals.append(float(bar) / float(att))
 
-        net_revenues = [calc_net(e) for e in ref_events]
-        avg_net = safe_avg(net_revenues)
-        profitability_score = None
-        if avg_net is not None:
-          if avg_net >= 8000: profitability_score = 10.0
-          elif avg_net >= 6000: profitability_score = 8.0
-          elif avg_net >= 4000: profitability_score = 6.5
-          elif avg_net >= 2000: profitability_score = 5.0
-          elif avg_net >= 0: profitability_score = 3.0
-          else: profitability_score = 1.0
+                avg_sph = safe_avg(sph_actuals)
+                sph_proj = []
+                for e in ref_events:
+                    pb = e.get("projected_bar_revenue")
+                    ea = e.get("expected_attendance")
+                    if pb and ea and float(ea) > 0:
+                        sph_proj.append(float(pb) / float(ea))
+                avg_sph_proj = safe_avg(sph_proj)
+                bar_yield_ratio = safe_pct(avg_sph, avg_sph_proj) / 100.0 if avg_sph and avg_sph_proj else None
+                bar_score = min(10, round((bar_yield_ratio or 0.5) * 9, 1)) if bar_yield_ratio else None
 
-        consistency_score = None
-        if len(draw_ratios) >= 2:
-          import statistics
-          variance = statistics.stdev(draw_ratios)
-          consistency_score = min(10, round(max(0, 10 - variance * 15), 1))
-        elif len(draw_ratios) == 1:
-          consistency_score = 7.0
+                net_revenues = [calc_net(e) for e in ref_events]
+                avg_net = safe_avg(net_revenues)
+                profitability_score = None
+                if avg_net is not None:
+                    if avg_net >= 8000: profitability_score = 10.0
+                    elif avg_net >= 6000: profitability_score = 8.0
+                    elif avg_net >= 4000: profitability_score = 6.5
+                    elif avg_net >= 2000: profitability_score = 5.0
+                    elif avg_net >= 0: profitability_score = 3.0
+                    else: profitability_score = 1.0
 
-        scores = {"draw_accuracy": draw_score, "bar_yield": bar_score, "deal_profitability": profitability_score, "consistency": consistency_score}
-        weights = {"draw_accuracy": 0.35, "bar_yield": 0.30, "deal_profitability": 0.25, "consistency": 0.10}
-        available = {k: v for k, v in scores.items() if v is not None}
-        if available:
-          total_weight = sum(weights[k] for k in available)
-          reputation_score = round(sum(float(v) * weights[k] / total_weight for k, v in available.items()), 1)
-        else:
-          reputation_score = None
+                consistency_score = None
+                if len(draw_ratios) >= 2:
+                    import statistics
+                    variance = statistics.stdev(draw_ratios)
+                    consistency_score = min(10, round(max(0, 10 - variance * 15), 1))
+                elif len(draw_ratios) == 1:
+                    consistency_score = 7.0
 
-        attendances = [e["actual_attendance"] for e in ref_events if e.get("actual_attendance")]
-        door_splits = [e["door_split_promoter"] for e in ref_events if e.get("door_split_promoter") is not None]
-        bar_splits = [e["bar_split_promoter"] for e in ref_events if e.get("bar_split_promoter") is not None]
-        effective_splits = [e.get("actual_effective_split") or e.get("effective_split_percentage") for e in ref_events if e.get("actual_effective_split") or e.get("effective_split_percentage")]
-        artist_fees = [e["artist_fee_landed"] for e in ref_events if e.get("artist_fee_landed")]
-        sorted_by_net = sorted([(e, calc_net(e)) for e in ref_events], key=lambda x: x[1], reverse=True)
+                scores = {"draw_accuracy": draw_score, "bar_yield": bar_score, "deal_profitability": profitability_score, "consistency": consistency_score}
+                weights = {"draw_accuracy": 0.35, "bar_yield": 0.30, "deal_profitability": 0.25, "consistency": 0.10}
+                available = {k: v for k, v in scores.items() if v is not None}
+                if available:
+                    total_weight = sum(weights[k] for k in available)
+                    reputation_score = round(sum(float(v) * weights[k] / total_weight for k, v in available.items()), 1)
+                else:
+                    reputation_score = None
 
-        history = []
-        for e in ref_events[:8]:
-          draw_pct = safe_pct(e.get("actual_attendance"), e.get("expected_attendance"))
-          bar_rev = e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("net_bar_revenue")
-          sph = (float(bar_rev) / e["actual_attendance"]) if bar_rev and e.get("actual_attendance") and e["actual_attendance"] > 0 else None
-          history.append({
-            "event_id": e["id"],
-            "event_name": e["event_name"],
-            "event_date": str(e["event_date"]),
-            "event_type": e["tier1_category"],
-            "expected_attendance": e.get("expected_attendance"),
-            "actual_attendance": e.get("actual_attendance"),
-            "draw_pct": draw_pct,
-            "spend_per_head_actual": round(sph, 2) if sph else None,
-            "actual_bar_revenue": bar_rev,
-            "net_revenue_actual": round(calc_net(e), 2),
-            "door_split_promoter": e.get("door_split_promoter"),
-            "bar_split_promoter": e.get("bar_split_promoter"),
-            "actual_effective_split": e.get("actual_effective_split") or e.get("effective_split_percentage"),
-            "artist_name": e.get("artist_name"),
-          })
+                attendances = [int(e["actual_attendance"]) for e in ref_events if e.get("actual_attendance")]
+                door_splits = [float(e["door_split_promoter"]) for e in ref_events if e.get("door_split_promoter") is not None]
+                bar_splits = [float(e["bar_split_promoter"]) for e in ref_events if e.get("bar_split_promoter") is not None]
+                effective_splits = [float(e.get("actual_effective_split") or e.get("effective_split_percentage")) for e in ref_events if e.get("actual_effective_split") or e.get("effective_split_percentage")]
+                artist_fees = [float(e["artist_fee_landed"]) for e in ref_events if e.get("artist_fee_landed")]
+                sorted_by_net = sorted([(e, calc_net(e)) for e in ref_events], key=lambda x: x[1], reverse=True)
 
-        return {
-          "found": True,
-          "promoter": promoter,
-          "event_type": event_type,
-          "total_events": len(all_events),
-          "type_events": len(type_events),
-          "reputation_score": reputation_score,
-          "score_components": {
-            "draw_accuracy": {
-              "score": draw_score,
-              "avg_draw_ratio": avg_draw_ratio,
-              "label": f"Averages {round(float(avg_draw_ratio or 0) * 100)}% of promised attendance" if avg_draw_ratio else "Insufficient data",
-              "weight": "35%"
-            },
-            "bar_yield": {
-              "score": bar_score,
-              "avg_spend_per_head": avg_sph,
-              "label": f"${avg_sph}/head avg bar spend" if avg_sph else "Insufficient data",
-              "weight": "30%"
-            },
-            "deal_profitability": {
-              "score": profitability_score,
-              "avg_net_revenue": avg_net,
-              "label": f"${int(round(float(avg_net))):,} avg net to venue" if avg_net else "Insufficient data",
-              "weight": "25%"
-            },
-            "consistency": {
-              "score": consistency_score,
-              "label": f"Based on {len(draw_ratios)} shows" if draw_ratios else "Insufficient data",
-              "weight": "10%"
-            }
-          },
-          "recommendations": {
-            "attendance": {
-              "suggested": round(safe_avg(attendances)) if attendances else None,
-              "range_low": min(attendances) if attendances else None,
-              "range_high": max(attendances) if attendances else None,
-              "based_on": len(attendances)
-            },
-            "spend_per_head": {
-              "suggested": round(avg_sph, 2) if avg_sph else None,
-              "based_on": len(sph_actuals)
-            },
-            "door_split_promoter": {
-              "suggested": safe_avg(door_splits),
-              "based_on": len(door_splits)
-            },
-            "bar_split_promoter": {
-              "suggested": safe_avg(bar_splits),
-              "based_on": len(bar_splits)
-            },
-            "effective_split_avg": safe_avg(effective_splits),
-            "avg_net_to_venue": avg_net,
-            "avg_artist_fee": safe_avg(artist_fees),
-            "best_net": sorted_by_net[0][1] if sorted_by_net else None,
-            "worst_net": sorted_by_net[-1][1] if sorted_by_net else None,
-          },
-          "history": history
-        }
+                history = []
+                for e in ref_events[:8]:
+                    draw_pct = safe_pct(e.get("actual_attendance"), e.get("expected_attendance"))
+                    bar_rev = e.get("actual_bar_revenue") or e.get("total_bar_sales") or e.get("net_bar_revenue")
+                    att = e.get("actual_attendance")
+                    sph = (float(bar_rev) / float(att)) if bar_rev and att and float(att) > 0 else None
+                    history.append({
+                        "event_id": e["id"],
+                        "event_name": e["event_name"],
+                        "event_date": str(e["event_date"]),
+                        "event_type": e["tier1_category"],
+                        "expected_attendance": e.get("expected_attendance"),
+                        "actual_attendance": e.get("actual_attendance"),
+                        "draw_pct": draw_pct,
+                        "spend_per_head_actual": round(sph, 2) if sph else None,
+                        "actual_bar_revenue": float(bar_rev) if bar_rev else None,
+                        "net_revenue_actual": round(calc_net(e), 2),
+                        "door_split_promoter": float(e["door_split_promoter"]) if e.get("door_split_promoter") is not None else None,
+                        "bar_split_promoter": float(e["bar_split_promoter"]) if e.get("bar_split_promoter") is not None else None,
+                        "actual_effective_split": float(e.get("actual_effective_split") or e.get("effective_split_percentage")) if (e.get("actual_effective_split") or e.get("effective_split_percentage")) else None,
+                        "artist_name": e.get("artist_name"),
+                    })
 
-    # ââ Artist Intelligence âââââââââââââââââââââââââââââââââââââââââââââââââââ
-
+                return {
+                    "found": True,
+                    "promoter": promoter,
+                    "event_type": event_type,
+                    "total_events": len(all_events),
+                    "type_events": len(type_events),
+                    "reputation_score": reputation_score,
+                    "score_components": {
+                        "draw_accuracy": {"score": draw_score, "avg_draw_ratio": avg_draw_ratio,
+                            "label": f"Averages {round(float(avg_draw_ratio or 0) * 100)}% of promised attendance" if avg_draw_ratio else "Insufficient data", "weight": "35%"},
+                        "bar_yield": {"score": bar_score, "avg_spend_per_head": avg_sph,
+                            "label": f"${avg_sph}/head avg bar spend" if avg_sph else "Insufficient data", "weight": "30%"},
+                        "deal_profitability": {"score": profitability_score, "avg_net_revenue": avg_net,
+                            "label": f"${int(round(float(avg_net))):,} avg net to venue" if avg_net is not None else "Insufficient data", "weight": "25%"},
+                        "consistency": {"score": consistency_score,
+                            "label": f"Based on {len(draw_ratios)} shows" if draw_ratios else "Insufficient data", "weight": "10%"}
+                    },
+                    "recommendations": {
+                        "attendance": {"suggested": round(safe_avg(attendances)) if attendances else None, "range_low": min(attendances) if attendances else None, "range_high": max(attendances) if attendances else None, "based_on": len(attendances)},
+                        "spend_per_head": {"suggested": round(avg_sph, 2) if avg_sph else None, "based_on": len(sph_actuals)},
+                        "door_split_promoter": {"suggested": safe_avg(door_splits), "based_on": len(door_splits)},
+                        "bar_split_promoter": {"suggested": safe_avg(bar_splits), "based_on": len(bar_splits)},
+                        "effective_split_avg": safe_avg(effective_splits),
+                        "avg_net_to_venue": avg_net,
+                        "avg_artist_fee": safe_avg(artist_fees),
+                        "best_net": sorted_by_net[0][1] if sorted_by_net else None,
+                        "worst_net": sorted_by_net[-1][1] if sorted_by_net else None,
+                    },
+                    "history": history
+                }
+        except Exception as _e:
+            import traceback as _tb
+            raise HTTPException(status_code=500, detail=f"PROM_ERR:{repr(_e)}|{_tb.format_exc()[-1000:]}")
     @api.get("/artist-intelligence")
     def get_artist_intelligence(artist: str, event_type: str = None):
         if not engine:
