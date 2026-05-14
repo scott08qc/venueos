@@ -1081,8 +1081,19 @@ def create_app(static_dir: str) -> FastAPI:
             ("tipped_staff_count", "INTEGER DEFAULT 0"),
             ("tipped_hours_avg", "NUMERIC DEFAULT 6.25"),
             ("production_staff_count", "INTEGER DEFAULT 0"),
+            # ─── Marketing deal-treatment fields (Phase 1, May 2026) ─────
+            ("marketing_fixed_allocation", "NUMERIC DEFAULT 0"),        # fixed $ promoter covers per deal (e.g. $1,000 Collectiv)
+            ("marketing_split_above_threshold", "TEXT DEFAULT '50/50'"), # split rule for overage above fixed alloc
         ]:
             conn.execute(text(f"ALTER TABLE event_costs ADD COLUMN IF NOT EXISTS {col} {dtype}"))
+        # Seed canonical marketing deal-treatment for event 131 (Disclosure / Collectiv 50/50)
+        conn.execute(text("""
+            UPDATE event_costs
+            SET marketing_fixed_allocation = 1000,
+                marketing_split_above_threshold = '50/50'
+            WHERE event_id = 131
+              AND (marketing_fixed_allocation IS NULL OR marketing_fixed_allocation = 0)
+        """))
         conn.commit()
         row = conn.execute(text("SELECT * FROM event_costs WHERE event_id = :eid"), {"eid": event_id}).fetchone()
         if not row:
