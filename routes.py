@@ -1157,6 +1157,29 @@ def create_app(static_dir: str) -> FastAPI:
 
     # ââ Promoter Intelligence âââââââââââââââââââââââââââââââââââââââââââââââââ
 
+    @api.get("/promoter-sql-debug")
+    def promoter_sql_debug(promoter: str, event_type: str = None):
+      import traceback as _tb
+      if not engine:
+        return {"error": "no engine"}
+      try:
+        with engine.connect() as conn:
+          rows = conn.execute(text("""
+            SELECT e.id, e.event_name, e.tier1_category,
+                   r.actual_attendance, r.actual_bar_revenue, r.review_status,
+                   n.total_bar_sales
+            FROM events e
+            LEFT JOIN post_event_reviews r ON r.event_id = e.id AND LOWER(r.review_status) = 'complete'
+            LEFT JOIN night_of_actuals n ON n.event_id = e.id AND n.time_of_entry ILIKE 'close%'
+            WHERE LOWER(e.promoter_name) LIKE LOWER(:p)
+            ORDER BY e.event_date DESC LIMIT 5
+          """), {"p": f"%{promoter}%"}).fetchall()
+          data = [dict(r._mapping) for r in rows]
+          safe = [{k: (float(v) if hasattr(v, 'as_integer_ratio') and not isinstance(v, int) else v) for k, v in row.items()} for row in data]
+          return {"count": len(data), "rows": safe}
+      except Exception as _e:
+        return {"error": str(_e), "trace": _tb.format_exc()[-1000:]}
+
     @api.get("/promoter-intelligence")
     def get_promoter_intelligence(promoter: str, event_type: str = None):
       if not engine:
