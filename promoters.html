@@ -561,6 +561,14 @@ const SCAFFOLD_PROMOTERS = new Set([
   'Libre Collective','Open Theory'
 ]);
 
+// Display-only event count overrides. The engine uses full history for scoring;
+// these caps control only what operators see in the roster and profile header.
+// Collectiv shows 9 — the 9 most recent Therapy Sessions at District.
+const DISPLAY_EVENT_COUNT = { 'Collectiv': 9 };
+function displayEventCount(p) {
+  return DISPLAY_EVENT_COUNT[p.promoter_name] ?? p.total_events;
+}
+
 async function loadData() {
   try {
     const res = await fetch(`${BASE_URL}/api/promoters/summary`);
@@ -654,7 +662,7 @@ function renderRoster() {
           <span class="promoter-name">${p.promoter_name}</span>
           <span class="promoter-genre ${genreClass(p.tier1_category)}">${p.tier1_category || '—'}</span>
         </div>
-        <div class="roster-cell secondary">${p.total_events} shows</div>
+        <div class="roster-cell secondary">${displayEventCount(p)} shows</div>
         <div class="roster-cell">
           <div class="score-bar">
             <div class="score-track"><div class="score-fill" style="width:${Math.min(draw,120)/120*100}%;background:${drawColor};"></div></div>
@@ -765,7 +773,7 @@ function renderCompareContent() {
             <div class="compare-bar-fill" style="width:${pct}%;background:${color};"></div>
           </div>
           <div class="compare-bar-value">
-            ${m.format(p[m.key])}
+            ${m.key === 'total_events' ? displayEventCount(p) + ' shows' : m.format(p[m.key])}
             ${isWinner && selected.length > 1 ? '<span class="winner-badge">Best</span>' : ''}
           </div>
         </div>
@@ -884,6 +892,7 @@ function renderProfile(name, d) {
   const hist = d.history || [];
   const comp = d.score_components || {};
   const eventCount = d.total_events || 0;
+  const displayCount = DISPLAY_EVENT_COUNT[name] ?? eventCount;
   const fmt = function(v){ return v != null ? '$' + Math.round(v).toLocaleString() : '\u2014'; };
   const pct = function(v){ return v != null ? v.toFixed(1) + '%' : '\u2014'; };
   const avgNet = rec.avg_net_to_venue;
@@ -921,7 +930,7 @@ function renderProfile(name, d) {
   const html = '<button class="profile-back" onclick="setMode(\'roster\')">← Back to Roster</button>'
     + '<div class="profile-header-row"><div><div class="profile-name">' + name + '</div><div class="profile-meta">'
     + '<span>' + (d.event_type||'Mixed') + '</span>'
-    + '<span>' + eventCount + ' events</span>'
+    + '<span>' + displayCount + ' events</span>'
     + (doorSplit ? '<span>' + pct(doorSplit) + ' door split</span>' : '')
     + '</div></div>'
     + '<button class="btn btn-primary" onclick="openInCalc(\'' + name + '\')">Open in Calculator \u2192</button></div>'
