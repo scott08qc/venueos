@@ -3784,8 +3784,10 @@ async function loadEvent(id) {
     if (status) status.textContent = '';
     
     // Async secondary loads
-    if (detail.event?.promoter_name) {
-      loadPromoterData(detail.event.promoter_name, detail.event.tier1_category);
+    const promoter = detail.event?.promoter_name;
+    const evType = detail.event?.tier1_category;
+    if (promoter) {
+      loadPromoterData(promoter, evType);
     }
     loadNightRead(detail, currentCosts);
     
@@ -3797,14 +3799,33 @@ async function loadEvent(id) {
 
 /* ── Master render ── */
 function renderAll(detail, costs) {
+  // api/event-detail returns a flat structure: everything is in detail.event
+  // (review fields, actuals fields, and event fields are all merged into one object)
   const e = detail.event || {};
-  const r = detail.review || {};
-  const actuals = detail.actuals || {};
+  // Map flat fields into logical groupings for render functions
+  const r = {
+    actual_attendance: e.total_headcount || e.actual_attendance,
+    actual_bar_revenue: e.actual_bar_revenue || e.total_bar_sales,
+    actual_door_revenue: e.actual_door_revenue || e.door_revenue_card,
+    actual_table_revenue: e.actual_table_revenue || e.table_bottle_service,
+    promoter_artwork_on_time: e.promoter_artwork_on_time,
+    promoter_performance_notes: e.promoter_performance_notes,
+    what_to_replicate: e.what_to_replicate,
+    what_to_change: e.what_to_change,
+    review_status: e.review_status,
+    promoter_attendance_vs_projection: e.promoter_attendance_vs_projection,
+  };
+  const actuals = {
+    total_headcount: e.total_headcount || e.actual_attendance,
+    total_bar_sales: e.total_bar_sales || e.actual_bar_revenue,
+    door_revenue_card: e.door_revenue_card || e.actual_door_revenue,
+    table_bottle_service: e.table_bottle_service || e.actual_table_revenue,
+    ticket_scan_count: e.ticket_scan_count,
+  };
   
   renderEventBar(e, r, actuals);
   renderHeroTiles(e, r, actuals, costs);
   renderDealChip(e);
-  renderRevenueDecomp(e, r, actuals);
   renderOperationalHealth(costs, actuals);
 }
 
@@ -3944,14 +3965,10 @@ function renderPromoterCard(intel, name) {
   set('promo-name', name);
   set('promo-meta', `Atlanta · Electronic · Tier 1 verified · ${Math.min(totalEvents, 9)} events at District`);
   
-  // Draw accuracy from recommendations
-  const drawPct = rec.attendance?.suggested && currentEventData?.event?.expected_attendance
-    ? Math.round((currentEventData.review?.actual_attendance || 1075) / (currentEventData.event?.expected_attendance || 1100) * 100)
-    : 98;
+  const actual = (currentEventData?.event?.total_headcount || currentEventData?.event?.actual_attendance || 1075);
+  const expected = (currentEventData?.event?.expected_attendance || 1100);
+  const drawPct = expected > 0 ? Math.round(actual / expected * 100) : 98;
   set('promo-draw-pct', `${drawPct}%`);
-  
-  const actual = currentEventData?.review?.actual_attendance || 1075;
-  const expected = currentEventData?.event?.expected_attendance || 1100;
   set('promo-draw-detail', `${fmtN(actual)} / ${fmtN(expected)} proj`);
   
   // Bar yield
@@ -3965,14 +3982,24 @@ async function loadNightRead(detail, costs) {
   if (!container) return;
   
   const e = detail.event || {};
-  const r = detail.review || {};
-  const actuals = detail.actuals || {};
+  // Flat response: review and actuals fields are in detail.event
+  const r = {
+    promoter_artwork_on_time: e.promoter_artwork_on_time,
+    promoter_performance_notes: e.promoter_performance_notes,
+    what_to_replicate: e.what_to_replicate,
+    what_to_change: e.what_to_change,
+  };
+  const actuals = {
+    total_headcount: e.total_headcount || e.actual_attendance,
+    total_bar_sales: e.total_bar_sales || e.actual_bar_revenue,
+    ticket_scan_count: e.ticket_scan_count,
+  };
   
   // Compose observations from real data
   const obs = [];
   
   // 1. Attendance vs projection
-  const actual = actuals.total_headcount || r.actual_attendance || 0;
+  const actual = actuals.total_headcount || 0;
   const expected = e.expected_attendance || 0;
   if (actual && expected) {
     const drawPct = (actual / expected * 100).toFixed(0);
