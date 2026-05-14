@@ -1899,6 +1899,14 @@ def create_app(static_dir: str) -> FastAPI:
             for col in ["nights_above", "nights_below", "nights_met"]:
               ex[col] = (ex[col] or 0) + (r[col] or 0)
 
+        # Display cap: Collectiv shows 9 most-recent Therapy Sessions events in UI (Option A).
+        # Engine averages (draw_accuracy, avg_sph, avg_bar_revenue) are untouched — only
+        # the displayed event count is capped. Add other promoters to DISPLAY_CAPS as needed.
+        DISPLAY_CAPS = {'Collectiv': 9}
+        for name, rec in merged.items():
+            if name in DISPLAY_CAPS and (rec.get('total_events') or 0) > DISPLAY_CAPS[name]:
+                rec['total_events'] = DISPLAY_CAPS[name]
+
         return list(merged.values())
 
     @api.get("/promoters/names")
