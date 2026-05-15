@@ -1358,9 +1358,12 @@ function renderDetailPanel(dk) {
     `;
   }
 
-  // Your events
-  html += `<div class="detail-section-title">Your Events (${internalEvs.length})</div>`;
-  if (internalEvs.length === 0) {
+  // Your events — split into District (full data) vs peer VenueOS-client venues (stub only)
+  const districtEvs = internalEvs.filter(ev => ev.eventSource !== 'competitor_venue');
+  const peerEvs = internalEvs.filter(ev => ev.eventSource === 'competitor_venue');
+
+  html += `<div class="detail-section-title">Your Events (${districtEvs.length})</div>`;
+  if (districtEvs.length === 0) {
     html += `
       <div class="empty-state" style="padding:16px 0;">
         <div style="font-size:13px; color:var(--text3);">No events booked</div>
@@ -1368,7 +1371,7 @@ function renderDetailPanel(dk) {
       </div>
     `;
   } else {
-    internalEvs.forEach(ev => {
+    districtEvs.forEach(ev => {
       const statusColor = ev.status === 'completed' ? '#2D6A4F' : ev.status === 'confirmed' ? '#2C5F8A' : '#8B5E0A';
       const statusBg = ev.status === 'completed' ? '#E8F4EE' : ev.status === 'confirmed' ? '#E8F0F7' : '#FDF3E0';
       const statusLabel = ev.status === 'completed' ? '✓ COMPLETED' : ev.status === 'confirmed' ? '● CONFIRMED' : '◌ HOLD — Not finalized';
@@ -1394,6 +1397,24 @@ function renderDetailPanel(dk) {
           ${(!hasActuals && !hasProjected && (ev.netBar || ev.revelBar)) ? `<div style="font-size:11px; color:#2C5F8A; margin-top:4px; font-weight:500;">Bar (net): $${parseFloat(ev.netBar || ev.revelBar).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>` : ''}
           ${ev.notes ? `<div style="font-size:11px; color:#5A5652; margin-top:6px; padding:6px 8px; background:#F4F2EF; border-radius:4px; border-left:2px solid #D4CFC9;">${ev.notes}</div>` : ''}
           <div style="font-size:11px; color:${ctaColor}; margin-top:6px; font-weight:500;">${ctaLabel}</div>
+        </div>
+      `;
+    });
+  }
+
+  // Peer VenueOS-client venues — stub cards, no financial data exposed
+  if (peerEvs.length > 0) {
+    html += `<div class="detail-section-title" style="margin-top:14px;">Market Context (${peerEvs.length})</div>`;
+    peerEvs.forEach(ev => {
+      html += `
+        <div class="detail-event-card" onclick="showPeerBenchmarkStub()" style="cursor:pointer; opacity:0.85;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+            <div class="detail-event-badge" style="background:#F4E8F0; color:#6B2D5A;">● PEER VENUE</div>
+          </div>
+          <div class="detail-event-name">${ev.name}</div>
+          <div class="detail-event-meta">${ev.originalType || ev.type}${ev.promoter ? ' · ' + ev.promoter : ''}</div>
+          <div style="font-size:11px; color:#9B9793; margin-top:4px; font-style:italic;">Anonymized benchmark data — full view coming Phase 5</div>
+          <div style="font-size:11px; color:#6B2D5A; margin-top:6px; font-weight:500;">View Peer Benchmark →</div>
         </div>
       `;
     });
@@ -1467,6 +1488,35 @@ function openEventInCalc(id, status) {
   } else {
     window.location.href = `${BASE_URL}/api/calculator?event_id=${id}`;
   }
+}
+
+// Item 13 fix — peer VenueOS-client venue stub
+// Peer venue events show a stub toast rather than exposing their full P&L.
+// Real peer benchmarking with anonymized cross-venue data is Phase 5+ work.
+function showPeerBenchmarkStub() {
+  showToast('Peer benchmark view — coming in Phase 5');
+}
+
+function showToast(msg) {
+  // Remove any existing toast
+  const existing = document.getElementById('cal-toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.id = 'cal-toast';
+  t.textContent = msg;
+  t.style.cssText = [
+    'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
+    'background:#1A1714', 'color:#fff', 'padding:10px 20px',
+    'border-radius:8px', 'font-size:13px', 'font-family:var(--mono,monospace)',
+    'z-index:9999', 'opacity:0', 'transition:opacity .2s', 'white-space:nowrap',
+    'pointer-events:none'
+  ].join(';');
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity = '1'; });
+  setTimeout(() => {
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 200);
+  }, 3000);
 }
 
 async function deleteHold(id, date) {
