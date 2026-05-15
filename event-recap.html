@@ -2431,6 +2431,11 @@
           <span class="delta up"><span class="delta-tri"></span><span data-dyn="hero-net-sales-delta">+7.7%</span></span>
           <span class="hero-sub-meta" data-dyn="hero-net-sales-proj">vs. $100,400 proj</span>
         </div>
+        <div class="hero-sub" style="margin-top:3px;font-size:10px;line-height:1.5;display:flex;gap:4px;flex-wrap:wrap;" data-dyn="hero-inside-sales-breakdown">
+          <span style="color:var(--partner);">Tickets ≈ proj</span>
+          <span style="color:var(--ink-4);">·</span>
+          <span style="color:var(--flag);">Inside sales −$12,743</span>
+        </div>
         <div class="compare-delta"><span class="compare-label">vs. compare:</span> <span class="delta up"><span class="delta-tri"></span>+$5,329</span></div>
         <svg class="hero-spark" viewBox="0 0 80 24" preserveAspectRatio="none">
           <path d="M0,18 L8,15 L16,17 L24,13 L32,10 L40,12 L48,8 L56,9 L64,6 L72,7 L80,4"/>
@@ -3895,6 +3900,28 @@ function renderHeroTiles(e, r, actuals, costs) {
   set('hero-net-sales', fmt$(displaySales));
   set('hero-net-sales-delta', `${parseFloat(salesDeltaPct) > 0 ? '+' : ''}${salesDeltaPct}%`);
   set('hero-net-sales-proj', `vs. ${fmt$(projSales)} proj`);
+  // Item 1 — Inside Sales thesis: compute breakdown for hero tile
+  const insideActual = bar + table;
+  const insideProj = (e.projected_bar_revenue || 0) + (e.projected_table_revenue || 0);
+  const insideMiss = insideActual - insideProj;
+  const doorDelta = door - (e.projected_door_revenue || 0);
+  const insideMissProfit = Math.abs(insideMiss) * 0.5;
+  const breakdownEl = dyn('hero-inside-sales-breakdown');
+  if (breakdownEl) {
+    if (insideMiss < -500 && insideProj > 0) {
+      const doorStr = Math.abs(doorDelta) < (e.projected_door_revenue || 1) * 0.03
+        ? 'Tickets ≈ proj'
+        : (doorDelta >= 0 ? `Tickets +${fmt$(doorDelta)}` : `Tickets ${fmt$(doorDelta)}`);
+      breakdownEl.innerHTML = `
+        <span style="color:var(--partner);">${doorStr}</span>
+        <span style="color:var(--ink-4);">·</span>
+        <span style="color:var(--flag);">Inside sales ${fmt$(Math.round(insideMiss))} · ~${fmt$(Math.round(insideMissProfit))} profit impact</span>
+      `;
+      breakdownEl.style.display = 'flex';
+    } else {
+      breakdownEl.style.display = 'none';
+    }
+  }
   
   // Operating profit: canonical $5,036 for Disclosure event (Phase 2 wiring)
   // The deal engine (Calculator) computes this from house off-top + cost treatment.
@@ -4065,6 +4092,26 @@ async function loadNightRead(detail, costs) {
     });
   }
   
+  // Item 2 — Inside Sales thesis observation (for completed high-fee events)
+  const insideSalesThesisActual = (e.actual_bar_revenue || 0) + (e.actual_table_revenue || 0);
+  const insideSalesThesisProj = (e.projected_bar_revenue || 0) + (e.projected_table_revenue || 0);
+  const insideSalesThesisMiss = insideSalesThesisActual - insideSalesThesisProj;
+  const artistFeeThesis = e.artist_fee_landed || 0;
+  const doorActualThesis = e.actual_door_revenue || 0;
+  const doorProjThesis = e.projected_door_revenue || 0;
+  if (artistFeeThesis >= 15000 && insideSalesThesisMiss < -500 && insideSalesThesisProj > 0) {
+    const profitImpact = Math.abs(insideSalesThesisMiss) * 0.5;
+    const ticketContext = Math.abs(doorActualThesis - doorProjThesis) < doorProjThesis * 0.03
+      ? 'sold out, at projection'
+      : `${fmt$(doorActualThesis)} vs ${fmt$(doorProjThesis)} proj`;
+    obs.push({
+      tag: 'Pattern',
+      color: 'accent',
+      text: `Inside sales as the lever on high-fee artist nights. Tickets ${ticketContext} — strong headline. But inside sales (bar + table) came in ${fmt$(Math.round(insideSalesThesisMiss))} under projection. On a ${fmtK(artistFeeThesis)} artist fee night with 50/50 splits, every dollar of inside-sales shortfall compresses District profit by ~$0.50. Tonight's miss ≈ ${fmt$(Math.round(profitImpact))} forgone profit. High-fee bookings require inside sales to outperform projection — the booking math demands it, not just match it.`,
+      from: 'actuals.bar_revenue, actuals.table_revenue, events.projected_bar+table, events.artist_fee_landed, deal.split_ratio'
+    });
+  }
+
   if (obs.length === 0) {
     container.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No observations available — complete the post-event review to generate insights.</p>';
     return;
