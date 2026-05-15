@@ -577,9 +577,10 @@ function displayRepScore(raw) {
   return computed;
 }
 function repGrade(score) {
-  if (score >= 93) return '+'; if (score >= 90) return ''; if (score >= 87) return '−';
-  if (score >= 83) return '+'; if (score >= 80) return ''; if (score >= 77) return '−';
-  return '+';  // C+
+  if (score >= 93) return 'A+'; if (score >= 90) return 'A'; if (score >= 87) return 'A−';
+  if (score >= 83) return 'B+'; if (score >= 80) return 'B'; if (score >= 77) return 'B−';
+  if (score >= 73) return 'C+'; if (score >= 70) return 'C'; if (score >= 67) return 'C−';
+  return 'D';
 }
 
 async function loadData() {
@@ -949,7 +950,7 @@ function renderProfile(name, d) {
     + '<button class="btn btn-primary" onclick="openInCalc(\'' + name + '\')">Open in Calculator \u2192</button></div>'
     + '<div class="profile-kpi-row">'
     + '<div class="profile-kpi"><div class="profile-kpi-label">Avg Net to Venue</div><div class="profile-kpi-val ' + netColor + '">' + fmt(avgNet) + '</div><div class="profile-kpi-sub">per event</div></div>'
-    + '<div class="profile-kpi"><div class="profile-kpi-label">Reputation Score</div><div class="profile-kpi-val hero">' + (d.reputation_score!=null?displayRepScore(d.reputation_score):'\u2014') + '<span style="font-size:13px;color:var(--text3);font-weight:400;"> / A' + (d.reputation_score!=null?repGrade(displayRepScore(d.reputation_score)):'\u2014') + '</span></div><div class="profile-kpi-sub">deal profitability weighted</div></div>'
+    + '<div class="profile-kpi"><div class="profile-kpi-label">Reputation Score</div><div class="profile-kpi-val hero">' + (d.reputation_score!=null?displayRepScore(d.reputation_score):'\u2014') + '<span style="font-size:13px;color:var(--text3);font-weight:400;"> / ' + (d.reputation_score!=null?repGrade(displayRepScore(d.reputation_score)):'\u2014') + '</span></div><div class="profile-kpi-sub">deal profitability weighted</div></div>'
     + '<div class="profile-kpi"><div class="profile-kpi-label">Best Night</div><div class="profile-kpi-val pos">' + fmt(bestNet) + '</div><div class="profile-kpi-sub">net to venue</div></div>'
     + '<div class="profile-kpi"><div class="profile-kpi-label">Worst Night</div><div class="profile-kpi-val ' + (worstNet<0?'neg':'') + '">' + fmt(worstNet) + '</div><div class="profile-kpi-sub">net to venue</div></div>'
     + '</div>'
@@ -975,7 +976,7 @@ async function fetchPromoterAI(name, d) {
   const recentAvg = recent5.length ? recent5.reduce(function(a,b){return a+b;},0)/recent5.length : null;
   const confidence = eventCount >= 15 ? 'high' : eventCount >= 8 ? 'medium' : 'low';
 
-  const prompt = 'You are a senior operator analyst for District Atlanta, an 800-cap nightlife venue. Analyze this promoter and provide a Promoter Read in exactly this JSON format:\n{\n  "summary": "2-3 sentences on overall value based on ' + eventCount + ' events. Confidence is ' + confidence + ' - use language accordingly (early signals/consistent pattern). Be specific with dollar amounts.",\n  "lever": "1 concrete recommendation for the next booking to improve net to venue."\n}\nReturn only valid JSON.\n\nPROMOTER: ' + name + '\nEVENTS: ' + eventCount + '\nAvg net: ' + fmt(rec.avg_net_to_venue) + '\nBest: ' + fmt(rec.best_net) + '\nWorst: ' + fmt(rec.worst_net) + '\nAvg artist fee: ' + fmt(rec.avg_artist_fee) + '\nRecent 5-event avg net: ' + (recentAvg!=null?fmt(recentAvg):'insufficient data') + '\nDoor split to promoter: ' + (rec.door_split_promoter!=null?rec.door_split_promoter.toFixed(0)+'%':'varies') + '\nReputation score: ' + (d.reputation_score!=null?(displayRepScore(d.reputation_score)+'/A'+repGrade(displayRepScore(d.reputation_score))):'insufficient data');
+  const prompt = 'You are a senior operator analyst for District Atlanta, an 800-cap nightlife venue. Analyze this promoter and provide a Promoter Read in exactly this JSON format:\n{\n  "summary": "2-3 sentences on overall value based on ' + eventCount + ' events. Confidence is ' + confidence + ' - use language accordingly (early signals/consistent pattern). Be specific with dollar amounts.",\n  "lever": "1 concrete recommendation for the next booking to improve net to venue."\n}\nReturn only valid JSON.\n\nPROMOTER: ' + name + '\nEVENTS: ' + eventCount + '\nAvg net: ' + fmt(rec.avg_net_to_venue) + '\nBest: ' + fmt(rec.best_net) + '\nWorst: ' + fmt(rec.worst_net) + '\nAvg artist fee: ' + fmt(rec.avg_artist_fee) + '\nRecent 5-event avg net: ' + (recentAvg!=null?fmt(recentAvg):'insufficient data') + '\nDoor split to promoter: ' + (rec.door_split_promoter!=null?rec.door_split_promoter.toFixed(0)+'%':'varies') + '\nReputation score: ' + (d.reputation_score!=null?(displayRepScore(d.reputation_score)+'/'+repGrade(displayRepScore(d.reputation_score))):'insufficient data');
 
   try {
     const res = await fetch(BASE + '/api/talking-points', {
