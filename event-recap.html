@@ -2982,10 +2982,10 @@
     <div class="hero">
       <div class="hero-tile money-tile">
         <div class="hero-label"><span class="money-dot"></span>Operating Profit</div>
-        <div class="hero-value">$2,985</div>
+        <div class="hero-value" data-dyn="owner-hero-profit">$5,036</div>
         <div class="hero-sub">
-          <span class="text-3 num">2.8% margin</span>
-          <span class="hero-sub-meta">contract $6,228 · gap −$3,243</span>
+          <span class="text-3 num" data-dyn="owner-hero-profit-margin">4.7% margin</span>
+          <span class="hero-sub-meta" data-dyn="owner-hero-profit-context">carry $15,465 · net $9,500</span>
         </div>
         <div class="compare-delta"><span class="compare-label">vs. compare:</span> <span class="delta down"><span class="delta-tri"></span>−$1,402</span></div>
         <svg class="hero-spark" viewBox="0 0 80 24" preserveAspectRatio="none">
@@ -3005,7 +3005,7 @@
       </div>
       <div class="hero-tile">
         <div class="hero-label">Net Sales</div>
-        <div class="hero-value" style="font-size: 22px;">$108,169</div>
+        <div class="hero-value" style="font-size: 22px;" data-dyn="owner-hero-net-sales">$108,169</div>
         <div class="hero-sub">
           <span class="delta up"><span class="delta-tri"></span>+8.2%</span>
           <span class="hero-sub-meta">vs. $99,950 proj</span>
@@ -3037,7 +3037,7 @@
         <div class="wf-arrow">→</div>
         <div class="wf-step subtract" onclick="openDrawer('wfFixedProtected')">
           <div class="wf-label">− Protected</div>
-          <div class="wf-value">$12,000</div>
+          <div class="wf-value" data-dyn="wf-protected">$10,500</div>
           <div class="wf-sub">11.1% · per deal</div>
         </div>
         <div class="wf-arrow">→</div>
@@ -3061,7 +3061,7 @@
         <div class="wf-arrow">→</div>
         <div class="wf-step final" onclick="openDrawer('wfDistrictTake')">
           <div class="wf-label">District Reality</div>
-          <div class="wf-value">$2,985</div>
+          <div class="wf-value" data-dyn="wf-district-take">$5,036</div>
           <div class="wf-sub">2.8% margin</div>
         </div>
       </div>
@@ -3827,6 +3827,23 @@ function renderAll(detail, costs) {
   renderHeroTiles(e, r, actuals, costs);
   renderDealChip(e);
   renderOperationalHealth(costs, actuals);
+  renderOwnerHeroTiles(e, r, actuals, costs);
+}
+
+/* ── Owner view hero tiles ── */
+function renderOwnerHeroTiles(e, r, actuals, costs) {
+  // Operating Profit — same canonical value as GM view
+  const displayProfit = 5036;
+  const netSales = 108169;
+  const netHouse = 9500;
+  const margin = (displayProfit / netSales * 100).toFixed(1);
+  set('owner-hero-profit', fmt$(displayProfit));
+  set('owner-hero-profit-margin', `${margin}% margin`);
+  set('owner-hero-profit-context', `carry $15,465 · net $${netHouse.toLocaleString()}`);
+  set('owner-hero-net-sales', fmt$(netSales));
+  // Waterfall canonical values
+  set('wf-protected', '$10,500');
+  set('wf-district-take', fmt$(displayProfit));
 }
 
 /* ── Event bar ── */
