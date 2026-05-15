@@ -1212,7 +1212,13 @@ function renderMonth(year, month) {
         const pillName = ev.name.length > 18 ? ev.name.slice(0,16)+'…' : ev.name;
         const pillArtist = ev.artist ? (ev.artist.length > 14 ? ev.artist.slice(0,12)+'…' : ev.artist) : null;
         const pillLabel = pillArtist ? `${pillName} · ${pillArtist}` : pillName;
-        html += `<div class="event-pill ${pillCls}" onclick="event.stopPropagation(); selectDate('${dk}')" title="${statusTitle}${isDistrict ? '' : ' · Competitor venue'}">
+        // District completed → recap; District upcoming → calculator; competitors → date sidebar
+        const pillClick = isDistrict && ev.status === 'completed' && ev.id
+          ? `event.stopPropagation(); openEventInCalc(${ev.id ? "'" + ev.id + "'" : 'null'}, '${ev.status}')`
+          : isDistrict && ev.status !== 'completed' && ev.id
+          ? `event.stopPropagation(); openEventInCalc(${ev.id ? "'" + ev.id + "'" : 'null'}, '${ev.status}')`
+          : `event.stopPropagation(); selectDate('${dk}')`;
+        html += `<div class="event-pill ${pillCls}" onclick="${pillClick}" title="${statusTitle}${isDistrict ? '' : ' · Competitor venue'}" style="${isDistrict && ev.id ? 'cursor:pointer;' : ''}">
           <span style="color:${tagColor}; margin-right:3px; font-size:9px;">${statusTag}</span>${pillLabel}
         </div>`;
       } else {
