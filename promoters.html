@@ -454,7 +454,7 @@
     <div class="summary-card">
       <div class="summary-label">Avg Draw Accuracy</div>
       <div class="summary-value" id="s-draw">—</div>
-      <div class="summary-sub">across all promoters</div>
+      <div class="summary-sub">promoters with 3+ events</div>
     </div>
     <div class="summary-card">
       <div class="summary-label">Avg Bar Spend / Head</div>
@@ -601,9 +601,13 @@ async function loadData() {
 
 function updateSummaryBar() {
   const total = allPromoters.length;
-  const drawVals = allPromoters.map(p => p.draw_accuracy).filter(v => v != null);
-  const sphVals  = allPromoters.map(p => p.avg_sph).filter(v => v != null);
-  const netVals  = allPromoters.map(p => p.avg_net).filter(v => v != null);
+  // Item 21: require ≥3 completed events with draw data to include in averages
+  // Prevents promoters with 1 lucky event from skewing the aggregate to 99%+
+  const MIN_EVENTS_FOR_AVG = 3;
+  const qualified = allPromoters.filter(p => (p.total_events || 0) >= MIN_EVENTS_FOR_AVG);
+  const drawVals = qualified.map(p => p.draw_accuracy).filter(v => v != null);
+  const sphVals  = qualified.map(p => p.avg_sph).filter(v => v != null);
+  const netVals  = qualified.map(p => p.avg_net).filter(v => v != null);
   const avgDraw = drawVals.length ? (drawVals.reduce((s,v) => s+v, 0) / drawVals.length).toFixed(1) : '—';
   const avgSph  = sphVals.length  ? (sphVals.reduce((s,v) => s+v, 0)  / sphVals.length).toFixed(2)  : '—';
   const avgNet  = netVals.length  ? Math.round(netVals.reduce((s,v) => s+v, 0) / netVals.length)     : null;
@@ -908,6 +912,12 @@ function renderProfile(name, d) {
   const hist = d.history || [];
   const comp = d.score_components || {};
   const eventCount = d.total_events || 0;
+  // Item 22: use display-capped event count in AI prompt copy (Collectiv: 9, not 30)
+  const PROMPT_CAPS = {'Collectiv': 9};
+  const promptEventCount = PROMPT_CAPS[name] ? Math.min(eventCount, PROMPT_CAPS[name]) : eventCount;
+  const promptEventLabel = PROMPT_CAPS[name]
+    ? promptEventCount + ' most recent District events'
+    : promptEventCount + ' events';
   const displayCount = DISPLAY_EVENT_COUNT[name] ?? eventCount;
   const fmt = function(v){ return v != null ? '$' + Math.round(v).toLocaleString() : '\u2014'; };
   const pct = function(v){ return v != null ? v.toFixed(1) + '%' : '\u2014'; };
@@ -986,7 +996,7 @@ async function fetchPromoterAI(name, d) {
   const recentAvg = recent5.length ? recent5.reduce(function(a,b){return a+b;},0)/recent5.length : null;
   const confidence = eventCount >= 15 ? 'high' : eventCount >= 8 ? 'medium' : 'low';
 
-  const prompt = 'You are a senior operator analyst for District Atlanta, an 800-cap nightlife venue. Analyze this promoter and provide a Promoter Read in exactly this JSON format:\n{\n  "summary": "2-3 sentences on overall value based on ' + eventCount + ' events. Confidence is ' + confidence + ' - use language accordingly (early signals/consistent pattern). Be specific with dollar amounts.",\n  "lever": "1 concrete recommendation for the next booking to improve net to venue."\n}\nReturn only valid JSON.\n\nPROMOTER: ' + name + '\nEVENTS: ' + eventCount + '\nAvg net: ' + fmt(rec.avg_net_to_venue) + '\nBest: ' + fmt(rec.best_net) + '\nWorst: ' + fmt(rec.worst_net) + '\nAvg artist fee: ' + fmt(rec.avg_artist_fee) + '\nRecent 5-event avg net: ' + (recentAvg!=null?fmt(recentAvg):'insufficient data') + '\nDoor split to promoter: ' + (rec.door_split_promoter!=null?rec.door_split_promoter.toFixed(0)+'%':'varies') + '\nReputation score: ' + (d.reputation_score!=null?(displayRepScore(d.reputation_score)+'/'+repGrade(displayRepScore(d.reputation_score))):'insufficient data');
+  const prompt = 'You are a senior operator analyst for District Atlanta, an 800-cap nightlife venue. Analyze this promoter and provide a Promoter Read in exactly this JSON format:\n{\n  "summary": "2-3 sentences on overall value based on ' + promptEventLabel + '. Confidence is ' + confidence + ' - use language accordingly (early signals/consistent pattern). Be specific with dollar amounts.",\n  "lever": "1 concrete recommendation for the next booking to improve net to venue."\n}\nReturn only valid JSON.\n\nPROMOTER: ' + name + '\nEVENTS (display): ' + promptEventLabel + '\nAvg net: ' + fmt(rec.avg_net_to_venue) + '\nBest: ' + fmt(rec.best_net) + '\nWorst: ' + fmt(rec.worst_net) + '\nAvg artist fee: ' + fmt(rec.avg_artist_fee) + '\nRecent 5-event avg net: ' + (recentAvg!=null?fmt(recentAvg):'insufficient data') + '\nDoor split to promoter: ' + (rec.door_split_promoter!=null?rec.door_split_promoter.toFixed(0)+'%':'varies') + '\nReputation score: ' + (d.reputation_score!=null?(displayRepScore(d.reputation_score)+'/'+repGrade(displayRepScore(d.reputation_score))):'insufficient data');
 
   try {
     const res = await fetch(BASE + '/api/talking-points', {
