@@ -3211,3 +3211,4 @@ loadDiscrepancies();
     return app
 # deploy-trigger: calendar.html Item-13 fix
 # redeploy: calculator+promoters nav Item-20
+# redeploy: promoters.html Items 21+22
