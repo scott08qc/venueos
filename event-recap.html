@@ -3796,12 +3796,23 @@ async function populateEventPicker(selectedId) {
   if (!picker) return;
   try {
     const events = await fetch(`${BASE}/api/events`).then(r => r.json());
-    const completed = events.filter(e => e.status === 'completed' || e.status === 'settled');
-    picker.innerHTML = '<option value="">— Select event —</option>' + 
-      completed.sort((a,b) => b.event_date.localeCompare(a.event_date))
-              .map(e => `<option value="${e.id}" ${e.id == selectedId ? 'selected' : ''}>
-                ${e.event_date} · ${e.event_name} · ${e.promoter_name || ''}${e.artist_name ? ' · ' + e.artist_name : ''}
-              </option>`).join('');
+    // Show completed + confirmed, newest first, cap at 40. Completed get ✓ prefix.
+    const sorted = events
+      .filter(e => e.status === 'completed' || e.status === 'settled' || e.status === 'confirmed')
+      .sort((a,b) => (b.event_date || '').localeCompare(a.event_date || ''))
+      .slice(0, 40);
+    const done = sorted.filter(e => e.status === 'completed' || e.status === 'settled');
+    const upcoming = sorted.filter(e => e.status === 'confirmed');
+    const makeOpt = (e, isDone) => {
+      const parts = [e.event_date, e.event_name, e.promoter_name, e.artist_name]
+        .filter(Boolean)
+        .filter((p, i, arr) => i === 0 || p !== arr[i-1]); // dedupe adjacent identical
+      return `<option value="${e.id}" ${e.id == selectedId ? 'selected' : ''}>${isDone ? '✓ ' : ''}${parts.join(' · ')}</option>`;
+    };
+    let html = '<option value="">— Select event —</option>';
+    if (done.length) html += `<optgroup label="Completed (${done.length})">${done.map(e => makeOpt(e, true)).join('')}</optgroup>`;
+    if (upcoming.length) html += `<optgroup label="Upcoming (${upcoming.length})">${upcoming.map(e => makeOpt(e, false)).join('')}</optgroup>`;
+    picker.innerHTML = html;
   } catch(err) {
     picker.innerHTML = '<option value="">Could not load events</option>';
   }
