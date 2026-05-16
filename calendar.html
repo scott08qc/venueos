@@ -528,8 +528,8 @@
   </div>
   <div class="header-actions">
     <span id="venue-label" style="font-size: 12px; color: var(--text3); margin-right: 4px;">District Atlanta</span>
-    <button class="btn" onclick="openNewEvent()">+ New Event</button>
-    <button class="btn btn-primary" onclick="window.location.href=window.location.origin+'/api/calculator'">+ New Event</button>
+    <button class="btn" onclick="openNewEvent()">+ Place a Hold</button>
+    <button class="btn btn-primary" onclick="window.location.href=window.location.origin+'/api/calculator'">+ Create Deal in Calculator</button>
   </div>
 </header>
 
@@ -677,7 +677,7 @@
   <div class="modal">
     <div class="modal-header">
       <div>
-        <div class="modal-title">New Event</div>
+        <div class="modal-title">Place a Hold</div>
         <div style="font-size:12px; color:var(--text3); margin-top:2px;" id="modal-date-sub">—</div>
       </div>
       <button class="detail-close" onclick="closeModal()">✕</button>
@@ -1209,7 +1209,10 @@ function renderMonth(year, month) {
         const tagColor = isHold ? '#8B2D2D'
           : isDistrict ? (ev.status === 'completed' ? '#1F5C3A' : '#2D6A4F')
           : '#6B2D5A';
-        const pillName = ev.name.length > 18 ? ev.name.slice(0,16)+'…' : ev.name;
+        // Item 23: strip '@ Venue X' suffix for competitor pills (context is implied by calendar)
+        // and relax truncation from 16 to 20 chars
+        const _pillBaseName = ev.name.replace(/ @ [A-Z][a-z].*$/, '').trim();
+        const pillName = _pillBaseName.length > 22 ? _pillBaseName.slice(0,20)+'…' : _pillBaseName;
         const pillArtist = ev.artist ? (ev.artist.length > 14 ? ev.artist.slice(0,12)+'…' : ev.artist) : null;
         const pillLabel = pillArtist ? `${pillName} · ${pillArtist}` : pillName;
         // District completed → recap; District upcoming → calculator; competitors → date sidebar
@@ -1473,8 +1476,8 @@ function renderDetailPanel(dk) {
   // CTA
   html += `
     <div class="detail-cta">
-      <button class="btn btn-primary" onclick="openNewEventOnDate('${dk}')">+ Book Event on This Date</button>
-      <button class="btn" onclick="window.location.href=BASE_URL+'/api/calculator'">+ New Deal</button>
+      <button class="btn btn-primary" onclick="openNewEventOnDate('${dk}')">+ Place Hold on This Date</button>
+      <button class="btn" onclick="window.location.href=BASE_URL+'/api/calculator'">+ Create Deal in Calculator</button>
     </div>
   `;
 
