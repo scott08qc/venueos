@@ -2297,7 +2297,7 @@
       <a class="nav-link active" href="#">Events</a>
       <a class="nav-link" href="/api/promoters">Promoters</a>
       <a class="nav-link" href="/api/calculator">Calculator</a>
-      <a class="nav-link" href="#">Analytics</a>
+      <a class="nav-link" href="#" onclick="event.preventDefault(); showToast('Analytics — coming in Phase 5')">Analytics</a>
     </nav>
   </div>
 
@@ -4200,7 +4200,7 @@ function wireToastStubs() {
   // Share / Export buttons in role-context-row
   document.querySelectorAll('.btn-ghost').forEach(btn => {
     if (!btn.getAttribute('onclick')) {
-      btn.addEventListener('click', () => showToast(`${btn.textContent.trim()} — coming in Phase 4 polish`));
+      btn.addEventListener('click', () => showToast(`${btn.textContent.trim()} — coming with Export & Sharing`));
     }
   });
   // Inbox badge / mode toggle
@@ -6361,7 +6361,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Delegated handlers for elements that get rendered dynamically inside drawers
     document.body.addEventListener('click', (e) => {
-      const target = e.target.closest('button, .recipient-add, .recipient-chip .x, .learning-card-edit, .ai-assist-toggle, .attach-chip, .ai-mini-btn, .composer-send-btn, .thread-reply-send, .msg-attachment, #expandPinnedBtn');
+      const target = e.target.closest('button, .recipient-add, .recipient-chip .x, .learning-card-edit, .ai-assist-toggle, .attach-chip, .ai-mini-btn, .composer-send-btn, .thread-reply-send, .msg-attachment, .action-btn, .thread-filter, .drawer-pdf-btn');
       if (!target) return;
 
       // recipient-add (composer)
@@ -6415,6 +6415,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (target.classList && target.classList.contains('msg-attachment')) {
         e.stopPropagation();
         showToast('Attached report would open', 'Coming with Report Library');
+        return;
+      }
+      // action-btn (Assign / Add to agenda / Flag next event)
+      if (target.classList && target.classList.contains('action-btn')) {
+        e.stopPropagation();
+        showToast(target.textContent.trim() + ' — coming with Inbox Actions');
+        return;
+      }
+      // thread-filter (All / Unread / etc.)
+      if (target.classList && target.classList.contains('thread-filter')) {
+        e.stopPropagation();
+        showToast('Filter would narrow threads by type or status — coming with Inbox Filters');
+        return;
+      }
+      // PDF drawer export button
+      if (target.classList && target.classList.contains('drawer-pdf-btn')) {
+        e.stopPropagation();
+        showToast('PDF export — coming with Export Module');
         return;
       }
     });
