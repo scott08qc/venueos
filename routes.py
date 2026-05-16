@@ -1317,7 +1317,9 @@ def create_app(static_dir: str) -> FastAPI:
                 bar_splits = [float(e["bar_split_promoter"]) for e in ref_events if e.get("bar_split_promoter") is not None]
                 effective_splits = [float(e.get("actual_effective_split") or e.get("effective_split_percentage")) for e in ref_events if e.get("actual_effective_split") or e.get("effective_split_percentage")]
                 artist_fees = [float(e["artist_fee_landed"]) for e in ref_events if e.get("artist_fee_landed")]
-                sorted_by_net = sorted([(e, calc_net(e)) for e in ref_events], key=lambda x: x[1], reverse=True)
+                # Item 18: best/worst night only from completed events (not upcoming, which net to $0)
+                completed_ref = [e for e in ref_events if e.get("status") in ("completed", "settled")]
+                sorted_by_net = sorted([(e, calc_net(e)) for e in completed_ref], key=lambda x: x[1], reverse=True)
 
                 history = []
                 for e in ref_events[:8]:
