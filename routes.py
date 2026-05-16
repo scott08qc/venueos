@@ -3241,3 +3241,4 @@ loadDiscrepancies();
 # deploy-trigger: calendar.html Item-13 fix
 # redeploy: calculator+promoters nav Item-20
 # redeploy: promoters.html Items 21+22
+# redeploy: calculator.html Item-9 Analytics toast
