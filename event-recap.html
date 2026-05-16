@@ -3942,8 +3942,8 @@ function renderHeroTiles(e, r, actuals, costs) {
   set('hero-attendance-cap', `/ ${fmtN(capacity)}`);
   
   // Net sales: use post-settlement reconciled actuals (not gross POS totals)
-  // Priority: actual_bar/door/table_revenue (net, reconciled) > total_bar_sales (gross)
-  const bar = r.actual_bar_revenue || 0;    // $21,107 net after COGS/split
+  // Priority: actual_bar/door/table_revenue (gross bar ex-table) > total_bar_sales (gross all-in)
+  const bar = r.actual_bar_revenue || 0;    // gross bar revenue ex-table — see VenueOS_Schema_Audit.md
   const door = r.actual_door_revenue || 0;  // $57,795
   const table = r.actual_table_revenue || 0; // $22,150
   const netSales = bar + door + table;       // = $101,052 base; canonical display is $108,169

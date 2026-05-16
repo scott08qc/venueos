@@ -25,6 +25,16 @@ engine = create_engine(
     connect_args={"sslmode": "require"},
 ) if DATABASE_URL else None
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SCHEMA NOTE — read before writing new features against the events table.
+# Several field names do not match their stored semantics. Key examples:
+#   net_bar_revenue      → actually GROSS total POS (bar + table combined)
+#   actual_bar_revenue   → GROSS bar ex-table (not net, not post-COGS)
+#   spend_per_head_actual → always NULL; SPH computed dynamically at query time
+#   net_revenue_actual   → always NULL; never written by any current route
+# Full audit: VenueOS_Schema_Audit.md in project knowledge.
+# ─────────────────────────────────────────────────────────────────────────────
+
 # ââ Tier 1 category constants âââââââââââââââââââââââââââââââââââââââââââââââââ
 
 TIER1_CATEGORIES = [
@@ -433,14 +443,28 @@ class EventCreate(BaseModel):
     venue_capacity: Optional[int] = 800
     deal_structure_type: Optional[str] = None
     door_split_venue: Optional[float] = None
+    # door_split_promoter: promoter's share of DOOR revenue only (e.g. 50 = 50%).
+    # Distinct from net_revenue_promoter_pct (see below). Use door_split_promoter
+    # for standard co-promote splits; net_revenue_promoter_pct for flat-fee or
+    # guarantee structures where the split applies to net profit, not gross door.
     door_split_promoter: Optional[float] = None
     bar_split_venue: Optional[float] = None
     bar_split_promoter: Optional[float] = None
     bar_split_basis: Optional[str] = None
+    # Projection input only — deal-time assumption for pre-event P&L estimates.
+    # Actual bar COGS is computed dynamically from Revel item costs in the P&L engine;
+    # this field is NOT used for post-event actuals. See VenueOS_Schema_Audit.md.
     bar_cogs_percentage: Optional[float] = None
+    # bar_threshold_amount: the gross bar revenue level above which the split kicks in.
+    #   e.g. venue keeps 100% of bar up to $X, then splits above that.
+    # bar_guarantee_amount: a minimum bar payout to the promoter regardless of revenue.
+    #   Distinct from threshold — guarantee is a floor, threshold is a trigger point.
+    # Neither field is currently populated in any live event (as of May 2026);
+    # both are reserved for future deal types. See VenueOS_Schema_Audit.md.
     bar_threshold_amount: Optional[float] = None
     bar_guarantee_amount: Optional[float] = None
     door_split_basis: Optional[str] = None
+    # door_threshold_amount / door_guarantee_amount: same semantics as bar equivalents.
     door_threshold_amount: Optional[float] = None
     door_guarantee_amount: Optional[float] = None
     table_minimum: Optional[float] = None
@@ -451,6 +475,11 @@ class EventCreate(BaseModel):
     artist_cost_responsibility: Optional[str] = None
     artist_cost_split_note: Optional[str] = None
     deal_notes: Optional[str] = None
+    # net_revenue_promoter_pct: promoter's share of NET PROFIT (after all costs).
+    # Applies to flat-fee and guarantee deal structures where the split is on
+    # bottom-line profit rather than gross door/bar. NOT the same as door_split_promoter.
+    # On standard 50/50 co-promotes (e.g. Collectiv), both fields = 50 — but
+    # the semantic distinction matters for non-standard deals.
     net_revenue_promoter_pct: Optional[float] = None
     net_revenue_venue_pct: Optional[float] = None
     net_revenue_basis: Optional[str] = None
