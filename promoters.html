@@ -432,7 +432,7 @@
   <a class="nav-link" href="/api/event-recap">Events</a>
   <a class="nav-link active" href="#">Promoters</a>
   <a class="nav-link" href="/api/calculator">Calculator</a>
-  <a class="nav-link" href="#">Analytics</a>
+  <a class="nav-link" href="#" onclick="event.preventDefault(); this.closest('nav') && (function(){ const t=document.createElement('div'); t.textContent='Analytics — coming in Phase 5'; t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1714;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-family:var(--mono,monospace);z-index:9999;opacity:0;transition:opacity .2s'; document.body.appendChild(t); requestAnimationFrame(()=>{t.style.opacity='1';}); setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),200);},2800); })()">Analytics</a>
 </nav>
 </header>
 
