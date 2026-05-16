@@ -56,17 +56,16 @@
   .header-sub { font-size: 12px; color: #9B9793; margin-left: 6px; }
   .header-nav { display: flex; align-items: center; gap: 6px; }
   .nav-link {
-    height: 32px; padding: 0 14px;
-    border-radius: 6px;
-    font-size: 13px; font-weight: 500;
-    color: #fff;
-    text-decoration: none;
-    display: flex; align-items: center;
-    transition: opacity 0.15s;
-  }
-  .nav-link:hover { opacity: 0.85; }
-  .nav-link.cal { background: #2D6A4F; }
-  .nav-link.calc { background: #2C5F8A; }
+  display: inline-flex; align-items: center;
+  padding: 4px 10px; border-radius: 5px;
+  font-size: 12px; font-weight: 500; font-family: inherit;
+  text-decoration: none; color: var(--text2, #5A5652);
+  background: transparent; border: none; cursor: pointer;
+  transition: background 100ms ease, color 100ms ease;
+  letter-spacing: 0;
+}
+.nav-link:hover { background: #F0EDE9; color: #1A1714; }
+.nav-link.active { background: #E8F0F7; color: #2C5F8A; font-weight: 600; }
   .btn {
     height: 32px; padding: 0 14px;
     border-radius: 6px;
@@ -428,10 +427,13 @@
     <span class="header-title">VenueOS</span>
     <span class="header-sub">/ Promoter Intelligence</span>
   </div>
-  <div class="header-nav">
-    <a href="/api/hub/calendar" class="nav-link cal">📅 Calendar</a>
-    <a href="/api/hub/calculator" class="nav-link calc">🧮 Calculator</a>
-  </div>
+  <nav class="header-nav">
+  <a class="nav-link" href="/api/calendar">Calendar</a>
+  <a class="nav-link" href="/api/event-recap">Events</a>
+  <a class="nav-link active" href="#">Promoters</a>
+  <a class="nav-link" href="/api/calculator">Calculator</a>
+  <a class="nav-link" href="#">Analytics</a>
+</nav>
 </header>
 
 <div class="page">
@@ -915,11 +917,19 @@ function renderProfile(name, d) {
   const netColor = avgNet > 0 ? 'pos' : avgNet < 0 ? 'neg' : '';
 
   const histRows = hist.slice(0,20).map(function(h) {
-    const net = h.net_revenue_actual;
+    const isCompleted = h.status === 'completed' || h.status === 'settled';
+    const net = isCompleted ? h.net_revenue_actual : null;
     const netCls = net > 0 ? 'ph-pos' : net < 0 ? 'ph-neg' : '';
     const date = h.event_date ? new Date(h.event_date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '\u2014';
-    const netStr = net != null ? (net >= 0 ? '+' : '') + fmt(net) : '\u2014';
-    return '<tr><td><a class="event-link" href="/api/event-recap?event_id=' + h.event_id + '">' + (h.event_name||'\u2014') + '</a></td><td>' + date + '</td><td>' + (h.artist_name||'\u2014') + '</td><td class="ph-mono">' + fmt(h.actual_bar_revenue) + '</td><td class="ph-mono ' + netCls + '">' + netStr + '</td></tr>';
+    // Item 17: upcoming events show status indicator, not misleading $0
+    const netStr = !isCompleted
+      ? '<span style="font-size:10px;color:var(--text3);font-style:italic;">Upcoming</span>'
+      : (net != null ? (net >= 0 ? '+' : '') + fmt(net) : '\u2014');
+    const barStr = !isCompleted ? '\u2014' : fmt(h.actual_bar_revenue);
+    const eventLink = isCompleted
+      ? '<a class="event-link" href="/api/event-recap?event_id=' + h.event_id + '">' + (h.event_name||'\u2014') + '</a>'
+      : '<span style="color:var(--text2);">' + (h.event_name||'\u2014') + '</span>';
+    return '<tr><td>' + eventLink + '</td><td>' + date + '</td><td>' + (h.artist_name||'\u2014') + '</td><td class="ph-mono">' + barStr + '</td><td class="ph-mono ' + netCls + '">' + netStr + '</td></tr>';
   }).join('');
 
   const scoreRows = Object.entries(comp).map(function(entry) {
