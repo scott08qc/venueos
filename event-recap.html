@@ -619,6 +619,21 @@
   .mini-bar.dim { background: var(--ink-4); opacity: 0.5; }
   .mini-bar.peak { opacity: 1; background: var(--accent); }
 
+  /* Pie decomp layout */
+  .lineitem-card-inner {
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .lineitem-rows { flex: 1; min-width: 0; }
+  .lineitem-pie-wrap {
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding-top: 6px;
+  }
+  .lineitem-row-val { display: flex; align-items: baseline; gap: 6px; }
+  .lineitem-row-amt { font-family: 'IBM Plex Mono', monospace; color: var(--ink); font-weight: 600; font-size: 11.5px; }
+  .lineitem-row-pct { font-family: 'IBM Plex Mono', monospace; color: var(--ink-3); font-size: 10px; min-width: 30px; text-align: right; }
+  .pie-tooltip { font-size: 9px; font-family: 'IBM Plex Mono', monospace; text-anchor: middle; dominant-baseline: middle; }
+
   /* Grids */
   .row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -2469,19 +2484,34 @@
           <span class="delta up"><span class="delta-tri"></span>+4.1%</span>
           <span class="text-3 num">vs. proj $56,400</span>
         </div>
-        <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('barSales')">
-          <span class="lineitem-row-name">Bar Sales</span>
-          <span class="lineitem-row-val"><span class="lineitem-row-amt">$49,890</span><span class="lineitem-row-pct">85.0%</span></span>
-        </div>
-        <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('tableSales')">
-          <span class="lineitem-row-name">Table Sales</span>
-          <span class="lineitem-row-val"><span class="lineitem-row-amt">$8,852</span><span class="lineitem-row-pct">15.0%</span></span>
-        </div>
-        <div class="mini-bars">
-          <div class="mini-bar" style="height: 100%;"></div>
-          <div class="mini-bar" style="height: 65%;"></div>
-          <div class="mini-bar dim" style="height: 35%;"></div>
-          <div class="mini-bar dim" style="height: 20%;"></div>
+        <div class="lineitem-card-inner">
+          <div class="lineitem-rows">
+            <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('barSales')">
+              <span class="lineitem-row-name">Bar Sales</span>
+              <span class="lineitem-row-val"><span class="lineitem-row-amt">$49,890</span><span class="lineitem-row-pct">85%</span></span>
+            </div>
+            <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('tableSales')">
+              <span class="lineitem-row-name">Table Sales</span>
+              <span class="lineitem-row-val"><span class="lineitem-row-amt">$8,852</span><span class="lineitem-row-pct">15%</span></span>
+            </div>
+          </div>
+          <div class="lineitem-pie-wrap">
+            <svg width="76" height="76" viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+              <title>Inside Sales split: Bar 85%, Table 15%</title>
+              <!-- Background ring (minor segment) -->
+              <circle cx="38" cy="38" r="28" fill="none" stroke="var(--surface-2)" stroke-width="9"/>
+              <!-- Foreground arc (major segment: 85%) -->
+              <circle cx="38" cy="38" r="28" fill="none"
+                stroke="var(--accent)" stroke-width="9"
+                stroke-dasharray="149.5 175.9"
+                stroke-dashoffset="0"
+                transform="rotate(-90 38 38)"
+                stroke-linecap="butt"/>
+              <!-- Center label -->
+              <text x="38" y="37" class="pie-tooltip" fill="var(--ink)" font-size="11" font-weight="600" font-family="IBM Plex Mono,monospace" text-anchor="middle" dominant-baseline="middle">85%</text>
+              <text x="38" y="49" class="pie-tooltip" fill="var(--ink-3)" font-size="8" font-family="IBM Plex Mono,monospace" text-anchor="middle" dominant-baseline="middle">Bar</text>
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -2492,19 +2522,34 @@
           <span class="delta up"><span class="delta-tri"></span>+12.5%</span>
           <span class="text-3 num">vs. proj $50,000</span>
         </div>
-        <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('presold')">
-          <span class="lineitem-row-name">Pre-sold</span>
-          <span class="lineitem-row-val"><span class="lineitem-row-amt">$48,375</span><span class="lineitem-row-pct">86.0%</span></span>
-        </div>
-        <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('walkupDetail')">
-          <span class="lineitem-row-name">Walk-up</span>
-          <span class="lineitem-row-val"><span class="lineitem-row-amt">$7,875</span><span class="lineitem-row-pct">14.0%</span></span>
-        </div>
-        <div class="mini-bars">
-          <div class="mini-bar" style="height: 30%;"></div>
-          <div class="mini-bar" style="height: 55%;"></div>
-          <div class="mini-bar" style="height: 85%;"></div>
-          <div class="mini-bar peak" style="height: 100%;"></div>
+        <div class="lineitem-card-inner">
+          <div class="lineitem-rows">
+            <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('presold')">
+              <span class="lineitem-row-name">Pre-sold</span>
+              <span class="lineitem-row-val"><span class="lineitem-row-amt">$48,375</span><span class="lineitem-row-pct">86%</span></span>
+            </div>
+            <div class="lineitem-row" onclick="event.stopPropagation(); openDrawer('walkupDetail')">
+              <span class="lineitem-row-name">Walk-up</span>
+              <span class="lineitem-row-val"><span class="lineitem-row-amt">$7,875</span><span class="lineitem-row-pct">14%</span></span>
+            </div>
+          </div>
+          <div class="lineitem-pie-wrap">
+            <svg width="76" height="76" viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+              <title>Ticket Sales split: Pre-sold 86%, Walk-up 14%</title>
+              <!-- Background ring (minor segment) -->
+              <circle cx="38" cy="38" r="28" fill="none" stroke="var(--surface-2)" stroke-width="9"/>
+              <!-- Foreground arc (major segment: 86%) -->
+              <circle cx="38" cy="38" r="28" fill="none"
+                stroke="var(--partner)" stroke-width="9"
+                stroke-dasharray="151.3 175.9"
+                stroke-dashoffset="0"
+                transform="rotate(-90 38 38)"
+                stroke-linecap="butt"/>
+              <!-- Center label -->
+              <text x="38" y="37" class="pie-tooltip" fill="var(--ink)" font-size="11" font-weight="600" font-family="IBM Plex Mono,monospace" text-anchor="middle" dominant-baseline="middle">86%</text>
+              <text x="38" y="49" class="pie-tooltip" fill="var(--ink-3)" font-size="8" font-family="IBM Plex Mono,monospace" text-anchor="middle" dominant-baseline="middle">Pre-sold</text>
+            </svg>
+          </div>
         </div>
       </div>
 
